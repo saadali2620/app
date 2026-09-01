@@ -1,10 +1,31 @@
-import type { Product, Collection, ProductSize } from '@/types';
+import type { Product, Collection, ProductSize, AccordionSection } from '@/types';
 
 const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/enterprise/index.php?rest_route=/wc/store/v1';
 
 function stripHtml(html: string | null): string {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').trim();
+}
+
+function parseAccordionSections(rawDescription: string | null): AccordionSection[] {
+    if (!rawDescription || !rawDescription.includes('[vc_accordion')) return [];
+    const norm = rawDescription.replace(/&#8220;|&#8221;|&#8243;/g, '"');
+    const sections: AccordionSection[] = [];
+    const tabRe = /\[vc_accordion_tab[^\]]*title="([^"]+)"[^\]]*\]([\s\S]*?)\[\/vc_accordion_tab\]/g;
+    let match: RegExpExecArray | null;
+    while ((match = tabRe.exec(norm))) {
+          const title = match[1].trim();
+          let content = match[2]
+                  .replace(/\[vc_column_text[^\]]*\]/g, '')
+                  .replace(/\[\/vc_column_text\]/g, '')
+                  .replace(/&#8211;/g, '\u2013')
+                  .replace(/&#8212;/g, '\u2014')
+                  .replace(/&#8216;/g, '\u2018')
+                  .replace(/&#8217;/g, '\u2019')
+                  .trim();
+          if (content) sections.push({ title, content });
+    }
+    return sections;
 }
 
 function mapWcProduct(p: any, collection?: Collection | null): Product {
@@ -19,6 +40,7 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
       : null,
     description: stripHtml(p.short_description || p.description),
     details: p.description ? stripHtml(p.description) : null,
+    accordion: parseAccordionSections(p.description),
     image_url: p.images?.[0]?.src ?? '',
     image_url_2: p.images?.[1]?.src ?? null,
     badge: p.on_sale ? 'Sale' : (p.is_purchasable === false ? 'Sold Out' : null),
@@ -52,7 +74,12 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
   const res = await fetch(`${WC_BASE}/products&slug=`);
   const productRes = await fetch(`${WC_BASE}/products/${productId}`);
   const product = await productRes.json();
-  return (product.variations ?? []).map((v: any, i: number) => {
+  const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
+    const sizeRank = (s: string) => {
+          const idx = sizeOrder.indexOf(s.toUpperCase());
+          return idx === -1 ? 999 : idx;
+    };
+    const sizes = (product.variations ?? []).map((v: any, i: number) => {
     const sizeAttr = v.attributes?.find((a: any) => a.name === 'Size');
     return {
       id: String(v.id),
@@ -62,6 +89,8 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
       sort_order: i,
     };
   });
+  sizes.sort((a, b) => sizeRank(a.size) - sizeRank(b.size));
+  return sizes;
 }
 
 export async function getCollections(): Promise<Collection[]> {
