@@ -46,7 +46,7 @@ export default function HomePage({ navigate }: HomePageProps) {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-12 lg:gap-16">
+            <div className="grid grid-cols-1 gap-0">
               {featured.map((product, i) => (
                 <div key={product.id} className="w-full">
                   <ProductCard product={product} navigate={navigate} index={i} />
