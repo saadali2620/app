@@ -30,7 +30,7 @@ export default function HomePage({ navigate }: HomePageProps) {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10">
           <div className="text-center mb-16">
             <p className="text-white/40 text-[11px] uppercase tracking-[0.25em] mb-3">
-              BATCH 011 / Live Now
+              BATCH 01 / Live Now
             </p>
             <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight">
               Latest Drops
@@ -92,43 +92,6 @@ export default function HomePage({ navigate }: HomePageProps) {
           >
             Read Our Story
           </button>
-        </div>
-      </section>
-
-      {/* Collection highlight */}
-      <section className="py-20 lg:py-28 border-t border-white/5">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div>
-              <p className="text-white/40 text-[11px] uppercase tracking-[0.25em] mb-4">
-                BATCH 010 / MUTED
-              </p>
-              <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight mb-6">
-                Elevated Basics
-              </h2>
-              <p className="text-white/60 text-base leading-relaxed mb-8">
-                Tech crew essentials. Warm brown rubber prints and muted navy tees. The foundation
-                of your wardrobe, refined.
-              </p>
-              <button
-                onClick={() => navigate('/collections/batch-010')}
-                className="inline-block border border-white/30 text-white px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-all duration-300"
-              >
-                Shop BATCH 010
-              </button>
-            </div>
-            <div
-              className="overflow-hidden bg-neutral-900 group cursor-pointer"
-              style={{ aspectRatio: '4/5' }}
-              onClick={() => navigate('/collections/batch-010')}
-            >
-              <img
-                src="https://images.pexels.com/photos/19461563/pexels-photo-19461563.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-                alt="BATCH 010"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            </div>
-          </div>
         </div>
       </section>
     </div>
