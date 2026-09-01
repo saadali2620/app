@@ -51,10 +51,10 @@ export default function Footer({ navigate }: FooterProps) {
           <div className="flex flex-col gap-2">
             {[
               { label: 'Shop All', path: '/collections/all' },
-              { label: 'BATCH 011', path: '/collections/batch-011' },
-              { label: 'BATCH 010', path: '/collections/batch-010' },
-              { label: 'Archive', path: '/collections/batch-008' },
+              { label: 'BATCH 01', path: '/collections/batch-011' },
               { label: 'About', path: '/about' },
+              { label: 'Policies', path: '/policies' },
+              { label: 'Contact Us', path: '/contact' },
             ].map((link) => (
               <button
                 key={link.path}
