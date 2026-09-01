@@ -62,7 +62,7 @@ export default function Hero({ navigate }: HeroProps) {
         {/* Top announcement */}
         <div className="pt-24 px-6 text-center">
           <span className="text-white/80 text-[11px] uppercase tracking-[0.25em]">
-            BATCH 011 / MUTED — Limited Edition
+            BATCH 01 / MUTED — Limited Edition
           </span>
         </div>
 
@@ -80,7 +80,7 @@ export default function Hero({ navigate }: HeroProps) {
               onClick={() => navigate('/collections/batch-011')}
               className="inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
             >
-              Shop BATCH 011
+              Shop BATCH 01
             </button>
           </div>
         </div>
