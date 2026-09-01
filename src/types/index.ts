@@ -8,6 +8,11 @@ export interface Collection {
   created_at: string;
 }
 
+export interface AccordionSection {
+    title: string;
+    content: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -24,6 +29,7 @@ export interface Product {
   sort_order: number;
   created_at: string;
   collection?: Collection | null;
+  accordion: AccordionSection[];
 }
 
 export interface ProductSize {
