@@ -93,7 +93,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
             <p className="text-white/50 text-sm">No products found in this collection.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
             {products.map((product, i) => (
               <div key={product.id} className="w-full">
                 <ProductCard product={product} navigate={navigate} index={i} />
