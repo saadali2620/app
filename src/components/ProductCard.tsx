@@ -14,23 +14,15 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
   return (
     <button
       onClick={() => navigate(`/products/${product.slug}`)}
-      className="group block text-left w-full"
+      className="group block text-left w-full border border-white/10 bg-black"
     >
-      <div className="relative overflow-hidden bg-neutral-900 w-full mb-4" style={{ aspectRatio: '3/4' }}>
+      <div className="relative overflow-hidden bg-neutral-900 w-full" style={{ aspectRatio: '3/4' }}>
         <img
           src={product.image_url}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="w-full h-full object-cover"
           loading="lazy"
         />
-        {product.image_url_2 && (
-          <img
-            src={product.image_url_2}
-            alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            loading="lazy"
-          />
-        )}
 
         {product.badge && (
           <span
@@ -61,18 +53,20 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
         )}
       </div>
 
-      <h3 className="text-white/90 text-sm font-medium leading-tight mb-1 group-hover:text-white transition-colors px-1">
-        {product.name}
-      </h3>
-      <div className="flex items-center gap-2 px-1">
-        {isOnSale ? (
-          <>
-            <span className="text-red-400 text-sm">{formatPrice(product.compare_at_price!)}</span>
-            <span className="text-white/40 text-sm line-through">{formatPrice(product.price)}</span>
-          </>
-        ) : (
-          <span className="text-white/70 text-sm">{formatPrice(product.price)}</span>
-        )}
+      <div className="px-3 py-3">
+        <h3 className="text-white/90 text-sm font-medium leading-tight mb-1 group-hover:text-white transition-colors">
+          {product.name}
+        </h3>
+        <div className="flex items-center gap-2">
+          {isOnSale ? (
+            <>
+              <span className="text-red-400 text-sm">{formatPrice(product.compare_at_price!)}</span>
+              <span className="text-white/40 text-sm line-through">{formatPrice(product.price)}</span>
+            </>
+          ) : (
+            <span className="text-white/70 text-sm">{formatPrice(product.price)}</span>
+          )}
+        </div>
       </div>
     </button>
   );
