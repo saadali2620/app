@@ -84,8 +84,9 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const productRes = await fetch(`${WC_BASE}/products/${productId}`);
-  const product = await productRes.json();
+  const productRes = await fetch(`${WC_BASE}/products&include=${productId}`);
+  const productList = await productRes.json();
+  const product = productList[0];
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
     const sizeRank = (s: string) => {
           const idx = sizeOrder.indexOf(s.toUpperCase());
