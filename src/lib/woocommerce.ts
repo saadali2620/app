@@ -76,14 +76,14 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`${WC_BASE}/products&slug=${encodeURIComponent(slug)}`);
-  const data = await res.json();
-  if (!data.length) return null;
-  return mapWcProduct(data[0]);
+  const res = await fetch(`${WC_BASE}/products&per_page=100`);
+  const list = await res.json();
+  const match = list.find((p: any) => p.slug === slug);
+  if (!match) return null;
+  return mapWcProduct(match);
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const res = await fetch(`${WC_BASE}/products&slug=`);
   const productRes = await fetch(`${WC_BASE}/products/${productId}`);
   const product = await productRes.json();
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
