@@ -4,6 +4,7 @@ import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
 import { ChevronLeft, Check, ShoppingBag } from 'lucide-react';
+import ProductAccordion from '@/components/ProductAccordion';
 
 interface ProductPageProps {
   slug: string;
@@ -168,22 +169,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             )}
           </div>
 
-          {/* Description */}
-          {product.description && (
-            <p className="text-white/70 text-sm leading-relaxed mb-8">{product.description}</p>
-          )}
-
-          {/* Details as bullet list — matches nors. */}
-          {product.details && (
-            <ul className="space-y-2 mb-8">
-              {product.details.split('\n').filter((line) => line.trim()).map((line, i) => (
-                <li key={i} className="text-white/60 text-sm leading-relaxed flex items-start gap-2">
-                  <span className="text-white/30 mt-1">•</span>
-                  <span>{line.trim()}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+<ProductAccordion sections={product.accordion} />
 
           {/* Size selector */}
           <div className="mb-8">
