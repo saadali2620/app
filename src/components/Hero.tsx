@@ -69,12 +69,12 @@ export default function Hero({ navigate }: HeroProps) {
         {/* Center content */}
         <div className="flex-1 flex items-end justify-center pb-32">
           <div className="text-center px-6 max-w-2xl">
-            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">since 2021</p>
+            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, since 2021</p>
             <h1 className="text-white text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight mb-6 leading-none">
-              REPRESENT
+              WORN IN, NOT WORN OUT
             </h1>
             <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-10 max-w-lg mx-auto">
-              Welcome to the grey area between fashion and streetwear.
+              Heavyweight basics cut for daily life, not display. Small batches, considered fabric, made to last past the season.
             </p>
             <button
               onClick={() => navigate('/collections/batch-011')}
