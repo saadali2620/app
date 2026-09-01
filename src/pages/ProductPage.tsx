@@ -123,7 +123,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const images = [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
   const titleBlock = (
-    <div className="mb-8 lg:mb-0">
+    <div className="mb-4 lg:mb-0">
       <h1 className="text-white text-2xl sm:text-3xl font-medium leading-tight mb-5">
         {product.name}
       </h1>
@@ -176,7 +176,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const sizeCtaBlock = (
     <div className="mb-8 lg:mb-0">
-      <div className="mb-8 mt-8 lg:mt-0">
+      <div className="mb-8 mt-8">
         <h3 className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-3">
           Size
         </h3>
