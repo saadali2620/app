@@ -35,21 +35,21 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   if (opts?.offset) params.set('offset', String(opts.offset));
   if (opts?.category) params.set('category', opts.category);
 
-  const res = await fetch(`${WC_BASE}/products?${params.toString()}`);
+  const res = await fetch(`${WC_BASE}/products&${params.toString()}`);
   const data = await res.json();
   const total = Number(res.headers.get('X-WP-Total') ?? data.length);
   return { data: data.map((p: any) => mapWcProduct(p)), count: total };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`${WC_BASE}/products?slug=${encodeURIComponent(slug)}`);
+  const res = await fetch(`${WC_BASE}/products&slug=${encodeURIComponent(slug)}`);
   const data = await res.json();
   if (!data.length) return null;
   return mapWcProduct(data[0]);
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const res = await fetch(`${WC_BASE}/products?slug=`);
+  const res = await fetch(`${WC_BASE}/products&slug=`);
   const productRes = await fetch(`${WC_BASE}/products/${productId}`);
   const product = await productRes.json();
   return (product.variations ?? []).map((v: any, i: number) => {
@@ -65,7 +65,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  const res = await fetch(`${WC_BASE}/products/categories?per_page=50`);
+  const res = await fetch(`${WC_BASE}/products/categories&per_page=50`);
   const data = await res.json();
   return data.map((c: any) => ({
     id: String(c.id),
