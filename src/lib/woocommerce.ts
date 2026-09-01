@@ -2,9 +2,21 @@ import type { Product, Collection, ProductSize, AccordionSection } from '@/types
 
 const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/enterprise/index.php?rest_route=/wc/store/v1';
 
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_m, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
 function stripHtml(html: string | null): string {
   if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
+  return decodeEntities(html.replace(/<[^>]*>/g, '')).trim();
 }
 
 function parseAccordionSections(rawDescription: string | null): AccordionSection[] {
