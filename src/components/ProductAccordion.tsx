@@ -42,5 +42,3 @@ export default function ProductAccordion({ sections }: ProductAccordionProps) {
         })}
         </div>
       );
-}
-</div>
