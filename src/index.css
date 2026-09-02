@@ -44,3 +44,17 @@
 button[class*='group'] {
   animation: fadeInUp 0.6s ease-out backwards;
 }
+
+@keyframes lookbookScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.lookbook-track {
+  animation: lookbookScroll 45s linear infinite;
+  width: max-content;
+}
