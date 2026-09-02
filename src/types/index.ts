@@ -24,6 +24,7 @@ export interface Product {
   details: string | null;
   image_url: string;
   image_url_2: string | null;
+  images: string[];
   badge: string | null;
   in_stock: boolean;
   sort_order: number;
