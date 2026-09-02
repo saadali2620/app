@@ -77,7 +77,7 @@ export default function HomePage({ navigate }: HomePageProps) {
           <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black" />
         </div>
         <div className="relative max-w-2xl mx-auto text-center px-6">
-          <p className="text-white/40 text-[11px] uppercase tracking-[0.3em] mb-6">since 2021</p>
+          <p className="text-white/40 text-[11px] uppercase tracking-[0.3em] mb-6">est. 2021</p>
           <h2 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-8 leading-tight">
             The Grey Area Between Fashion and Streetwear
           </h2>
