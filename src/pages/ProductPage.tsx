@@ -148,7 +148,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        {product.badge && (
+        {product.badge && product.badge !== 'Sale' && (
           <span
             className={`absolute top-4 left-4 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold ${
               product.badge === 'Sold Out'
@@ -186,7 +186,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
               key={s.id}
               onClick={() => s.in_stock && setSelectedSize(s.size)}
               disabled={!s.in_stock || isSoldOut}
-              className={`min-w-[3rem] px-4 py-3 text-sm border transition-all ${
+              className={`min-w-[3rem] px-4 py-3 text-sm uppercase border transition-all ${
                 selectedSize === s.size
                   ? 'border-white bg-white text-black'
                   : s.in_stock && !isSoldOut
