@@ -18,7 +18,7 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
       style={{ aspectRatio: '3/4' }}
     >
       <img
-        src={product.image_url}
+        src={`${product.image_url_2 ?? product.image_url}`}
         alt={product.name}
         className="w-full h-full object-cover"
         loading="lazy"
