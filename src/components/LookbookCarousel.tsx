@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
 
 const LOOKBOOK_IMAGES = [
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07213_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07387_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/776012b2-2581-4f25-96a8-f716c37565e8_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07289_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/5405cc69-dc7e-470d-af4e-e2c207c7704f_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07260_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07413_result.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/09/A7405332.jpg-scaled.jpeg',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01901-1_result-scaled.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/af017bb2-44e7-443f-8434-9ac938faeac5_result-scaled.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B018732_result-scaled.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A7405347_result-scaled.webp',
-  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A74053502_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B07380_result.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B019792_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01931_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01929_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01904_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B018832_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01875_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/V_B01862-1_result.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/d1c5c32b-5803-4df4-8c12-d625ac6697a01_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/ccafdde2-2ce4-44a5-9c40-42f432e1387a_result.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A7405436_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A7405392_result.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A7405351-1_result-scaled.webp',
+  'https://nors.com.pk/enterprise/wp-content/uploads/2026/08/A7405326_result-scaled.webp',
 ];
 
 function shuffle(arr: string[]): string[] {
