@@ -55,6 +55,7 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
     accordion: parseAccordionSections(p.description),
     image_url: p.images?.[0]?.src ?? '',
     image_url_2: p.images?.[1]?.src ?? null,
+    images: (p.images ?? []).map((im: any) => im.src),
     badge: p.on_sale ? 'Sale' : (p.is_purchasable === false ? 'Sold Out' : null),
     in_stock: p.is_in_stock,
     sort_order: p.menu_order ?? 0,
