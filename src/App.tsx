@@ -10,6 +10,7 @@ import AboutPage from '@/pages/AboutPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import PolicyPage from '@/pages/PolicyPage';
 import ContactPage from '@/pages/ContactPage';
+import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -46,6 +47,11 @@ function App() {
     // /contact
     if (path === '/contact') {
       return <ContactPage navigate={navigate} />;
+    }
+
+    // /order-confirmation/:id
+    if (path.startsWith('/order-confirmation/')) {
+      return <OrderConfirmationPage path={path} navigate={navigate} />;
     }
 
     // / (home)
