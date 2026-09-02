@@ -18,6 +18,9 @@ export default function Footer({ navigate }: FooterProps) {
           <p className="text-white/40 text-xs mt-4 uppercase tracking-[0.15em]">
             Designed in Karachi / Proudly made in Pakistan
           </p>
+          <p className="text-white/40 text-xs mt-2 uppercase tracking-[0.15em]">
+            8-D, Block #2, PECHS, Karachi
+          </p>
         </div>
 
         <div>
@@ -72,7 +75,7 @@ export default function Footer({ navigate }: FooterProps) {
       <div className="border-t border-white/10 py-6 px-6 lg:px-10 max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <span className="text-white font-bold tracking-[0.3em] text-lg">nors.</span>
         <p className="text-white/30 text-xs uppercase tracking-[0.15em]">
-          since 2021 / all rights reserved
+          est. 2021 / all rights reserved
         </p>
       </div>
     </footer>
