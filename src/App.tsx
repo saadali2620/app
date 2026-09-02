@@ -8,6 +8,8 @@ import CatalogPage from '@/pages/CatalogPage';
 import ProductPage from '@/pages/ProductPage';
 import AboutPage from '@/pages/AboutPage';
 import CheckoutPage from '@/pages/CheckoutPage';
+import PolicyPage from '@/pages/PolicyPage';
+import ContactPage from '@/pages/ContactPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -34,6 +36,16 @@ function App() {
     // /checkout
     if (path === '/checkout') {
       return <CheckoutPage navigate={navigate} />;
+    }
+
+    // /policies
+    if (path === '/policies') {
+      return <PolicyPage navigate={navigate} />;
+    }
+
+    // /contact
+    if (path === '/contact') {
+      return <ContactPage navigate={navigate} />;
     }
 
     // / (home)
