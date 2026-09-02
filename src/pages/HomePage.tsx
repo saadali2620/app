@@ -3,6 +3,7 @@ import { getProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
+import LookbookCarousel from '@/components/LookbookCarousel';
 
 interface HomePageProps {
   navigate: (path: string) => void;
@@ -65,6 +66,8 @@ export default function HomePage({ navigate }: HomePageProps) {
           </div>
         </div>
       </section>
+
+      <LookbookCarousel />
 
       {/* Brand story */}
       <section className="relative py-32 lg:py-40 overflow-hidden">
