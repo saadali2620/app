@@ -52,7 +52,7 @@ export default function Hero({ navigate }: HeroProps) {
           }`}
         >
           <img
-            src={`${product.image_url_2 ?? product.image_url}`}
+            src={product.image_url}
             alt={product.name}
             className="w-full h-full object-cover"
           />
