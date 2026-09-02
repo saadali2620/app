@@ -183,6 +183,7 @@ export interface CheckoutBilling {
   last_name: string;
   address_1: string;
   city: string;
+  postcode: string;
   email: string;
   phone: string;
   country: string;
