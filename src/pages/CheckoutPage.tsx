@@ -19,6 +19,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     lastName: '',
     address: '',
     city: '',
+    postcode: '',
     phone: '',
   });
 
@@ -44,6 +45,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
           last_name: form.lastName,
           address_1: form.address,
           city: form.city,
+          postcode: form.postcode,
           email: form.email,
           phone: form.phone,
           country: 'PK',
@@ -154,6 +156,13 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   placeholder="City"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
+                />
+                <input
+                  required
+                  placeholder="Postcode / ZIP"
+                  value={form.postcode}
+                  onChange={(e) => setForm({ ...form, postcode: e.target.value })}
                   className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
                 />
                 <input
