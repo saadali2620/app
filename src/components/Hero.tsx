@@ -69,15 +69,12 @@ export default function Hero({ navigate }: HeroProps) {
         {/* Center content */}
         <div className="flex-1 flex items-end justify-center pb-32">
           <div className="text-center px-6 max-w-2xl">
-            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, since 2021</p>
+            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, est. 2021</p>
             <h1 className="text-white text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-6 leading-none">
               WORN IN, NOT WORN OUT
             </h1>
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-10 max-w-lg mx-auto">
-              Heavyweight basics cut for daily life, not display. Small batches, considered fabric, made to last past the season.
-            </p>
             <button
-              onClick={() => navigate('/collections/batch-011')}
+              onClick={() => navigate('/collections/batch-01')}
               className="inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
             >
               Shop BATCH 01
@@ -93,7 +90,6 @@ export default function Hero({ navigate }: HeroProps) {
               <h3 className="text-white text-sm font-medium leading-tight mb-1">
                 {products[current].name}
               </h3>
-              <p className="text-white/60 text-sm">{formatPrice(products[current].price)}</p>
             </div>
 
             {/* Slide controls */}
