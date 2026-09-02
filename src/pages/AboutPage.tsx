@@ -15,7 +15,7 @@ export default function AboutPage({ navigate }: AboutPageProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center px-6">
-            <p className="text-white/50 text-[11px] uppercase tracking-[0.3em] mb-4">since 2021</p>
+            <p className="text-white/50 text-[11px] uppercase tracking-[0.3em] mb-4">est. 2021</p>
             <h1 className="text-white text-5xl sm:text-7xl font-bold tracking-tight">nors.</h1>
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function AboutPage({ navigate }: AboutPageProps) {
             <p className="text-white/40 text-[11px] uppercase tracking-[0.18em]">Established</p>
           </div>
           <div>
-            <h3 className="text-white text-3xl font-bold mb-2">11</h3>
+            <h3 className="text-white text-3xl font-bold mb-2">1</h3>
             <p className="text-white/40 text-[11px] uppercase tracking-[0.18em]">Batches Dropped</p>
           </div>
           <div>
@@ -68,9 +68,6 @@ export default function AboutPage({ navigate }: AboutPageProps) {
 
       {/* CTA */}
       <section className="py-20 text-center px-6 border-t border-white/10">
-        <h2 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-8">
-          Represent.
-        </h2>
         <button
           onClick={() => navigate('/collections/all')}
           className="inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
