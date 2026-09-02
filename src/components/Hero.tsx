@@ -15,8 +15,11 @@ export default function Hero({ navigate }: HeroProps) {
 
   useEffect(() => {
     (async () => {
-      const { data } = await getProducts({ limit: 4 });
-      if (data) setProducts(data);
+      const { data } = await getProducts({ limit: 50 });
+      if (data) {
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        setProducts(shuffled.slice(0, 4));
+      }
       setLoading(false);
     })();
   }, []);
