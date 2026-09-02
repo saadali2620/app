@@ -24,7 +24,7 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
         loading="lazy"
       />
 
-      {product.badge && (
+      {product.badge && product.badge !== 'Sale' && (
         <span
           className={`absolute top-4 left-4 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold ${
             product.badge === 'Sold Out'
