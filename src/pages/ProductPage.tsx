@@ -120,7 +120,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     );
   }
 
-  const images = [product.image_url, product.image_url_2].filter(Boolean) as string[];
+  const images = product.images.length > 0 ? product.images : [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
   const titleBlock = (
     <div className="mb-4 lg:mb-0">
