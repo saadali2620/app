@@ -67,7 +67,7 @@ export default function HomePage({ navigate }: HomePageProps) {
         </div>
       </section>
 
-      <LookbookCarousel />
+      {/* <LookbookCarousel /> hidden for now, image selection needs more work */}
 
       {/* Brand story */}
       <section className="relative py-32 lg:py-40 overflow-hidden">
