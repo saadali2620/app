@@ -53,7 +53,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         paymentMethod
       );
 
-      if (result.payment_result?.redirect_url) {
+      if (result.payment_result?.redirect_url && paymentMethod !== 'cod' && paymentMethod !== 'bacs') {
         clearCart();
         window.location.href = result.payment_result.redirect_url;
         return;
