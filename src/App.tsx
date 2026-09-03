@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { CartProvider } from '@/context/CartContext';
+import { trackPageView } from '@/lib/pixel';
 import { useRouter } from '@/hooks/useRouter';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -15,6 +17,10 @@ import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
 function App() {
   const { route, navigate } = useRouter();
   const path = route.path;
+
+  useEffect(() => {
+    trackPageView();
+  }, [path]);
 
   const renderPage = () => {
     // /products/:slug
