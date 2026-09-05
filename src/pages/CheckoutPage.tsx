@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
 import { clearWooCart, addToWooCart, submitWooCheckout, getPaymentMethods } from '@/lib/woocommerce';
+import { useTurnstile } from '@/hooks/useTurnstile';
+import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react';
 
 interface CheckoutPageProps {
@@ -19,9 +21,10 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     lastName: '',
     address: '',
     city: '',
-    postcode: '',
     phone: '',
   });
+  const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile();
+  const [honeypot, setHoneypot] = useState('');
 
   const shipping = totalPrice > 5000 ? 0 : 250;
   const grandTotal = totalPrice + shipping;
@@ -45,12 +48,15 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
           last_name: form.lastName,
           address_1: form.address,
           city: form.city,
-          postcode: form.postcode,
           email: form.email,
           phone: form.phone,
           country: 'PK',
         },
-        paymentMethod
+        paymentMethod,
+        {
+          turnstileToken,
+          honeypot,
+        }
       );
 
       if (result.payment_result?.redirect_url && paymentMethod !== 'cod' && paymentMethod !== 'bacs') {
@@ -62,7 +68,15 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
       clearCart();
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong placing your order.');
+      const code = (err as any)?.code;
+      if (code === 'nors_turnstile_failed') {
+        resetTurnstile();
+        setError('We could not verify your browser. Please try again.');
+      } else if (code === 'nors_honeypot_triggered') {
+        setError('Something went wrong. Please try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Something went wrong placing your order.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -160,13 +174,6 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 />
                 <input
                   required
-                  placeholder="Postcode / ZIP"
-                  value={form.postcode}
-                  onChange={(e) => setForm({ ...form, postcode: e.target.value })}
-                  className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
-                />
-                <input
-                  required
                   placeholder="Phone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -174,6 +181,9 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 />
               </div>
             </div>
+
+            <div ref={turnstileRef} />
+            <HoneypotField value={honeypot} onChange={setHoneypot} />
 
             {error && (
               <p className="text-red-400 text-xs">{error}</p>
@@ -184,7 +194,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               disabled={submitting}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Placing Order…' : `Place Order — ${formatPrice(grandTotal)}`}
+              {submitting ? 'Placing Order…' : \`Place Order — \${formatPrice(grandTotal)}\`}
             </button>
           </form>
 
@@ -195,7 +205,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
             </h2>
             <div className="border border-white/10 p-6 space-y-4">
               {items.map((item) => (
-                <div key={`${item.productId}-${item.size}`} className="flex gap-4">
+                <div key={\`\${item.productId}-\${item.size}\`} className="flex gap-4">
                   <img
                     src={item.image_url}
                     alt={item.name}
