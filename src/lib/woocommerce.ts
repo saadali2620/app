@@ -138,6 +138,11 @@ function readTokens(res: Response, fallback: WcTokens): WcTokens {
   };
 }
 
+const STEP_GAP_MS = 220;
+function pause(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function wcCall(path: string, tokens: WcTokens, options: RequestInit = {}): Promise<{ data: any; res: Response; tokens: WcTokens }> {
   const res = await fetch(`${WC_BASE}${path}`, {
     ...options,
@@ -182,12 +187,14 @@ export interface CheckoutLineItem {
 
 /**
  * Runs the full checkout sequence (sync server cart to match the local cart,
- * fetch payment methods, submit the order) as ONE chain that fetches the
- * Nonce/Cart-Token pair once and threads it through every call, instead of
- * re-fetching a fresh nonce before each step. This roughly halves the number
- * of round-trips a full checkout makes to the WooCommerce API — important on
- * shared hosting where a burst of near-simultaneous requests can trip the
- * server's PHP-FPM concurrency limit and return an unrelated network error.
+ * submit the order) as one chain that fetches the Nonce/Cart-Token pair once
+ * and threads it through every call, instead of re-fetching a fresh nonce
+ * before each step. Payment methods are read from the very first plain GET
+ * (before any items are added) rather than a second fetch later, and a small
+ * pause separates each preflighted request. Shared hosting can trip a
+ * PHP-FPM concurrency/rate limit on a tight burst of back-to-back
+ * CORS-preflighted requests, surfacing as an unrelated "Failed to fetch";
+ * both changes keep the request volume and pacing comfortably under that.
  */
 export async function performCheckout(
   items: CheckoutLineItem[],
@@ -197,8 +204,11 @@ export async function performCheckout(
   const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
+  const paymentMethods: string[] = currentCart.payment_methods ?? [];
+  const paymentMethod = paymentMethods.includes('payfast') ? 'payfast' : paymentMethods[0] ?? 'cod';
 
   for (const existing of currentCart.items ?? []) {
+    await pause(STEP_GAP_MS);
     const r = await wcCall('/cart/remove-item', tokens, {
       method: 'POST',
       body: JSON.stringify({ key: existing.key }),
@@ -207,6 +217,7 @@ export async function performCheckout(
   }
 
   for (const item of items) {
+    await pause(STEP_GAP_MS);
     const r = await wcCall('/cart/add-item', tokens, {
       method: 'POST',
       body: JSON.stringify({ id: Number(item.variantId), quantity: item.quantity }),
@@ -215,11 +226,7 @@ export async function performCheckout(
     tokens = r.tokens;
   }
 
-  const cartCheck = await wcCall('/cart', tokens);
-  tokens = cartCheck.tokens;
-  const paymentMethods: string[] = cartCheck.data.payment_methods ?? [];
-  const paymentMethod = paymentMethods.includes('payfast') ? 'payfast' : paymentMethods[0] ?? 'cod';
-
+  await pause(STEP_GAP_MS);
   const checkoutRes = await wcCall('/checkout', tokens, {
     method: 'POST',
     body: JSON.stringify({
