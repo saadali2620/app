@@ -70,14 +70,14 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   if (opts?.offset) params.set('offset', String(opts.offset));
   if (opts?.category) params.set('category', opts.category);
 
-  const res = await fetch(`WC_BASE${params.toString()`);
+  const res = await fetch(`${WC_BASE}/products&${params.toString()}`);
   const data = await res.json();
   const total = Number(res.headers.get('X-WP-Total') ?? data.length);
   return { data: data.map((p: any) => mapWcProduct(p)), count: total };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`WC_BASE/products&per_page=100`);
+  const res = await fetch(`${WC_BASE}/products&per_page=100`);
   const list = await res.json();
   const match = list.find((p: any) => p.slug === slug);
   if (!match) return null;
@@ -85,7 +85,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const productRes = await fetch(`WC_BASE/products&include=${productId`);
+  const productRes = await fetch(`${WC_BASE}/products&include=${productId}`);
   const productList = await productRes.json();
   const product = productList[0];
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
@@ -108,7 +108,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  const res = await fetch(`WC_BASE/products/categories&per_page=50`);
+  const res = await fetch(`${WC_BASE}/products/categories&per_page=50`);
   const data = await res.json();
   return data.map((c: any) => ({
     id: String(c.id),
@@ -132,7 +132,7 @@ interface WcNonceInfo {
 }
 
 async function getNonce(): Promise<WcNonceInfo> {
-  const res = await fetch(`WC_BASE/cart`, { credentials: 'include' });
+  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
   return {
     nonce: res.headers.get('Nonce') ?? '',
     cartToken: res.headers.get('Cart-Token') ?? '',
@@ -140,14 +140,14 @@ async function getNonce(): Promise<WcNonceInfo> {
 }
 
 export async function getPaymentMethods(): Promise<string[]> {
-  const res = await fetch(`WC_BASE/cart`, { credentials: 'include' });
+  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
   const cart = await res.json();
   return cart.payment_methods ?? [];
 }
 
 async function wcFetch(path: string, options: RequestInit = {}) {
   const { nonce, cartToken } = await getNonce();
-  const res = await fetch(`WC_BASE${path`, {
+  const res = await fetch(`${WC_BASE}${path}`, {
     ...options,
     credentials: 'include',
     headers: {
