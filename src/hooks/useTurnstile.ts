@@ -19,8 +19,8 @@ const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 
 /**
  * Mounts an invisible Turnstile widget and exposes the verification token.
- * Attach \`containerRef\` to a hidden <div> in the checkout form; the widget
- * verifies silently in the background and \`token\` populates once it passes.
+ * Attach containerRef to a hidden <div> in the checkout form; the widget
+ * verifies silently in the background and token populates once it passes.
  */
 export function useTurnstile() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +29,7 @@ export function useTurnstile() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (document.querySelector(\`script[src="\${SCRIPT_SRC}"]\`)) {
+    if (document.querySelector(`script[src="${SCRIPT_SRC}"]`)) {
       setReady(true);
       return;
     }
