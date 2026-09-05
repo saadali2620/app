@@ -20,24 +20,24 @@ function stripHtml(html: string | null): string {
 }
 
 function parseAccordionSections(rawDescription: string | null): AccordionSection[] {
-    if (!rawDescription || !rawDescription.includes('[vc_accordion')) return [];
-    const norm = rawDescription.replace(/&#8220;|&#8221;|&#8243;/g, '"');
-    const sections: AccordionSection[] = [];
-    const tabRe = /\[vc_accordion_tab[^\]]*title="([^"]+)"[^\]]*\]([\s\S]*?)\[\/vc_accordion_tab\]/g;
-    let match: RegExpExecArray | null;
-    while ((match = tabRe.exec(norm))) {
-          const title = match[1].trim();
-          let content = match[2]
-                  .replace(/\[vc_column_text[^\]]*\]/g, '')
-                  .replace(/\[\/vc_column_text\]/g, '')
-                  .replace(/&#8211;/g, '\u2013')
-                  .replace(/&#8212;/g, '\u2014')
-                  .replace(/&#8216;/g, '\u2018')
-                  .replace(/&#8217;/g, '\u2019')
-                  .trim();
-          if (content) sections.push({ title, content });
-    }
-    return sections;
+  if (!rawDescription || !rawDescription.includes('[vc_accordion')) return [];
+  const norm = rawDescription.replace(/&#8220;|&#8221;|&#8243;/g, '"');
+  const sections: AccordionSection[] = [];
+  const tabRe = /\[vc_accordion_tab[^\]]*title="([^"]+)"[^\]]*\]([\s\S]*?)\[\/vc_accordion_tab\]/g;
+  let match: RegExpExecArray | null;
+  while ((match = tabRe.exec(norm))) {
+    const title = match[1].trim();
+    let content = match[2]
+      .replace(/\[vc_column_text[^\]]*\]/g, '')
+      .replace(/\[\/vc_column_text\]/g, '')
+      .replace(/&#8211;/g, '\u2013')
+      .replace(/&#8212;/g, '\u2014')
+      .replace(/&#8216;/g, '\u2018')
+      .replace(/&#8217;/g, '\u2019')
+      .trim();
+    if (content) sections.push({ title, content });
+  }
+  return sections;
 }
 
 function mapWcProduct(p: any, collection?: Collection | null): Product {
@@ -70,14 +70,14 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   if (opts?.offset) params.set('offset', String(opts.offset));
   if (opts?.category) params.set('category', opts.category);
 
-  const res = await fetch(`${WC_BASE}/products&${params.toString()}`);
+  const res = await fetch(\`\${WC_BASE}/products&\${params.toString()}\`);
   const data = await res.json();
   const total = Number(res.headers.get('X-WP-Total') ?? data.length);
   return { data: data.map((p: any) => mapWcProduct(p)), count: total };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`${WC_BASE}/products&per_page=100`);
+  const res = await fetch(\`\${WC_BASE}/products&per_page=100\`);
   const list = await res.json();
   const match = list.find((p: any) => p.slug === slug);
   if (!match) return null;
@@ -85,15 +85,15 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const productRes = await fetch(`${WC_BASE}/products&include=${productId}`);
+  const productRes = await fetch(\`\${WC_BASE}/products&include=\${productId}\`);
   const productList = await productRes.json();
   const product = productList[0];
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
-    const sizeRank = (s: string) => {
-          const idx = sizeOrder.indexOf(s.toUpperCase());
-          return idx === -1 ? 999 : idx;
-    };
-    const sizes = (product.variations ?? []).map((v: any, i: number) => {
+  const sizeRank = (s: string) => {
+    const idx = sizeOrder.indexOf(s.toUpperCase());
+    return idx === -1 ? 999 : idx;
+  };
+  const sizes = (product.variations ?? []).map((v: any, i: number) => {
     const sizeAttr = v.attributes?.find((a: any) => a.name === 'Size');
     return {
       id: String(v.id),
@@ -108,7 +108,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  const res = await fetch(`${WC_BASE}/products/categories&per_page=50`);
+  const res = await fetch(\`\${WC_BASE}/products/categories&per_page=50\`);
   const data = await res.json();
   return data.map((c: any) => ({
     id: String(c.id),
@@ -132,7 +132,7 @@ interface WcNonceInfo {
 }
 
 async function getNonce(): Promise<WcNonceInfo> {
-  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const res = await fetch(\`\${WC_BASE}/cart\`, { credentials: 'include' });
   return {
     nonce: res.headers.get('Nonce') ?? '',
     cartToken: res.headers.get('Cart-Token') ?? '',
@@ -140,14 +140,14 @@ async function getNonce(): Promise<WcNonceInfo> {
 }
 
 export async function getPaymentMethods(): Promise<string[]> {
-  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const res = await fetch(\`\${WC_BASE}/cart\`, { credentials: 'include' });
   const cart = await res.json();
   return cart.payment_methods ?? [];
 }
 
 async function wcFetch(path: string, options: RequestInit = {}) {
   const { nonce, cartToken } = await getNonce();
-  const res = await fetch(`${WC_BASE}${path}`, {
+  const res = await fetch(\`\${WC_BASE}\${path}\`, {
     ...options,
     credentials: 'include',
     headers: {
@@ -165,7 +165,7 @@ async function wcFetch(path: string, options: RequestInit = {}) {
 export async function clearWooCart() {
   const cart = await wcFetch('/cart');
   for (const item of cart.items ?? []) {
-    await wcFetch(`/cart/remove-item`, {
+    await wcFetch(\`/cart/remove-item\`, {
       method: 'POST',
       body: JSON.stringify({ key: item.key }),
     });
@@ -184,19 +184,30 @@ export interface CheckoutBilling {
   last_name: string;
   address_1: string;
   city: string;
-  postcode: string;
+  postcode?: string;
   email: string;
   phone: string;
   country: string;
 }
 
-export async function submitWooCheckout(billing: CheckoutBilling, paymentMethod: string) {
+export interface CheckoutSecurity {
+  turnstileToken: string;
+  honeypot: string;
+}
+
+export async function submitWooCheckout(billing: CheckoutBilling, paymentMethod: string, security: CheckoutSecurity) {
   return wcFetch('/checkout', {
     method: 'POST',
     body: JSON.stringify({
       billing_address: billing,
       shipping_address: billing,
       payment_method: paymentMethod,
+      extensions: {
+        nors_security: {
+          turnstile_token: security.turnstileToken,
+          website_hp: security.honeypot,
+        },
+      },
     }),
   });
 }
