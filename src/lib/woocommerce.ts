@@ -126,57 +126,37 @@ export async function getCollectionBySlug(slug: string): Promise<Collection | nu
   return collections.find(c => c.slug === slug) ?? null;
 }
 
-interface WcNonceInfo {
+interface WcTokens {
   nonce: string;
   cartToken: string;
 }
 
-async function getNonce(): Promise<WcNonceInfo> {
-  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+function readTokens(res: Response, fallback: WcTokens): WcTokens {
   return {
-    nonce: res.headers.get('Nonce') ?? '',
-    cartToken: res.headers.get('Cart-Token') ?? '',
+    nonce: res.headers.get('Nonce') ?? fallback.nonce,
+    cartToken: res.headers.get('Cart-Token') ?? fallback.cartToken,
   };
+}
+
+async function wcCall(path: string, tokens: WcTokens, options: RequestInit = {}): Promise<{ data: any; res: Response; tokens: WcTokens }> {
+  const res = await fetch(`${WC_BASE}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      Nonce: tokens.nonce,
+      'Cart-Token': tokens.cartToken,
+      ...(options.headers ?? {}),
+    },
+  });
+  const data = await res.json();
+  return { data, res, tokens: readTokens(res, tokens) };
 }
 
 export async function getPaymentMethods(): Promise<string[]> {
   const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
   const cart = await res.json();
   return cart.payment_methods ?? [];
-}
-
-async function wcFetch(path: string, options: RequestInit = {}) {
-  const { nonce, cartToken } = await getNonce();
-  const res = await fetch(`${WC_BASE}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      Nonce: nonce,
-      'Cart-Token': cartToken,
-      ...(options.headers ?? {}),
-    },
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'WooCommerce request failed');
-  return data;
-}
-
-export async function clearWooCart() {
-  const cart = await wcFetch('/cart');
-  for (const item of cart.items ?? []) {
-    await wcFetch(`/cart/remove-item`, {
-      method: 'POST',
-      body: JSON.stringify({ key: item.key }),
-    });
-  }
-}
-
-export async function addToWooCart(variantId: string, quantity: number) {
-  return wcFetch('/cart/add-item', {
-    method: 'POST',
-    body: JSON.stringify({ id: Number(variantId), quantity }),
-  });
 }
 
 export interface CheckoutBilling {
@@ -195,8 +175,52 @@ export interface CheckoutSecurity {
   honeypot: string;
 }
 
-export async function submitWooCheckout(billing: CheckoutBilling, paymentMethod: string, security: CheckoutSecurity) {
-  return wcFetch('/checkout', {
+export interface CheckoutLineItem {
+  variantId: string;
+  quantity: number;
+}
+
+/**
+ * Runs the full checkout sequence (sync server cart to match the local cart,
+ * fetch payment methods, submit the order) as ONE chain that fetches the
+ * Nonce/Cart-Token pair once and threads it through every call, instead of
+ * re-fetching a fresh nonce before each step. This roughly halves the number
+ * of round-trips a full checkout makes to the WooCommerce API — important on
+ * shared hosting where a burst of near-simultaneous requests can trip the
+ * server's PHP-FPM concurrency limit and return an unrelated network error.
+ */
+export async function performCheckout(
+  items: CheckoutLineItem[],
+  billing: CheckoutBilling,
+  security: CheckoutSecurity
+) {
+  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const currentCart = await initRes.json();
+  let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
+
+  for (const existing of currentCart.items ?? []) {
+    const r = await wcCall('/cart/remove-item', tokens, {
+      method: 'POST',
+      body: JSON.stringify({ key: existing.key }),
+    });
+    tokens = r.tokens;
+  }
+
+  for (const item of items) {
+    const r = await wcCall('/cart/add-item', tokens, {
+      method: 'POST',
+      body: JSON.stringify({ id: Number(item.variantId), quantity: item.quantity }),
+    });
+    if (!r.res.ok) throw new Error(r.data.message || 'Could not add item to cart');
+    tokens = r.tokens;
+  }
+
+  const cartCheck = await wcCall('/cart', tokens);
+  tokens = cartCheck.tokens;
+  const paymentMethods: string[] = cartCheck.data.payment_methods ?? [];
+  const paymentMethod = paymentMethods.includes('payfast') ? 'payfast' : paymentMethods[0] ?? 'cod';
+
+  const checkoutRes = await wcCall('/checkout', tokens, {
     method: 'POST',
     body: JSON.stringify({
       billing_address: billing,
@@ -210,4 +234,12 @@ export async function submitWooCheckout(billing: CheckoutBilling, paymentMethod:
       },
     }),
   });
+
+  if (!checkoutRes.res.ok) {
+    const err = new Error(checkoutRes.data.message || 'Order could not be placed.') as Error & { code?: string };
+    err.code = checkoutRes.data.code;
+    throw err;
+  }
+
+  return { result: checkoutRes.data, paymentMethod };
 }
