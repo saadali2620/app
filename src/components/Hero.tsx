@@ -1,28 +1,20 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
-import { formatPrice } from '@/lib/format';
 
 interface HeroProps {
   navigate: (path: string) => void;
+  products: Product[];
 }
 
-export default function Hero({ navigate }: HeroProps) {
+export default function Hero({ navigate, products: allProducts }: HeroProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const { data } = await getProducts({ limit: 50 });
-      if (data) {
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setProducts(shuffled.slice(0, 4));
-      }
-      setLoading(false);
-    })();
-  }, []);
+    const shuffled = [...allProducts].sort(() => Math.random() - 0.5);
+    setProducts(shuffled.slice(0, 4));
+  }, [allProducts]);
 
   useEffect(() => {
     if (products.length <= 1) return;
@@ -32,11 +24,9 @@ export default function Hero({ navigate }: HeroProps) {
     return () => clearInterval(timer);
   }, [products.length]);
 
-  if (loading) {
+  if (products.length === 0) {
     return <div className="h-[100vh] bg-black animate-pulse" />;
   }
-
-  if (products.length === 0) return null;
 
   const next = () => setCurrent((c) => (c + 1) % products.length);
   const prev = () => setCurrent((c) => (c - 1 + products.length) % products.length);
