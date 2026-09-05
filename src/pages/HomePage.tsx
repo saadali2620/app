@@ -3,28 +3,35 @@ import { getProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
-import LookbookCarousel from '@/components/LookbookCarousel';
 
 interface HomePageProps {
   navigate: (path: string) => void;
 }
 
 export default function HomePage({ navigate }: HomePageProps) {
-  const [featured, setFeatured] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data } = await getProducts({ limit: 4 });
-      setFeatured(data ?? []);
+      // Single fetch shared by Hero and the grid below — avoids two
+      // concurrent cross-origin requests hitting the WooCommerce API on load.
+      const { data } = await getProducts({ limit: 50 });
+      setAllProducts(data ?? []);
       setLoading(false);
     })();
   }, []);
 
+  const featured = allProducts.slice(0, 4);
+
   return (
     <div className="bg-black">
       {/* Hero slideshow */}
-      <Hero navigate={navigate} />
+      {loading ? (
+        <div className="h-[100vh] bg-black animate-pulse" />
+      ) : (
+        <Hero navigate={navigate} products={allProducts} />
+      )}
 
       {/* Featured products — one per row */}
       <section className="py-20 lg:py-28">
