@@ -194,7 +194,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               disabled={submitting}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Placing Order…' : `Place Order — ${formatPrice(grandTotal)`}
+              {submitting ? 'Placing Order…' : `Place Order — ${formatPrice(grandTotal)}`}
             </button>
           </form>
 
@@ -205,7 +205,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
             </h2>
             <div className="border border-white/10 p-6 space-y-4">
               {items.map((item) => (
-                <div key={`${item.productId}-${item.size`} className="flex gap-4">
+                <div key={`${item.productId}-${item.size}`} className="flex gap-4">
                   <img
                     src={item.image_url}
                     alt={item.name}
