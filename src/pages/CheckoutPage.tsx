@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { clearWooCart, addToWooCart, submitWooCheckout, getPaymentMethods } from '@/lib/woocommerce';
+import { performCheckout } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react';
@@ -34,15 +34,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     setSubmitting(true);
     setError(null);
     try {
-      await clearWooCart();
-      for (const item of items) {
-        await addToWooCart(item.variantId, item.quantity);
-      }
-
-      const methods = await getPaymentMethods();
-      const paymentMethod = methods.includes('payfast') ? 'payfast' : methods[0] ?? 'cod';
-
-      const result = await submitWooCheckout(
+      const { result, paymentMethod } = await performCheckout(
+        items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
         {
           first_name: form.firstName,
           last_name: form.lastName,
@@ -52,7 +45,6 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
           phone: form.phone,
           country: 'PK',
         },
-        paymentMethod,
         {
           turnstileToken,
           honeypot,
