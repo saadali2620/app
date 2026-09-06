@@ -13,6 +13,7 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import PolicyPage from '@/pages/PolicyPage';
 import ContactPage from '@/pages/ContactPage';
 import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
+import TrackOrderPage from '@/pages/TrackOrderPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -43,6 +44,11 @@ function App() {
     // /checkout
     if (path === '/checkout') {
       return <CheckoutPage navigate={navigate} />;
+    }
+
+    // /track-order
+    if (path === '/track-order') {
+        return <TrackOrderPage navigate={navigate} />;
     }
 
     // /policies
