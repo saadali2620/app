@@ -54,7 +54,7 @@ export default function Footer({ navigate }: FooterProps) {
           <div className="flex flex-col gap-2">
             {[
               { label: 'Shop All', path: '/collections/all' },
-              { label: 'BATCH 01', path: '/collections/batch-011' },
+      { label: 'BATCH 01', path: '/collections/batch-01' },
               { label: 'About', path: '/about' },
               { label: 'Track Order', path: '/track-order' },
               { label: 'Policies', path: '/policies' },
