@@ -10,11 +10,21 @@ interface CheckoutPageProps {
   navigate: (path: string) => void;
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Pakistani mobile numbers: 03XXXXXXXXX (11 digits) or +923XXXXXXXXX
+const PHONE_PATTERN = /^(?:\+92|0)3\d{9}$/;
+
+function normalizePhone(value: string): string {
+  return value.replace(/[\s-]/g, '');
+}
+
 export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: '',
     firstName: '',
@@ -29,10 +39,33 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const shipping = totalPrice > 5000 ? 0 : 250;
   const grandTotal = totalPrice + shipping;
 
+  const validateEmail = (value: string): boolean => {
+    if (!EMAIL_PATTERN.test(value.trim())) {
+      setEmailError('Enter a valid email address.');
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
+
+  const validatePhone = (value: string): boolean => {
+    if (!PHONE_PATTERN.test(normalizePhone(value))) {
+      setPhoneError('Enter a valid Pakistani mobile number (e.g. 03001234567).');
+      return false;
+    }
+    setPhoneError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    const emailOk = validateEmail(form.email);
+    const phoneOk = validatePhone(form.phone);
+    if (!emailOk || !phoneOk) return;
+
+    setSubmitting(true);
     try {
       const { result, paymentMethod } = await performCheckout(
         items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
@@ -116,7 +149,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div>
               <h2 className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-4">
                 Contact
@@ -126,9 +159,14 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 required
                 placeholder="Email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (emailError) setEmailError(null);
+                }}
+                onBlur={(e) => e.target.value && validateEmail(e.target.value)}
                 className="w-full bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
               />
+              {emailError && <p className="text-red-400 text-xs mt-2">{emailError}</p>}
             </div>
 
             <div>
@@ -164,14 +202,21 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
                 />
-                <input
-                  required
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
-                />
+                <div>
+                  <input
+                    required
+                    placeholder="Phone"
+                    value={form.phone}
+                    onChange={(e) => {
+                      setForm({ ...form, phone: e.target.value });
+                      if (phoneError) setPhoneError(null);
+                    }}
+                    onBlur={(e) => e.target.value && validatePhone(e.target.value)}
+                    className="w-full bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
+                  />
+                </div>
               </div>
+              {phoneError && <p className="text-red-400 text-xs mt-2">{phoneError}</p>}
             </div>
 
             <div ref={turnstileRef} />
