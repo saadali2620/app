@@ -56,6 +56,7 @@ export default function Footer({ navigate }: FooterProps) {
               { label: 'Shop All', path: '/collections/all' },
               { label: 'BATCH 01', path: '/collections/batch-011' },
               { label: 'About', path: '/about' },
+              { label: 'Track Order', path: '/track-order' },
               { label: 'Policies', path: '/policies' },
               { label: 'Contact Us', path: '/contact' },
             ].map((link) => (
