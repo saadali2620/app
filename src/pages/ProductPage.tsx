@@ -3,7 +3,7 @@ import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/wo
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { ChevronLeft, Check, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
 
 const SIZE_ORDER = [
@@ -39,6 +39,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { addItem, openCart } = useCart();
 
@@ -48,6 +49,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       setSelectedSize(null);
       setAdded(false);
       setActiveImage(0);
+      setLightboxOpen(false);
 
       const prod = await getProductBySlug(slug);
 
@@ -69,6 +71,17 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       setLoading(false);
     })();
   }, [slug]);
+
+  // Lock body scroll while the lightbox is open
+  useEffect(() => {
+    if (lightboxOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [lightboxOpen]);
 
   const isSoldOut = product ? !product.in_stock || product.badge === 'Sold Out' : false;
   const isOnSale =
@@ -124,6 +137,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const images = product.images.length > 0 ? product.images : [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
+  const goPrev = () => setActiveImage((i) => (i - 1 + images.length) % images.length);
+  const goNext = () => setActiveImage((i) => (i + 1) % images.length);
+
   const titleBlock = (
     <div className="mb-4 lg:mb-0">
       <h1 className="text-white text-2xl sm:text-3xl font-medium leading-tight mb-5">
@@ -144,12 +160,23 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const imagesBlock = (
     <div className="flex flex-col gap-3 mb-8 lg:mb-0">
-      <div className="w-full bg-neutral-900 overflow-hidden relative group" style={{ aspectRatio: '3/4' }}>
+      <div
+        className="w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
+        style={{ aspectRatio: '3/4' }}
+        onClick={() => setLightboxOpen(true)}
+        role="button"
+        aria-label="View larger image"
+      >
         <img
           src={images[activeImage]}
           alt={product.name}
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
+        <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ZoomIn size={16} strokeWidth={1.5} />
+        </div>
         {product.badge && product.badge !== 'Sale' && (
           <span
             className={`absolute top-4 left-4 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold ${
@@ -165,19 +192,25 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         )}
       </div>
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex gap-2 overflow-x-auto">
           {images.map((img, i) => (
             <button
               key={i}
               type="button"
               onClick={() => setActiveImage(i)}
-              className={`overflow-hidden bg-neutral-900 cursor-pointer border transition-colors ${
+              className={`flex-shrink-0 w-14 sm:w-16 overflow-hidden bg-neutral-900 border transition-colors ${
                 i === activeImage ? 'border-white' : 'border-transparent hover:border-white/30'
               }`}
               style={{ aspectRatio: '3/4' }}
               aria-label={`View image ${i + 1}`}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <img
+                src={img}
+                alt=""
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full h-full object-cover"
+              />
             </button>
           ))}
         </div>
@@ -309,6 +342,63 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           {shareBlock}
         </div>
       </div>
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <X size={28} strokeWidth={1.5} />
+          </button>
+
+          {images.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goPrev();
+              }}
+              className="absolute left-3 sm:left-8 text-white/70 hover:text-white transition-colors"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={32} strokeWidth={1.5} />
+            </button>
+          )}
+
+          <img
+            src={images[activeImage]}
+            alt={product.name}
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain"
+          />
+
+          {images.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goNext();
+              }}
+              className="absolute right-3 sm:right-8 text-white/70 hover:text-white transition-colors"
+              aria-label="Next image"
+            >
+              <ChevronRight size={32} strokeWidth={1.5} />
+            </button>
+          )}
+
+          {images.length > 1 && (
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/50 text-xs uppercase tracking-[0.15em]">
+              {activeImage + 1} / {images.length}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
