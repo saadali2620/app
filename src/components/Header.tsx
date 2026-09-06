@@ -22,6 +22,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
     { label: 'Shop All', path: '/collections/all' },
     { label: 'BATCH 01', path: '/collections/batch-011' },
     { label: 'About', path: '/about' },
+    { label: 'Track Order', path: '/track-order' },
   ];
 
   const isActive = (path: string) => currentPath === path;
