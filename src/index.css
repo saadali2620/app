@@ -58,3 +58,16 @@ button[class*='group'] {
   animation: lookbookScroll 45s linear infinite;
   width: max-content;
 }
+
+
+/* Image protection: block casual right-click-save and drag-to-save.
+   Note: this is a deterrent, not a guarantee — anyone can still screenshot
+   the screen or use browser dev tools, no website can fully prevent that. */
+img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
