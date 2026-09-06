@@ -38,6 +38,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   const { addItem, openCart } = useCart();
 
@@ -46,6 +47,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       setLoading(true);
       setSelectedSize(null);
       setAdded(false);
+      setActiveImage(0);
 
       const prod = await getProductBySlug(slug);
 
@@ -144,7 +146,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     <div className="flex flex-col gap-3 mb-8 lg:mb-0">
       <div className="w-full bg-neutral-900 overflow-hidden relative group" style={{ aspectRatio: '3/4' }}>
         <img
-          src={images[0]}
+          src={images[activeImage]}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
@@ -165,9 +167,18 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       {images.length > 1 && (
         <div className="grid grid-cols-4 gap-2">
           {images.map((img, i) => (
-            <div key={i} className="overflow-hidden bg-neutral-900 cursor-pointer" style={{ aspectRatio: '3/4' }}>
+            <button
+              key={i}
+              type="button"
+              onClick={() => setActiveImage(i)}
+              className={`overflow-hidden bg-neutral-900 cursor-pointer border transition-colors ${
+                i === activeImage ? 'border-white' : 'border-transparent hover:border-white/30'
+              }`}
+              style={{ aspectRatio: '3/4' }}
+              aria-label={`View image ${i + 1}`}
+            >
               <img src={img} alt="" className="w-full h-full object-cover" />
-            </div>
+            </button>
           ))}
         </div>
       )}
