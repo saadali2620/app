@@ -20,7 +20,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
 
   const navLinks = [
     { label: 'Shop All', path: '/collections/all' },
-    { label: 'BATCH 01', path: '/collections/batch-011' },
+    { label: 'BATCH 01', path: '/collections/batch-01' },
     { label: 'About', path: '/about' },
     { label: 'Track Order', path: '/track-order' },
   ];
