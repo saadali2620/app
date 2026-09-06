@@ -23,6 +23,18 @@ function App() {
     trackPageView();
   }, [path]);
 
+  useEffect(() => {
+      // Best-effort deterrent against casual image saving (right-click / long-press).
+      // Does not and cannot stop screenshots or dev-tools access.
+      const blockImageContextMenu = (e: MouseEvent) => {
+            if ((e.target as HTMLElement)?.tagName === 'IMG') {
+                    e.preventDefault();
+            }
+      };
+      document.addEventListener('contextmenu', blockImageContextMenu);
+      return () => document.removeEventListener('contextmenu', blockImageContextMenu);
+  }, []);
+
   const renderPage = () => {
     // /products/:slug
     if (path.startsWith('/products/')) {
