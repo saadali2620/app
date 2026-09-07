@@ -71,3 +71,14 @@ img {
     -webkit-user-select: none;
     -moz-user-select: none;
 }
+
+
+/* iOS Safari sometimes fails to register a tap reliably on buttons/links
+   without this — it removes the ~300ms tap-delay/double-tap-zoom detection
+   window that can otherwise make taps feel inconsistent (works, then
+   doesn't, then needs two taps). This is the standard fix for that class
+   of iOS Safari touch-responsiveness issue. */
+button,
+a {
+    touch-action: manipulation;
+}
