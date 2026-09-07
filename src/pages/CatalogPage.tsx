@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { getProducts, getCollectionBySlug } from '@/lib/woocommerce';
-import type { ProductSortBy } from '@/lib/woocommerce';
 import type { Product, Collection } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
@@ -9,12 +8,11 @@ interface CatalogPageProps {
   collectionSlug?: string;
 }
 
-const SORT_OPTIONS: { value: ProductSortBy; label: string }[] = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
-];
+// Sort UI is hidden for now (customer-facing dropdown removed on request) but
+// the underlying getProducts(sortBy) plumbing in woocommerce.ts still works,
+// so a dropdown can be re-added later without rebuilding anything. Products
+// always show in the order set via the "Sorting" button on the WordPress
+// Products list (WooCommerce's menu_order field) — that's the 'featured' sort.
 
 export default function CatalogPage({ navigate, collectionSlug }: CatalogPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,14 +20,13 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-      const [sortBy, setSortBy] = useState<ProductSortBy>('featured');
 
   const pageSize = 8;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   useEffect(() => {
     setPage(1);
-  }, [collectionSlug, sortBy]);
+  }, [collectionSlug]);
 
   useEffect(() => {
     (async () => {
@@ -44,7 +41,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
             limit: pageSize,
             offset: (page - 1) * pageSize,
             category: col.id,
-            sortBy,
+            sortBy: 'featured',
           });
           setTotalCount(count);
           setProducts(data);
@@ -57,7 +54,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
         const { data, count } = await getProducts({
           limit: pageSize,
           offset: (page - 1) * pageSize,
-          sortBy,
+          sortBy: 'featured',
         });
         setTotalCount(count);
         setProducts(data);
@@ -65,7 +62,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
 
       setLoading(false);
     })();
-  }, [collectionSlug, page, sortBy]);
+  }, [collectionSlug, page]);
 
   const title = collection ? collection.name : 'Products';
   const subtitle = collection?.tagline;
@@ -87,24 +84,6 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
 
       {/* Products — one per row, full width */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pb-20">
-        {/* Sort control */}
-        <div className="flex justify-end mb-8">
-          <label className="flex items-center gap-3">
-            <span className="text-white/40 text-[11px] uppercase tracking-[0.18em]">Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as ProductSortBy)}
-              className="bg-black border border-white/20 text-white text-[11px] uppercase tracking-[0.15em] px-3 py-2 focus:border-white focus:outline-none cursor-pointer"
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-black">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
         {loading ? (
           <div className="grid grid-cols-1 gap-10">
             {Array.from({ length: 4 }).map((_, i) => (
