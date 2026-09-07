@@ -64,11 +64,28 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
   };
 }
 
-export async function getProducts(opts?: { limit?: number; offset?: number; category?: string }): Promise<{ data: Product[]; count: number }> {
+export type ProductSortBy = 'newest' | 'price-asc' | 'price-desc';
+
+function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string } {
+  switch (sortBy) {
+    case 'price-asc':
+      return { orderby: 'price', order: 'asc' };
+    case 'price-desc':
+      return { orderby: 'price', order: 'desc' };
+    case 'newest':
+    default:
+      return { orderby: 'date', order: 'desc' };
+  }
+}
+
+export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<{ data: Product[]; count: number }> {
   const params = new URLSearchParams();
   params.set('per_page', String(opts?.limit ?? 50));
   if (opts?.offset) params.set('offset', String(opts.offset));
   if (opts?.category) params.set('category', opts.category);
+  const { orderby, order } = sortToParams(opts?.sortBy);
+  params.set('orderby', orderby);
+  params.set('order', order);
 
   const res = await fetch(`${WC_BASE}/products&${params.toString()}`);
   const data = await res.json();
