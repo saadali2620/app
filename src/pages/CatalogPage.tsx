@@ -10,6 +10,7 @@ interface CatalogPageProps {
 }
 
 const SORT_OPTIONS: { value: ProductSortBy; label: string }[] = [
+  { value: 'featured', label: 'Featured' },
   { value: 'newest', label: 'Newest' },
   { value: 'price-asc', label: 'Price: Low to High' },
   { value: 'price-desc', label: 'Price: High to Low' },
@@ -21,7 +22,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [sortBy, setSortBy] = useState<ProductSortBy>('newest');
+      const [sortBy, setSortBy] = useState<ProductSortBy>('featured');
 
   const pageSize = 8;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
