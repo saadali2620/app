@@ -80,6 +80,7 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
                 // WordPress Products list (WooCommerce's menu_order field).
                 return { orderby: 'menu_order', order: 'asc' };
       }
+      }
   
 
 export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<{ data: Product[]; count: number }> {
