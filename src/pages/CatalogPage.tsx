@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProducts, getCollectionBySlug } from '@/lib/woocommerce';
+import type { ProductSortBy } from '@/lib/woocommerce';
 import type { Product, Collection } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
@@ -8,19 +9,26 @@ interface CatalogPageProps {
   collectionSlug?: string;
 }
 
+const SORT_OPTIONS: { value: ProductSortBy; label: string }[] = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'price-asc', label: 'Price: Low to High' },
+  { value: 'price-desc', label: 'Price: High to Low' },
+];
+
 export default function CatalogPage({ navigate, collectionSlug }: CatalogPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [collection, setCollection] = useState<Collection | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState<ProductSortBy>('newest');
 
   const pageSize = 8;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   useEffect(() => {
     setPage(1);
-  }, [collectionSlug]);
+  }, [collectionSlug, sortBy]);
 
   useEffect(() => {
     (async () => {
@@ -35,6 +43,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
             limit: pageSize,
             offset: (page - 1) * pageSize,
             category: col.id,
+            sortBy,
           });
           setTotalCount(count);
           setProducts(data);
@@ -47,6 +56,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
         const { data, count } = await getProducts({
           limit: pageSize,
           offset: (page - 1) * pageSize,
+          sortBy,
         });
         setTotalCount(count);
         setProducts(data);
@@ -54,7 +64,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
 
       setLoading(false);
     })();
-  }, [collectionSlug, page]);
+  }, [collectionSlug, page, sortBy]);
 
   const title = collection ? collection.name : 'Products';
   const subtitle = collection?.tagline;
@@ -76,6 +86,24 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
 
       {/* Products — one per row, full width */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pb-20">
+        {/* Sort control */}
+        <div className="flex justify-end mb-8">
+          <label className="flex items-center gap-3">
+            <span className="text-white/40 text-[11px] uppercase tracking-[0.18em]">Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as ProductSortBy)}
+              className="bg-black border border-white/20 text-white text-[11px] uppercase tracking-[0.15em] px-3 py-2 focus:border-white focus:outline-none cursor-pointer"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-black">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 gap-10">
             {Array.from({ length: 4 }).map((_, i) => (
