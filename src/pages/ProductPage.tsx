@@ -238,7 +238,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
                   : 'border-white/10 text-white/20 cursor-not-allowed line-through'
               }`}
             >
-              {s.size === 'Extra-Large' ? 'X-Large' : s.size}
+              {s.size.toLowerCase().replace(/[^a-z]/g, '') === 'extralarge' ? 'X-Large' : s.size}
             </button>
           ))}
         </div>
