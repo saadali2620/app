@@ -230,7 +230,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
               key={s.id}
               onClick={() => s.in_stock && setSelectedSize(s.size)}
               disabled={!s.in_stock || isSoldOut}
-              className={`min-w-[3rem] px-4 py-3 text-sm uppercase border transition-all ${
+                          className={`min-w-[3rem] px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium border transition-all ${
                 selectedSize === s.size
                   ? 'border-white bg-white text-black'
                   : s.in_stock && !isSoldOut
@@ -238,7 +238,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
                   : 'border-white/10 text-white/20 cursor-not-allowed line-through'
               }`}
             >
-              {s.size}
+              {s.size === 'Extra-Large' ? 'X-Large' : s.size}
             </button>
           ))}
         </div>
