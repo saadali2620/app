@@ -64,19 +64,23 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
   };
 }
 
-export type ProductSortBy = 'newest' | 'price-asc' | 'price-desc';
+ export type ProductSortBy = 'featured' | 'newest' | 'price-asc' | 'price-desc';
 
-function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string } {
-  switch (sortBy) {
-    case 'price-asc':
-      return { orderby: 'price', order: 'asc' };
-    case 'price-desc':
-      return { orderby: 'price', order: 'desc' };
-    case 'newest':
-    default:
-      return { orderby: 'date', order: 'desc' };
-  }
-}
+  function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string } {
+      switch (sortBy) {
+        case 'price-asc':
+                return { orderby: 'price', order: 'asc' };
+        case 'price-desc':
+                return { orderby: 'price', order: 'desc' };
+        case 'newest':
+                return { orderby: 'date', order: 'desc' };
+        case 'featured':
+        default:
+                // Matches the drag-and-drop order set via the "Sorting" button on the
+                // WordPress Products list (WooCommerce's menu_order field).
+                return { orderby: 'menu_order', order: 'asc' };
+      }
+  
 
 export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<{ data: Product[]; count: number }> {
   const params = new URLSearchParams();
