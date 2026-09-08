@@ -65,7 +65,7 @@ export default function HomePage({ navigate }: HomePageProps) {
 
           <div className="text-center mt-16">
             <button
-              onClick={() => navigate('/collections/all')}
+              onClick={() => navigate('/collections/batch-01')}
               className="inline-block border border-white/30 text-white px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-all duration-300"
             >
               View All Products
