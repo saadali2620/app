@@ -24,15 +24,15 @@ function App() {
   }, [path]);
 
   useEffect(() => {
-      // Best-effort deterrent against casual image saving (right-click / long-press).
-      // Does not and cannot stop screenshots or dev-tools access.
-      const blockImageContextMenu = (e: MouseEvent) => {
-            if ((e.target as HTMLElement)?.tagName === 'IMG') {
-                    e.preventDefault();
-            }
-      };
-      document.addEventListener('contextmenu', blockImageContextMenu);
-      return () => document.removeEventListener('contextmenu', blockImageContextMenu);
+    // Best-effort deterrent against casual image saving (right-click / long-press).
+    // Does not and cannot stop screenshots or dev-tools access.
+    const blockImageContextMenu = (e: MouseEvent) => {
+      if ((e.target as HTMLElement)?.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', blockImageContextMenu);
+    return () => document.removeEventListener('contextmenu', blockImageContextMenu);
   }, []);
 
   const renderPage = () => {
@@ -45,7 +45,12 @@ function App() {
     // /collections/:slug
     if (path.startsWith('/collections/')) {
       const slug = path.replace('/collections/', '');
-      return <CatalogPage navigate={navigate} collectionSlug={slug} />;
+      // The general "Shop All" catalog ('all') is temporarily hidden
+      // site-wide; falls through to the homepage below. Specific
+      // collections (e.g. batch-01) remain browsable directly.
+      if (slug !== 'all') {
+        return <CatalogPage navigate={navigate} collectionSlug={slug} />;
+      }
     }
 
     // /about
@@ -60,7 +65,7 @@ function App() {
 
     // /track-order
     if (path === '/track-order') {
-        return <TrackOrderPage navigate={navigate} />;
+      return <TrackOrderPage navigate={navigate} />;
     }
 
     // /policies
