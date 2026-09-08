@@ -61,9 +61,9 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
 
         {/* Center content */}
         <div className="flex-1 flex items-end justify-center pb-32">
-          <div className="text-center px-6 max-w-2xl">
+          <div className="text-center px-6 max-w-3xl">
             <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, est. 2021</p>
-            <h1 className="text-white text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-6 leading-none">
+            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none whitespace-nowrap">
               WORN IN, NOT WORN OUT
             </h1>
             <button
