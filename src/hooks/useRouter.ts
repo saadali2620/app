@@ -16,7 +16,14 @@ export function useRouter() {
   useEffect(() => {
     const onChange = () => {
       setRoute(parseHash());
-      window.scrollTo(0, 0);
+      // Safari performs its own async scroll adjustment after a hashchange
+      // (it tries to jump to any element matching the new hash), which can
+      // run *after* a synchronous scrollTo(0, 0) here and leave the page
+      // stuck mid-scroll. Deferring to the next animation frame lets our
+      // reset win instead of getting overridden.
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+      });
     };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
