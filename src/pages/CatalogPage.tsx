@@ -64,14 +64,16 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
     })();
   }, [collectionSlug, page]);
 
-  const title = collection ? collection.name : 'Products';
+  // Blank while loading rather than defaulting to 'Products' — avoids a
+  // flash of the wrong title before the actual collection name arrives.
+  const title = loading ? '' : collection ? collection.name : 'Products';
   const subtitle = collection?.tagline;
 
   return (
     <div className="min-h-screen bg-black pt-20">
       {/* Page header */}
       <div className="px-6 lg:px-10 pt-16 pb-12 text-center">
-        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3">{title}</h1>
+        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3 uppercase">{title}</h1>
         {subtitle && (
           <p className="text-white/50 text-sm uppercase tracking-[0.2em]">{subtitle}</p>
         )}
