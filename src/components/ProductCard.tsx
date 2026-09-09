@@ -46,18 +46,18 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 px-3 py-3">
-        <h3 className="text-white text-sm font-medium leading-tight mb-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+      <div className="absolute bottom-0 left-0 right-0 px-3 py-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+        <h3 className="text-white text-sm font-medium leading-tight mb-1">
           {product.name}
         </h3>
         <div className="flex items-center gap-2">
           {isOnSale ? (
             <>
-              <span className="text-red-400 text-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{formatPrice(product.compare_at_price!)}</span>
-              <span className="text-white/50 text-sm line-through drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{formatPrice(product.price)}</span>
+              <span className="text-red-400 text-sm">{formatPrice(product.compare_at_price!)}</span>
+              <span className="text-white/50 text-sm line-through">{formatPrice(product.price)}</span>
             </>
           ) : (
-            <span className="text-white/90 text-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{formatPrice(product.price)}</span>
+            <span className="text-white/90 text-sm">{formatPrice(product.price)}</span>
           )}
         </div>
       </div>
