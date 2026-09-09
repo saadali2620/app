@@ -18,11 +18,11 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // "Shop All" (the general catalog) is temporarily hidden site-wide —
-  // see App.tsx routing guard too. BATCH 01 stays, since it's the current drop.
+  // "Shop All" (the general catalog) and "About" are temporarily hidden
+  // site-wide — see App.tsx routing guard too. BATCH 01 stays, since it's
+  // the current drop.
   const navLinks = [
     { label: 'BATCH 01', path: '/collections/batch-01' },
-    { label: 'About', path: '/about' },
     { label: 'Track Order', path: '/track-order' },
   ];
 
@@ -49,7 +49,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
 
           {/* Desktop nav left */}
           <nav className="hidden lg:flex items-center gap-7 flex-1">
-            {navLinks.slice(0, 2).map((link) => (
+            {navLinks.slice(0, 1).map((link) => (
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
@@ -77,7 +77,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
           {/* Right side */}
           <div className="flex items-center gap-5 flex-1 justify-end">
             <nav className="hidden lg:flex items-center gap-7">
-              {navLinks.slice(2).map((link) => (
+              {navLinks.slice(1).map((link) => (
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
