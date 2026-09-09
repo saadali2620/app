@@ -3,6 +3,7 @@ import { getProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
+import FAQAccordion from '@/components/FAQAccordion';
 
 interface HomePageProps {
   navigate: (path: string) => void;
@@ -91,19 +92,18 @@ export default function HomePage({ navigate }: HomePageProps) {
           <h2 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-8 leading-tight">
             The Grey Area Between Fashion and Streetwear
           </h2>
-          <p className="text-white/70 text-base leading-relaxed mb-10">
+          <p className="text-white/70 text-base leading-relaxed">
             Limited edition seasonal collections embracing the current culture. Locally sourced with
             an obsessive attention to fit, fabric and fabrication. Designed in Karachi, proudly made
             in Pakistan.
           </p>
-          <button
-            onClick={() => navigate('/about')}
-            className="text-white text-[11px] uppercase tracking-[0.2em] border-b border-white/30 pb-1 hover:border-white transition-colors"
-          >
-            Read Our Story
-          </button>
+          {/* "Read Our Story" button removed — it linked to /about, which is
+              temporarily hidden site-wide. Re-add once About is back. */}
         </div>
       </section>
+
+      {/* FAQs — sits right before the global Footer (rendered in App.tsx) */}
+      <FAQAccordion navigate={navigate} />
     </div>
   );
 }
