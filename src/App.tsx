@@ -8,7 +8,6 @@ import CartDrawer from '@/components/CartDrawer';
 import HomePage from '@/pages/HomePage';
 import CatalogPage from '@/pages/CatalogPage';
 import ProductPage from '@/pages/ProductPage';
-import AboutPage from '@/pages/AboutPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import PolicyPage from '@/pages/PolicyPage';
 import ContactPage from '@/pages/ContactPage';
@@ -53,10 +52,8 @@ function App() {
       }
     }
 
-    // /about
-    if (path === '/about') {
-      return <AboutPage navigate={navigate} />;
-    }
+    // /about — temporarily hidden site-wide, same treatment as Shop All;
+    // falls through to the homepage below.
 
     // /checkout
     if (path === '/checkout') {
