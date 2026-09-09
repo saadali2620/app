@@ -274,9 +274,6 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               </div>
             </div>
 
-            <p className="text-white/40 text-xs mt-4 leading-relaxed">
-              Free shipping on orders over Rs. 5,000. Powered by Cash on Delivery within Pakistan.
-            </p>
           </div>
         </div>
       </div>
