@@ -14,13 +14,13 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
   return (
     <button
       onClick={() => navigate(`/products/${product.slug}`)}
-      className="group block text-left w-full border border-white/10 bg-black relative overflow-hidden"
+      className="group block text-left w-full border border-white/10 bg-black relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-black/60 active:scale-[0.98]"
       style={{ aspectRatio: '3/4' }}
     >
       <img
         src={product.image_url}
         alt={product.name}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         loading="lazy"
       />
 
