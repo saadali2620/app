@@ -33,18 +33,22 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
 
   return (
     <section className="relative h-[100vh] min-h-[600px] w-full overflow-hidden bg-black">
-      {/* Slides */}
+      {/* Slides — crossfade + a slow Ken Burns scale so the resting slide
+          settles to 1:1 while the incoming one starts slightly zoomed,
+          giving the transition depth instead of a flat opacity swap. */}
       {products.map((product, i) => (
         <div
           key={product.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ${
+          className={`absolute inset-0 transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-out ${
+              i === current ? 'scale-100' : 'scale-110'
+            }`}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
         </div>
@@ -54,7 +58,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
       <div className="absolute inset-0 flex flex-col">
         {/* Top announcement */}
         <div className="pt-24 px-6 text-center">
-          <span className="text-white/80 text-[11px] uppercase tracking-[0.25em]">
+          <span className="hero-intro inline-block text-white/80 text-[11px] uppercase tracking-[0.25em]">
             BATCH 01 / MUTED — Limited Edition
           </span>
         </div>
@@ -62,13 +66,22 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
         {/* Center content */}
         <div className="flex-1 flex items-end justify-center pb-32">
           <div className="text-center px-6 max-w-3xl">
-            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, est. 2021</p>
-            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none whitespace-nowrap">
+            <p
+              className="hero-intro text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4"
+              style={{ animationDelay: '80ms' }}
+            >
+              Karachi, est. 2021
+            </p>
+            <h1
+              className="hero-intro text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none whitespace-nowrap"
+              style={{ animationDelay: '150ms' }}
+            >
               WORN IN, NOT WORN OUT
             </h1>
             <button
               onClick={() => navigate('/collections/batch-01')}
-              className="inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
+              className="hero-intro inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 active:scale-95 transition-all duration-150"
+              style={{ animationDelay: '260ms' }}
             >
               Shop BATCH 01
             </button>
@@ -89,7 +102,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
             <div className="flex items-center gap-3 mx-auto sm:mx-0">
               <button
                 onClick={prev}
-                className="text-white/70 hover:text-white transition-colors p-2"
+                className="text-white/70 hover:text-white active:scale-90 active:text-white transition-all duration-100 p-2"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={22} strokeWidth={1.5} />
@@ -99,7 +112,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
                   <button
                     key={i}
                     onClick={() => setCurrent(i)}
-                    className={`h-1 transition-all duration-300 ${
+                    className={`h-1 transition-all duration-300 active:scale-y-150 ${
                       i === current ? 'w-8 bg-white' : 'w-4 bg-white/30 hover:bg-white/50'
                     }`}
                     aria-label={`Go to slide ${i + 1}`}
@@ -108,7 +121,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
               </div>
               <button
                 onClick={next}
-                className="text-white/70 hover:text-white transition-colors p-2"
+                className="text-white/70 hover:text-white active:scale-90 active:text-white transition-all duration-100 p-2"
                 aria-label="Next slide"
               >
                 <ChevronRight size={22} strokeWidth={1.5} />
