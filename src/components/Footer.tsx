@@ -32,7 +32,7 @@ export default function Footer({ navigate }: FooterProps) {
           <div className="flex flex-col gap-2">
             <a
               href="mailto:help@nors.com.pk"
-              className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-2 text-white/70 hover:text-white text-sm w-fit active:scale-95 transition-all duration-150"
             >
               <Mail size={15} strokeWidth={1.5} />
               help@nors.com.pk
@@ -41,7 +41,7 @@ export default function Footer({ navigate }: FooterProps) {
               href="https://instagram.com/nors.com.pk"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-2 text-white/70 hover:text-white text-sm w-fit active:scale-95 transition-all duration-150"
             >
               <Instagram size={15} strokeWidth={1.5} />
               IG - NORS.
@@ -61,7 +61,7 @@ export default function Footer({ navigate }: FooterProps) {
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
-                className="text-white/70 hover:text-white text-sm text-left transition-colors"
+                className="text-white/70 hover:text-white text-sm text-left w-fit active:scale-95 transition-all duration-150"
               >
                 {link.label}
               </button>
