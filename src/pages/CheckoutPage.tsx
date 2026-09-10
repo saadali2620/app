@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { performCheckout } from '@/lib/woocommerce';
+import { performCheckout, getCartTotals } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react';
@@ -36,8 +36,46 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile();
   const [honeypot, setHoneypot] = useState('');
 
-  const shipping = totalPrice > 5000 ? 0 : 250;
-  const grandTotal = totalPrice + shipping;
+  // Real shipping/total from WooCommerce's own cart — replaces a previous
+  // hardcoded guess that had drifted out of sync with the actual configured
+  // shipping rate, showing customers a total that didn't match what they
+  // were actually charged.
+  const [totals, setTotals] = useState<{ shipping: number; grandTotal: number } | null>(null);
+  const [totalsLoading, setTotalsLoading] = useState(true);
+  const [totalsError, setTotalsError] = useState(false);
+
+  // Stable key so the effect only re-runs when quantities/items actually
+  // change, not on every render.
+  const itemsKey = items.map((i) => `${i.variantId}:${i.quantity}`).join(',');
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setTotalsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setTotalsLoading(true);
+    setTotalsError(false);
+    (async () => {
+      try {
+        const t = await getCartTotals(items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })));
+        if (!cancelled) {
+          setTotals({ shipping: t.shippingTotal, grandTotal: t.grandTotal });
+        }
+      } catch {
+        if (!cancelled) setTotalsError(true);
+      } finally {
+        if (!cancelled) setTotalsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsKey]);
+
+  const shipping = totals?.shipping ?? 0;
+  const grandTotal = totals?.grandTotal ?? totalPrice;
 
   const validateEmail = (value: string): boolean => {
     if (!EMAIL_PATTERN.test(value.trim())) {
@@ -133,7 +171,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
       <div className="min-h-screen bg-black pt-20 flex flex-col items-center justify-center px-6 text-center gap-6">
         <h1 className="text-white text-2xl font-medium">Your cart is empty</h1>
         <button
-          onClick={() => navigate('/collections/all')}
+          onClick={() => navigate('/collections/batch-01')}
           className="text-white text-[11px] uppercase tracking-[0.2em] border-b border-white/30 pb-1 hover:border-white transition-colors"
         >
           Continue Shopping
@@ -228,10 +266,14 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || totalsLoading}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Placing Order…' : `Place Order — ${formatPrice(grandTotal)}`}
+              {submitting
+                ? 'Placing Order…'
+                : totalsLoading
+                ? 'Calculating…'
+                : `Place Order — ${formatPrice(grandTotal)}`}
             </button>
           </form>
 
@@ -264,13 +306,21 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Shipping</span>
                   <span className="text-white">
-                    {shipping === 0 ? 'Free' : formatPrice(shipping)}
+                    {totalsLoading ? '…' : shipping === 0 ? 'Free' : formatPrice(shipping)}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-white/10">
                   <span className="text-white font-medium">Total</span>
-                  <span className="text-white font-medium text-lg">{formatPrice(grandTotal)}</span>
+                  <span className="text-white font-medium text-lg">
+                    {totalsLoading ? '…' : formatPrice(grandTotal)}
+                  </span>
                 </div>
+                {totalsError && (
+                  <p className="text-red-400 text-xs pt-1">
+                    Couldn't confirm shipping cost — showing subtotal only. It will be recalculated
+                    accurately when you place your order.
+                  </p>
+                )}
               </div>
             </div>
 
