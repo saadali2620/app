@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Menu, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCart } from '@/context/CartContext';
 
 interface HeaderProps {
@@ -28,20 +29,28 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
 
   const isActive = (path: string) => currentPath === path;
 
+  // Standard critically-damped spring — no overshoot, used for the sheet's
+  // open/close since it's a state toggle rather than a live-dragged gesture.
+  const sheetSpring = { type: 'spring' as const, damping: 28, stiffness: 320 };
+
   return (
     <>
+      {/* Translucent material from the very top — content scrolls under it,
+          not behind an opaque bar. Weight (opacity/blur) increases once
+          scrolled, and a hairline fades in at the same time as the scroll
+          edge effect, instead of a hard divider that's always there. */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-all duration-500 ${
           scrolled
-            ? 'bg-black/95 backdrop-blur-md py-3 shadow-lg shadow-black/20'
-            : 'bg-transparent py-5'
+            ? 'bg-black/80 py-3 border-b border-white/10'
+            : 'bg-black/25 py-5 border-b border-transparent'
         }`}
       >
         <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between">
           {/* Mobile menu button */}
           <button
             onClick={() => setMenuOpen(true)}
-            className="lg:hidden text-white"
+            className="lg:hidden text-white active:scale-90 transition-transform duration-100"
             aria-label="Open menu"
           >
             <Menu size={22} strokeWidth={1.5} />
@@ -53,7 +62,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
-                className={`text-[11px] uppercase tracking-[0.18em] font-medium transition-colors duration-300 ${
+                className={`text-[11px] uppercase tracking-[0.18em] font-medium transition-colors duration-300 active:scale-95 ${
                   isActive(link.path) ? 'text-white' : 'text-white/60 hover:text-white'
                 }`}
               >
@@ -65,7 +74,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
           {/* Logo center */}
           <button
             onClick={() => navigate('/')}
-            className="absolute left-1/2 -translate-x-1/2 select-none flex-shrink-0"
+            className="absolute left-1/2 -translate-x-1/2 select-none flex-shrink-0 active:scale-95 transition-transform duration-100"
           >
             <img
               src="https://nors.com.pk/enterprise/wp-content/uploads/2026/08/nors-updated-logo-resized-300-px-width-white.svg"
@@ -81,7 +90,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className={`text-[11px] uppercase tracking-[0.18em] font-medium transition-colors duration-300 ${
+                  className={`text-[11px] uppercase tracking-[0.18em] font-medium transition-colors duration-300 active:scale-95 ${
                     isActive(link.path) ? 'text-white' : 'text-white/60 hover:text-white'
                   }`}
                 >
@@ -92,7 +101,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
 
             <button
               onClick={openCart}
-              className="relative text-white transition-transform hover:scale-110 duration-300"
+              className="relative text-white active:scale-90 transition-transform duration-100"
               aria-label="Open cart"
             >
               <ShoppingBag size={20} strokeWidth={1.5} />
@@ -106,46 +115,62 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
         </div>
       </header>
 
-      {/* Mobile menu overlay */}
-      <div
-        className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${
-          menuOpen ? 'visible opacity-100' : 'invisible opacity-0'
-        }`}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
-        <div
-          className={`absolute left-0 top-0 bottom-0 w-[75%] max-w-[320px] bg-black border-r border-white/10 p-8 flex flex-col transition-transform duration-500 ${
-            menuOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-12">
-            <span className="text-white font-bold tracking-[0.3em] text-lg">nors.</span>
-            <button onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white">
-              <X size={22} strokeWidth={1.5} />
-            </button>
+      {/* Mobile menu — a real sheet: backdrop and panel both animate with a
+          spring (materialize, not just fade), anchored to the edge it was
+          triggered from (hamburger sits at the left, panel opens from the
+          left), and fully unmounts when closed so it never traps focus or
+          input behind an invisible layer. */}
+      <AnimatePresence>
+        {menuOpen && (
+          <div className="fixed inset-0 z-[60] lg:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={sheetSpring}
+              className="absolute left-0 top-0 bottom-0 w-[75%] max-w-[320px] bg-black border-r border-white/10 p-8 flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-12">
+                <span className="text-white font-bold tracking-[0.3em] text-lg">nors.</span>
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="text-white/70 hover:text-white active:scale-90 transition-transform duration-100"
+                >
+                  <X size={22} strokeWidth={1.5} />
+                </button>
+              </div>
+              <nav className="flex flex-col gap-6">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.path}
+                    onClick={() => {
+                      navigate(link.path);
+                      setMenuOpen(false);
+                    }}
+                    className={`text-sm uppercase tracking-[0.18em] font-medium text-left transition-colors active:scale-95 ${
+                      isActive(link.path) ? 'text-white' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                ))}
+              </nav>
+              <div className="mt-auto pt-8 border-t border-white/10">
+                <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Designed in Karachi</p>
+                <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Proudly made in Pakistan</p>
+              </div>
+            </motion.div>
           </div>
-          <nav className="flex flex-col gap-6">
-            {navLinks.map((link) => (
-              <button
-                key={link.path}
-                onClick={() => {
-                  navigate(link.path);
-                  setMenuOpen(false);
-                }}
-                className={`text-sm uppercase tracking-[0.18em] font-medium text-left transition-colors ${
-                  isActive(link.path) ? 'text-white' : 'text-white/60 hover:text-white'
-                }`}
-              >
-                {link.label}
-              </button>
-            ))}
-          </nav>
-          <div className="mt-auto pt-8 border-t border-white/10">
-            <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Designed in Karachi</p>
-            <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Proudly made in Pakistan</p>
-          </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
