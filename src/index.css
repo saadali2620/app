@@ -7,7 +7,11 @@
     scroll-behavior: smooth;
   }
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* System font first — this is the real San Francisco on macOS/iOS/Safari,
+       with Inter as a close-match fallback everywhere else. Apple's own
+       guidance is to prefer the platform font before a custom face. */
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+      'Inter', system-ui, sans-serif;
     background-color: #000;
     color: #fff;
     -webkit-font-smoothing: antialiased;
@@ -59,19 +63,17 @@ button[class*='group'] {
   width: max-content;
 }
 
-
 /* Image protection: block casual right-click-save and drag-to-save.
    Note: this is a deterrent, not a guarantee — anyone can still screenshot
    the screen or use browser dev tools, no website can fully prevent that. */
 img {
-    -webkit-user-drag: none;
-    user-drag: none;
-    -webkit-touch-callout: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
-
 
 /* iOS Safari sometimes fails to register a tap reliably on buttons/links
    without this — it removes the ~300ms tap-delay/double-tap-zoom detection
@@ -80,5 +82,33 @@ img {
    of iOS Safari touch-responsiveness issue. */
 button,
 a {
-    touch-action: manipulation;
+  touch-action: manipulation;
+}
+
+/* Reduced motion: swap sliding/looping/spring motion for a simple, short
+   cross-fade. Framer/motion components read this via useReducedMotion() in
+   JS; these rules cover the plain-CSS animations above that JS doesn't
+   touch. */
+@media (prefers-reduced-motion: reduce) {
+  button[class*='group'] {
+    animation: none;
+  }
+  .lookbook-track {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Reduced transparency: flatten translucent/blurred surfaces (header,
+   cart drawer, mobile menu) into a solid, higher-contrast fill instead of
+   backdrop-blur, per the platform's accessibility setting. */
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-blur-xl,
+  .backdrop-blur-md,
+  .backdrop-blur-sm {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
