@@ -64,24 +64,23 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
   };
 }
 
- export type ProductSortBy = 'featured' | 'newest' | 'price-asc' | 'price-desc';
+export type ProductSortBy = 'featured' | 'newest' | 'price-asc' | 'price-desc';
 
-  function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string } {
-      switch (sortBy) {
-        case 'price-asc':
-                return { orderby: 'price', order: 'asc' };
-        case 'price-desc':
-                return { orderby: 'price', order: 'desc' };
-        case 'newest':
-                return { orderby: 'date', order: 'desc' };
-        case 'featured':
-        default:
-                // Matches the drag-and-drop order set via the "Sorting" button on the
-                // WordPress Products list (WooCommerce's menu_order field).
-                return { orderby: 'menu_order', order: 'asc' };
-      }
-      }
-  
+function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string } {
+  switch (sortBy) {
+    case 'price-asc':
+      return { orderby: 'price', order: 'asc' };
+    case 'price-desc':
+      return { orderby: 'price', order: 'desc' };
+    case 'newest':
+      return { orderby: 'date', order: 'desc' };
+    case 'featured':
+    default:
+      // Matches the drag-and-drop order set via the "Sorting" button on the
+      // WordPress Products list (WooCommerce's menu_order field).
+      return { orderby: 'menu_order', order: 'asc' };
+  }
+}
 
 export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<{ data: Product[]; count: number }> {
   const params = new URLSearchParams();
@@ -205,6 +204,55 @@ export interface CheckoutSecurity {
 export interface CheckoutLineItem {
   variantId: string;
   quantity: number;
+}
+
+export interface CartTotals {
+  itemsTotal: number;
+  shippingTotal: number;
+  grandTotal: number;
+}
+
+/**
+ * Syncs the server-side cart to match the given items (same clear-then-add
+ * sequence performCheckout uses) purely to read back WooCommerce's real
+ * totals — in particular the actual shipping cost from the configured
+ * shipping zone, rather than guessing it on the frontend. Used to show an
+ * accurate order summary on the checkout page *before* the customer submits,
+ * so the number they see matches what they're actually charged.
+ */
+export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTotals> {
+  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const currentCart = await initRes.json();
+  let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
+
+  for (const existing of currentCart.items ?? []) {
+    await pause(STEP_GAP_MS);
+    const r = await wcCall('/cart/remove-item', tokens, {
+      method: 'POST',
+      body: JSON.stringify({ key: existing.key }),
+    });
+    tokens = r.tokens;
+  }
+
+  let lastData: any = currentCart;
+  for (const item of items) {
+    await pause(STEP_GAP_MS);
+    const r = await wcCall('/cart/add-item', tokens, {
+      method: 'POST',
+      body: JSON.stringify({ id: Number(item.variantId), quantity: item.quantity }),
+    });
+    if (!r.res.ok) throw new Error(r.data.message || 'Could not add item to cart');
+    tokens = r.tokens;
+    lastData = r.data;
+  }
+
+  const totals = lastData.totals ?? {};
+  const minorUnit = Math.pow(10, totals.currency_minor_unit ?? 2);
+  return {
+    itemsTotal: Number(totals.total_items ?? 0) / minorUnit,
+    shippingTotal: Number(totals.total_shipping ?? 0) / minorUnit,
+    grandTotal: Number(totals.total_price ?? 0) / minorUnit,
+  };
 }
 
 /**
