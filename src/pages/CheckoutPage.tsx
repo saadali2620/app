@@ -59,7 +59,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
-  const itemsKey = items.map((i) => \`\${i.variantId}:\${i.quantity}\`).join(',');
+  const itemsKey = items.map((i) => `${i.variantId}:${i.quantity}`).join(',');
 
   useEffect(() => {
     if (items.length === 0) {
@@ -326,7 +326,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 ? 'Placing Order…'
                 : totalsLoading
                 ? 'Calculating…'
-                : \`Place Order — \${formatPrice(grandTotal)}\`}
+                : `Place Order — ${formatPrice(grandTotal)}`}
             </button>
           </form>
 
@@ -337,7 +337,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
             </h2>
             <div className="border border-white/10 p-6 space-y-4">
               {items.map((item) => (
-                <div key={\`\${item.productId}-\${item.size}\`} className="flex gap-4">
+                <div key={`${item.productId}-${item.size}`} className="flex gap-4">
                   <img
                     src={item.image_url}
                     alt={item.name}
