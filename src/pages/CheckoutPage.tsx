@@ -14,6 +14,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Pakistani mobile numbers: 03XXXXXXXXX (11 digits) or +923XXXXXXXXX
 const PHONE_PATTERN = /^(?:\+92|0)3\d{9}$/;
 
+// PayFast's gateway hosts (UAT + production). Preconnecting on checkout
+// mount lets the browser finish DNS/TLS ahead of time, so the handoff at
+// the end of checkout lands on an already-warm connection instead of
+// starting cold.
+const PAYFAST_HOSTS = ['https://ipg1.apps.net.pk', 'https://ipguat.apps.net.pk'];
+
 function normalizePhone(value: string): string {
   return value.replace(/[\s-]/g, '');
 }
@@ -36,6 +42,13 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile();
   const [honeypot, setHoneypot] = useState('');
 
+  // Set once performCheckout succeeds with a gateway redirect_url. Rendering
+  // a dedicated "redirecting" screen (instead of firing window.location.href
+  // the instant the response arrives) gives the browser a beat to paint
+  // before the hard navigation, so the handoff reads as a deliberate
+  // transition rather than the page appearing to freeze mid-click.
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
   // Real shipping/total from WooCommerce's own cart — replaces a previous
   // hardcoded guess that had drifted out of sync with the actual configured
   // shipping rate, showing customers a total that didn't match what they
@@ -46,7 +59,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
-  const itemsKey = items.map((i) => `${i.variantId}:${i.quantity}`).join(',');
+  const itemsKey = items.map((i) => \`\${i.variantId}:\${i.quantity}\`).join(',');
 
   useEffect(() => {
     if (items.length === 0) {
@@ -73,6 +86,32 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
+
+  // Warm the connection to PayFast ahead of time (not gated on anything —
+  // cheap to add, and it's the one thing we can do before we even know if
+  // this order will end up paying via PayFast).
+  useEffect(() => {
+    const links = PAYFAST_HOSTS.map((href) => {
+      const link = document.createElement('link');
+      link.rel = 'preconnect';
+      link.href = href;
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+      return link;
+    });
+    return () => links.forEach((l) => l.remove());
+  }, []);
+
+  // Give the redirect screen a moment to paint, then hand off to PayFast.
+  // The delay is short enough not to feel like a stall, long enough that
+  // the transition reads as intentional rather than an instant tab-hijack.
+  useEffect(() => {
+    if (!redirectUrl) return;
+    const t = setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 450);
+    return () => clearTimeout(t);
+  }, [redirectUrl]);
 
   const shipping = totals?.shipping ?? 0;
   const grandTotal = totals?.grandTotal ?? totalPrice;
@@ -124,7 +163,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
       if (result.payment_result?.redirect_url && paymentMethod !== 'cod' && paymentMethod !== 'bacs') {
         clearCart();
-        window.location.href = result.payment_result.redirect_url;
+        setRedirectUrl(result.payment_result.redirect_url);
         return;
       }
 
@@ -144,6 +183,20 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
       setSubmitting(false);
     }
   };
+
+  if (redirectUrl) {
+    return (
+      <div className="min-h-screen bg-black pt-20 flex flex-col items-center justify-center px-6 text-center gap-6">
+        <div className="w-10 h-10 border-2 border-white/15 border-t-white rounded-full animate-spin" />
+        <div>
+          <h1 className="text-white text-xl font-medium mb-2">Redirecting to secure payment</h1>
+          <p className="text-white/50 text-sm max-w-sm">
+            Taking you to PayFast to complete your order. Hang tight — this only takes a second.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -273,7 +326,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 ? 'Placing Order…'
                 : totalsLoading
                 ? 'Calculating…'
-                : `Place Order — ${formatPrice(grandTotal)}`}
+                : \`Place Order — \${formatPrice(grandTotal)}\`}
             </button>
           </form>
 
@@ -284,7 +337,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
             </h2>
             <div className="border border-white/10 p-6 space-y-4">
               {items.map((item) => (
-                <div key={`${item.productId}-${item.size}`} className="flex gap-4">
+                <div key={\`\${item.productId}-\${item.size}\`} className="flex gap-4">
                   <img
                     src={item.image_url}
                     alt={item.name}
