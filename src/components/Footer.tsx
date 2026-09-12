@@ -10,17 +10,17 @@ export default function Footer({ navigate }: FooterProps) {
       {/* Fine print */}
       <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-12">
         <div>
-          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">// Real Talk</h3>
+          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">Real Talk</h3>
           <p className="text-white/70 text-sm leading-relaxed">
             Small batches, made on purpose. We source locally and lose sleep over fit,
-            fabric, and finishing — every single time.
+            fabric, and finishing.
           </p>
         </div>
 
         <div>
           <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">Got a Question?</h3>
           <p className="text-white/70 text-sm leading-relaxed mb-4">
-            Sizing question, order issue, or just want to talk fabric — email or DM, we'll
+            Sizing question, order issue, or just want to talk fabric. Email or DM, we'll
             get back to you. Might take a day, but you'll always get an answer.
           </p>
           <div className="flex flex-col gap-2">
