@@ -34,6 +34,17 @@ function App() {
     return () => document.removeEventListener('contextmenu', blockImageContextMenu);
   }, []);
 
+  useEffect(() => {
+    // /faqs has no dedicated page — the FAQ content lives inline on the
+    // homepage. Rather than silently land on the top of the homepage with
+    // no indication anything happened, scroll straight to that section
+    // once it's mounted.
+    if (path === '/faqs') {
+      const el = document.getElementById('faqs');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [path]);
+
   const renderPage = () => {
     // /products/:slug
     if (path.startsWith('/products/')) {
@@ -80,7 +91,7 @@ function App() {
       return <OrderConfirmationPage path={path} navigate={navigate} />;
     }
 
-    // / (home)
+    // / (home) — also covers /faqs, which scrolls to the FAQ section above.
     return <HomePage navigate={navigate} />;
   };
 
