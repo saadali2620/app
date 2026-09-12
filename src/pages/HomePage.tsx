@@ -42,7 +42,7 @@ export default function HomePage({ navigate }: HomePageProps) {
               BATCH 01 / Live Now
             </p>
             <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight">
-              Latest Drops
+              Still Warm
             </h2>
           </div>
 
@@ -69,7 +69,7 @@ export default function HomePage({ navigate }: HomePageProps) {
               onClick={() => navigate('/collections/batch-01')}
               className="inline-block border border-white/30 text-white px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-all duration-300"
             >
-              View All Products
+              See the Full Batch
             </button>
           </div>
         </div>
@@ -90,12 +90,13 @@ export default function HomePage({ navigate }: HomePageProps) {
         <div className="relative max-w-2xl mx-auto text-center px-6">
           <p className="text-white/40 text-[11px] uppercase tracking-[0.3em] mb-6">est. 2021</p>
           <h2 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-8 leading-tight">
-            The Grey Area Between Fashion and Streetwear
+            Built for Both, Loyal to Neither
           </h2>
           <p className="text-white/70 text-base leading-relaxed">
-            Limited edition seasonal collections embracing the current culture. Locally sourced with
-            an obsessive attention to fit, fabric and fabrication. Designed in Karachi, proudly made
-            in Pakistan.
+            Every batch is small on purpose. We'd rather sell out in a week than sit in a
+            warehouse for a year. Fabric gets picked apart by hand before it's approved, cuts
+            get argued over in the studio, and nothing ships until it's right — not just done.
+            That's the whole operation, start to finish.
           </p>
           {/* "Read Our Story" button removed — it linked to /about, which is
               temporarily hidden site-wide. Re-add once About is back. */}
