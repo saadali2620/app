@@ -10,11 +10,27 @@ interface HeroProps {
 export default function Hero({ navigate, products: allProducts }: HeroProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [current, setCurrent] = useState(0);
+  // Which slide indices have actually been given a real src yet. Starts
+  // empty and grows as slides are shown (plus one slide ahead, prefetched
+  // so the crossfade never shows a blank frame) instead of handing the
+  // browser all 4 full-bleed hero images on page load — on a slow
+  // connection that was by far the heaviest thing on the page.
+  const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const shuffled = [...allProducts].sort(() => Math.random() - 0.5);
     setProducts(shuffled.slice(0, 4));
   }, [allProducts]);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      next.add(current);
+      next.add((current + 1) % products.length);
+      return next;
+    });
+  }, [current, products.length]);
 
   useEffect(() => {
     if (products.length <= 1) return;
@@ -41,11 +57,17 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
             i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+          {revealed.has(i) && (
+            <img
+              src={product.image_url}
+              srcSet={product.image_srcset || undefined}
+              sizes="100vw"
+              alt={product.name}
+              className="w-full h-full object-cover"
+              fetchPriority={i === 0 ? 'high' : 'auto'}
+              decoding={i === 0 ? 'sync' : 'async'}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
         </div>
       ))}
