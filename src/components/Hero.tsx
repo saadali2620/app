@@ -68,7 +68,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
               decoding={i === 0 ? 'sync' : 'async'}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/80" />
         </div>
       ))}
 
@@ -81,15 +81,14 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
           </span>
         </div>
 
-        {/* Center content */}
-        <div className="flex-1 flex items-end justify-center pb-32">
+        {/* Center content — reserves clear space below itself (pb-44 on
+            mobile) so a two-line wrapped headline never crowds the fixed
+            bottom bar, regardless of how long the headline or product
+            name run. */}
+        <div className="flex-1 flex items-end justify-center pb-44 sm:pb-32">
           <div className="text-center px-6 max-w-3xl">
-            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, est. 2021</p>
-            {/* whitespace-nowrap only applies from sm up — on mobile the
-                headline needs to wrap onto two lines within the section's
-                own px-6 padding, otherwise it was overflowing past both
-                screen edges with no margin at all. */}
-            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none sm:whitespace-nowrap">
+            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-3 sm:mb-4">Karachi, est. 2021</p>
+            <h1 className="text-white text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight sm:leading-none sm:whitespace-nowrap">
               WORN IN, NOT WORN OUT
             </h1>
             <button
@@ -101,15 +100,16 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
           </div>
         </div>
 
-        {/* Bottom: current product info */}
-        <div className="absolute bottom-0 left-0 right-0 pb-8 px-6 lg:px-10">
-          {/* Stacks vertically and centered on mobile so "Now Showing" gets
-              its own line above the slide controls, instead of being
-              hidden entirely below the sm breakpoint. */}
-          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-between gap-3">
+        {/* Bottom bar — a distinct translucent strip (not just text
+            floating over the photo) so "Now Showing" stays legible no
+            matter what's in the image behind it, and reads as one grouped
+            unit with the slide controls instead of two things competing
+            for the same cramped space. */}
+        <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 py-4 px-6 lg:px-10">
+          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3">
             <div className="max-w-xs text-center sm:text-left">
-              <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] mb-1">Now Showing</p>
-              <h3 className="text-white text-sm font-medium leading-tight mb-1">
+              <p className="text-white/60 text-[10px] uppercase tracking-[0.2em] mb-1">Now Showing</p>
+              <h3 className="text-white text-sm font-medium leading-tight">
                 {products[current].name}
               </h3>
             </div>
