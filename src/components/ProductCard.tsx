@@ -19,9 +19,12 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
     >
       <img
         src={product.image_url}
+        srcSet={product.image_srcset || undefined}
+        sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
         alt={product.name}
         className="w-full h-full object-cover"
         loading="lazy"
+        decoding="async"
       />
 
       {product.badge && product.badge !== 'Sale' && (
