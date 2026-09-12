@@ -85,7 +85,11 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
         <div className="flex-1 flex items-end justify-center pb-32">
           <div className="text-center px-6 max-w-3xl">
             <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-4">Karachi, est. 2021</p>
-            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none whitespace-nowrap">
+            {/* whitespace-nowrap only applies from sm up — on mobile the
+                headline needs to wrap onto two lines within the section's
+                own px-6 padding, otherwise it was overflowing past both
+                screen edges with no margin at all. */}
+            <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-none sm:whitespace-nowrap">
               WORN IN, NOT WORN OUT
             </h1>
             <button
@@ -99,8 +103,11 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
 
         {/* Bottom: current product info */}
         <div className="absolute bottom-0 left-0 right-0 pb-8 px-6 lg:px-10">
-          <div className="max-w-[1600px] mx-auto flex items-end justify-between">
-            <div className="hidden sm:block max-w-xs">
+          {/* Stacks vertically and centered on mobile so "Now Showing" gets
+              its own line above the slide controls, instead of being
+              hidden entirely below the sm breakpoint. */}
+          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-between gap-3">
+            <div className="max-w-xs text-center sm:text-left">
               <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] mb-1">Now Showing</p>
               <h3 className="text-white text-sm font-medium leading-tight mb-1">
                 {products[current].name}
@@ -108,7 +115,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
             </div>
 
             {/* Slide controls */}
-            <div className="flex items-center gap-3 mx-auto sm:mx-0">
+            <div className="flex items-center gap-3">
               <button
                 onClick={prev}
                 className="text-white/70 hover:text-white transition-colors p-2"
@@ -137,7 +144,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
               </button>
             </div>
 
-            <div className="hidden sm:block" />
+            <div className="hidden sm:block sm:max-w-xs sm:flex-1" />
           </div>
         </div>
       </div>
