@@ -20,7 +20,14 @@ export default function ProductCard({ product, navigate, index = 0 }: ProductCar
       <img
         src={product.image_url}
         srcSet={product.image_srcset || undefined}
-        sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+        // Matches the actual grid this card renders in everywhere it's
+        // used (CatalogPage and HomePage's featured section): a single
+        // column below 1024px, two columns at 1024px and up. Previously
+        // this assumed a denser 4-5 column grid, so the browser was
+        // fetching a source sized for ~25vw when the card was actually
+        // rendering at up to 50vw — the image was there, just visibly
+        // softer than the source quality supported.
+        sizes="(min-width: 1024px) 50vw, 100vw"
         alt={product.name}
         className="w-full h-full object-cover"
         loading="lazy"
