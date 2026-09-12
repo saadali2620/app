@@ -10,24 +10,18 @@ export default function Footer({ navigate }: FooterProps) {
       {/* Fine print */}
       <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-12">
         <div>
-          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">// Fine Print</h3>
+          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">// Real Talk</h3>
           <p className="text-white/70 text-sm leading-relaxed">
-            Limited edition seasonal collections embracing the current culture. Locally sourced with
-            an obsessive attention to fit, fabric and fabrication.
-          </p>
-          <p className="text-white/40 text-xs mt-4 uppercase tracking-[0.15em]">
-            Designed in Karachi / Proudly made in Pakistan
-          </p>
-          <p className="text-white/40 text-xs mt-2 uppercase tracking-[0.15em]">
-            8-D, Block #2, PECHS, Karachi
+            Small batches, made on purpose. We source locally and lose sleep over fit,
+            fabric, and finishing — every single time.
           </p>
         </div>
 
         <div>
-          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">Have a Query?</h3>
+          <h3 className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">Got a Question?</h3>
           <p className="text-white/70 text-sm leading-relaxed mb-4">
-            We are available to help through email and instagram. Due to high influx of orders,
-            please bear with us as we navigate through each and all queries.
+            Sizing question, order issue, or just want to talk fabric — email or DM, we'll
+            get back to you. Might take a day, but you'll always get an answer.
           </p>
           <div className="flex flex-col gap-2">
             <a
