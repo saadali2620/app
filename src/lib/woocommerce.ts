@@ -54,6 +54,12 @@ function mapWcProduct(p: any, collection?: Collection | null): Product {
     details: p.description ? stripHtml(p.description) : null,
     accordion: parseAccordionSections(p.description),
     image_url: p.images?.[0]?.src ?? '',
+    // WooCommerce's Store API already returns WordPress's generated
+    // intermediate sizes (150w/300w/1024w/...) for each image via srcset —
+    // carrying those through means <img> can request only the pixels a
+    // given layout needs instead of always pulling the full-size original.
+    image_srcset: p.images?.[0]?.srcset ?? '',
+    image_sizes: p.images?.[0]?.sizes ?? '',
     image_url_2: p.images?.[1]?.src ?? null,
     images: (p.images ?? []).map((im: any) => im.src),
     badge: p.on_sale ? 'Sale' : (p.is_purchasable === false ? 'Sold Out' : null),
