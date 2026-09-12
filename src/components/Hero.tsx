@@ -68,7 +68,11 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
               decoding={i === 0 ? 'sync' : 'async'}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/80" />
+          {/* Slightly deeper at the very bottom than before (black/85 vs
+              /70) so the "Now Showing" row stays readable without needing
+              its own background panel — same look as desktop, just with
+              enough contrast built into the photo treatment itself. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/85" />
         </div>
       ))}
 
@@ -81,55 +85,55 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
           </span>
         </div>
 
-        {/* Center content — reserves clear space below itself (pb-44 on
-            mobile) so a two-line wrapped headline never crowds the fixed
-            bottom bar, regardless of how long the headline or product
-            name run. */}
-        <div className="flex-1 flex items-end justify-center pb-44 sm:pb-32">
+        {/* Center content — same treatment as desktop, just scaled down on
+            mobile (smaller type, tighter but not zero leading so a
+            wrapped two-line headline has room to breathe) with enough
+            reserved space below it that it can never crowd the bottom row. */}
+        <div className="flex-1 flex items-end justify-center pb-40 sm:pb-32">
           <div className="text-center px-6 max-w-3xl">
-            <p className="text-white/60 text-[11px] uppercase tracking-[0.3em] mb-3 sm:mb-4">Karachi, est. 2021</p>
-            <h1 className="text-white text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight sm:leading-none sm:whitespace-nowrap">
+            <p className="text-white/60 text-[10px] sm:text-[11px] uppercase tracking-[0.25em] sm:tracking-[0.3em] mb-3 sm:mb-4">Karachi, est. 2021</p>
+            <h1 className="text-white text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 sm:mb-6 leading-tight sm:leading-none sm:whitespace-nowrap">
               WORN IN, NOT WORN OUT
             </h1>
             <button
               onClick={() => navigate('/collections/batch-01')}
-              className="inline-block bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
+              className="inline-block bg-white text-black px-8 sm:px-10 py-3.5 sm:py-4 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-all hover:scale-105 duration-300"
             >
               Shop BATCH 01
             </button>
           </div>
         </div>
 
-        {/* Bottom bar — a distinct translucent strip (not just text
-            floating over the photo) so "Now Showing" stays legible no
-            matter what's in the image behind it, and reads as one grouped
-            unit with the slide controls instead of two things competing
-            for the same cramped space. */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 py-4 px-6 lg:px-10">
-          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-3">
+        {/* Bottom: current product info — floating directly over the
+            photo like desktop (no separate bar), just scaled down and
+            with a fixed height reserved for the two-line max product name
+            so it can't collide with anything above it. */}
+        <div className="absolute bottom-0 left-0 right-0 pb-6 sm:pb-8 px-6 lg:px-10">
+          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-between gap-2 sm:gap-3">
             <div className="max-w-xs text-center sm:text-left">
-              <p className="text-white/60 text-[10px] uppercase tracking-[0.2em] mb-1">Now Showing</p>
-              <h3 className="text-white text-sm font-medium leading-tight">
+              <p className="text-white/50 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] mb-1">Now Showing</p>
+              <h3 className="text-white text-xs sm:text-sm font-medium leading-tight">
                 {products[current].name}
               </h3>
             </div>
 
             {/* Slide controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={prev}
                 className="text-white/70 hover:text-white transition-colors p-2"
                 aria-label="Previous slide"
               >
-                <ChevronLeft size={22} strokeWidth={1.5} />
+                <ChevronLeft size={20} strokeWidth={1.5} className="sm:hidden" />
+                <ChevronLeft size={22} strokeWidth={1.5} className="hidden sm:block" />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {products.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrent(i)}
                     className={`h-1 transition-all duration-300 ${
-                      i === current ? 'w-8 bg-white' : 'w-4 bg-white/30 hover:bg-white/50'
+                      i === current ? 'w-6 sm:w-8 bg-white' : 'w-3 sm:w-4 bg-white/30 hover:bg-white/50'
                     }`}
                     aria-label={`Go to slide ${i + 1}`}
                   />
@@ -140,7 +144,8 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
                 className="text-white/70 hover:text-white transition-colors p-2"
                 aria-label="Next slide"
               >
-                <ChevronRight size={22} strokeWidth={1.5} />
+                <ChevronRight size={20} strokeWidth={1.5} className="sm:hidden" />
+                <ChevronRight size={22} strokeWidth={1.5} className="hidden sm:block" />
               </button>
             </div>
 
