@@ -46,7 +46,9 @@ export default function FAQAccordion({ navigate }: FAQAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 lg:py-28 border-t border-white/10">
+    // id lets App.tsx scroll straight here for the /faqs route, since the
+    // FAQ content itself only lives on the homepage.
+    <section id="faqs" className="py-20 lg:py-28 border-t border-white/10">
       <div className="max-w-[800px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-12">
           <p className="text-white/40 text-[11px] uppercase tracking-[0.25em] mb-3">Need to know</p>
