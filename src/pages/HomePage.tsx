@@ -78,15 +78,10 @@ export default function HomePage({ navigate }: HomePageProps) {
       {/* <LookbookCarousel /> hidden for now, image selection needs more work */}
 
       {/* Brand story */}
-      <section className="relative py-32 lg:py-40 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.pexels.com/photos/10077947/pexels-photo-10077947.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-            alt=""
-            className="w-full h-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black" />
-        </div>
+      {/* Background image removed — was a hotlinked Pexels stock photo with
+          no connection to the brand. A plain dark gradient reads cleaner
+          than a placeholder shot of someone else's product. */}
+      <section className="relative py-32 lg:py-40 overflow-hidden bg-gradient-to-b from-neutral-950 via-black to-black">
         <div className="relative max-w-2xl mx-auto text-center px-6">
           <p className="text-white/40 text-[11px] uppercase tracking-[0.3em] mb-6">est. 2021</p>
           <h2 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-8 leading-tight">
