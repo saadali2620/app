@@ -9,8 +9,8 @@ export interface Collection {
 }
 
 export interface AccordionSection {
-    title: string;
-    content: string;
+  title: string;
+  content: string;
 }
 
 export interface Product {
@@ -23,6 +23,12 @@ export interface Product {
   description: string | null;
   details: string | null;
   image_url: string;
+  // WordPress-generated responsive variants for the primary image (empty
+  // string when WP hasn't generated intermediate sizes for that upload).
+  // Lets <img> request only the pixels a given layout actually needs
+  // instead of always downloading the full "-scaled" master.
+  image_srcset: string;
+  image_sizes: string;
   image_url_2: string | null;
   images: string[];
   badge: string | null;
