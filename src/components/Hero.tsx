@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Product } from '@/types';
 
@@ -7,9 +7,23 @@ interface HeroProps {
   products: Product[];
 }
 
+const AUTO_ADVANCE_MS = 6000;
+// How long to hold off auto-advancing after the user last touched a slide
+// control. Long enough that a manual click never gets immediately
+// overridden by the timer (which is what caused the slide to visibly jump
+// twice in a row when they happened to land close together); short enough
+// that the hero doesn't just sit still if someone taps once and walks away.
+const RESUME_AFTER_MS = 5000;
+
 export default function Hero({ navigate, products: allProducts }: HeroProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [current, setCurrent] = useState(0);
+  // True while the user is "in control" — set on any manual interaction,
+  // cleared automatically once RESUME_AFTER_MS passes with no further
+  // interaction. The auto-advance timer is simply off while this is true.
+  const [userControlled, setUserControlled] = useState(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Which slide indices have actually been given a real src yet. Starts
   // empty and grows as slides are shown (plus one slide ahead, prefetched
   // so the crossfade never shows a blank frame) instead of handing the
@@ -32,20 +46,38 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
     });
   }, [current, products.length]);
 
+  // Auto-advance — paused entirely while userControlled is true.
   useEffect(() => {
-    if (products.length <= 1) return;
+    if (products.length <= 1 || userControlled) return;
     const timer = setInterval(() => {
       setCurrent((c) => (c + 1) % products.length);
-    }, 6000);
+    }, AUTO_ADVANCE_MS);
     return () => clearInterval(timer);
-  }, [products.length]);
+  }, [products.length, userControlled]);
+
+  // Clear any pending resume timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
 
   if (products.length === 0) {
     return <div className="h-[100vh] bg-black animate-pulse" />;
   }
 
-  const next = () => setCurrent((c) => (c + 1) % products.length);
-  const prev = () => setCurrent((c) => (c - 1 + products.length) % products.length);
+  // Call on every manual prev/next/dot interaction — hands control to the
+  // user immediately and (re)starts the idle countdown before auto-advance
+  // takes back over.
+  const handleManualNav = (index: number) => {
+    setCurrent(index);
+    setUserControlled(true);
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => setUserControlled(false), RESUME_AFTER_MS);
+  };
+
+  const next = () => handleManualNav((current + 1) % products.length);
+  const prev = () => handleManualNav((current - 1 + products.length) % products.length);
 
   return (
     <section className="relative h-[100vh] min-h-[600px] w-full overflow-hidden bg-black">
@@ -131,7 +163,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
                 {products.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setCurrent(i)}
+                    onClick={() => handleManualNav(i)}
                     className={`h-1 transition-all duration-300 ${
                       i === current ? 'w-6 sm:w-8 bg-white' : 'w-3 sm:w-4 bg-white/30 hover:bg-white/50'
                     }`}
