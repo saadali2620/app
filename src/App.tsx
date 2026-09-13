@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { CartProvider } from '@/context/CartContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { trackPageView } from '@/lib/pixel';
 import { useRouter } from '@/hooks/useRouter';
 import Header from '@/components/Header';
@@ -13,6 +14,9 @@ import PolicyPage from '@/pages/PolicyPage';
 import ContactPage from '@/pages/ContactPage';
 import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
 import TrackOrderPage from '@/pages/TrackOrderPage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
+import AccountPage from '@/pages/AccountPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -86,6 +90,21 @@ function App() {
       return <ContactPage navigate={navigate} />;
     }
 
+    // /login
+    if (path === '/login') {
+      return <LoginPage navigate={navigate} />;
+    }
+
+    // /register
+    if (path === '/register') {
+      return <RegisterPage navigate={navigate} />;
+    }
+
+    // /account
+    if (path === '/account') {
+      return <AccountPage navigate={navigate} />;
+    }
+
     // /order-confirmation/:id
     if (path.startsWith('/order-confirmation/')) {
       return <OrderConfirmationPage path={path} navigate={navigate} />;
@@ -96,14 +115,16 @@ function App() {
   };
 
   return (
-    <CartProvider>
-      <div className="min-h-screen bg-black flex flex-col">
-        <Header navigate={navigate} currentPath={path} />
-        <main className="flex-1">{renderPage()}</main>
-        <Footer navigate={navigate} />
-        <CartDrawer navigate={navigate} />
-      </div>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <div className="min-h-screen bg-black flex flex-col">
+          <Header navigate={navigate} currentPath={path} />
+          <main className="flex-1">{renderPage()}</main>
+          <Footer navigate={navigate} />
+          <CartDrawer navigate={navigate} />
+        </div>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
