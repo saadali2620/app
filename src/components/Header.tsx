@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 interface HeaderProps {
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ navigate, currentPath }: HeaderProps) {
   const { totalItems, openCart } = useCart();
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -91,6 +93,14 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
             </nav>
 
             <button
+              onClick={() => navigate(user ? '/account' : '/login')}
+              className="text-white transition-transform hover:scale-110 duration-300"
+              aria-label={user ? 'My Account' : 'Log In'}
+            >
+              <User size={20} strokeWidth={1.5} />
+            </button>
+
+            <button
               onClick={openCart}
               className="relative text-white transition-transform hover:scale-110 duration-300"
               aria-label="Open cart"
@@ -139,6 +149,17 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
                 {link.label}
               </button>
             ))}
+          <button
+              onClick={() => {
+                navigate(user ? '/account' : '/login');
+                setMenuOpen(false);
+              }}
+              className={`text-sm uppercase tracking-[0.18em] font-medium text-left transition-colors ${
+                isActive('/account') || isActive('/login') ? 'text-white' : 'text-white/60 hover:text-white'
+              }`}
+            >
+              {user ? 'My Account' : 'Log In'}
+            </button>
           </nav>
           <div className="mt-auto pt-8 border-t border-white/10">
             <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Designed in Karachi</p>
