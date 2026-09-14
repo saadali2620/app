@@ -18,18 +18,26 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'nors_cart';
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+function loadStoredCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setItems(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-  }, []);
+export function CartProvider({ children }: { children: ReactNode }) {
+  // Lazy-init directly from localStorage instead of loading it in a separate
+  // effect. Loading via useEffect meant the first render always started with
+  // items = [], and the "persist to localStorage" effect (keyed on [items])
+  // ran on that same empty value before the load effect's setItems had
+  // committed — briefly overwriting the saved cart with []. On a remount
+  // (e.g. navigating back from checkout) that race could show, or even
+  // persist, an empty cart. Initializing state synchronously from storage
+  // removes the empty-first-render window entirely.
+  const [items, setItems] = useState<CartItem[]>(loadStoredCart);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
