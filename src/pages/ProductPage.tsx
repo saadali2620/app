@@ -80,8 +80,36 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+
+    // Attached natively (not via React's onTouchMove prop) because React
+    // registers touch listeners as passive by default, which silently
+    // ignores preventDefault() and lets the page's own vertical scroll
+    // fight the horizontal drag. A manually-added listener can opt out
+    // of that with { passive: false }.
+    const handleNativeTouchMove = (evt: TouchEvent) => {
+      const startPoint = touchStartRef.current;
+      if (!startPoint || images.length <= 1) return;
+      const touchPoint = evt.touches[0];
+      const deltaX = touchPoint.clientX - startPoint.x;
+      const deltaY = touchPoint.clientY - startPoint.y;
+
+      if (touchAxisRef.current === null) {
+        if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
+        touchAxisRef.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+      }
+      if (touchAxisRef.current !== 'x') return;
+
+      evt.preventDefault();
+      didSwipeRef.current = true;
+      setDragX(deltaX);
+    };
+    el.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+
+    return () => {
+      observer.disconnect();
+      el.removeEventListener('touchmove', handleNativeTouchMove);
+    };
+  }, [images.length]);
 
   // Commits the pending index change (set by a released drag or a
   // completed arrow-button animation) once the slide transition finishes,
@@ -106,25 +134,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     setAnimating(false);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const start = touchStartRef.current;
-    if (!start || images.length <= 1) return;
-    const t = e.touches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-
-    if (touchAxisRef.current === null) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      touchAxisRef.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-    }
-    if (touchAxisRef.current !== 'x') return;
-
-    // Once it is clearly a horizontal swipe, stop the page from also
-    // scrolling vertically while the finger drags the image.
-    e.preventDefault();
-    didSwipeRef.current = true;
-    setDragX(dx);
-  };
 
   const handleTouchEnd = () => {
     const wasDrag = touchAxisRef.current === 'x';
@@ -289,7 +298,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           setLightboxOpen(true);
         }}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         role="button"
         aria-label="View larger image"
