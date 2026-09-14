@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { performCheckout, getCartTotals } from '@/lib/woocommerce';
+import { performCheckout, getCartTotals, getPaymentMethods } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react';
@@ -57,6 +57,14 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const [totalsLoading, setTotalsLoading] = useState(true);
   const [totalsError, setTotalsError] = useState(false);
 
+  // Payment method the customer picks at checkout. Previously this was
+  // decided silently on the backend (PayFast whenever it was available),
+  // so Cash on Delivery was never actually offered even when enabled in
+  // WooCommerce. Defaulting to 'cod' here means a slow/failed methods fetch
+  // never leaves the customer stuck on a method they didn't choose.
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
   const itemsKey = items.map((i) => `${i.variantId}:${i.quantity}`).join(',');
@@ -87,6 +95,25 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getPaymentMethods()
+      .then((methods) => {
+        if (cancelled) return;
+        setPaymentMethods(methods);
+        if (methods.length > 0) {
+          setPaymentMethod(methods.includes('cod') ? 'cod' : methods[0]);
+        }
+      })
+      .catch(() => {
+        // Leave the 'cod' default in place; the checkout submit itself will
+        // surface a clear error if the chosen method turns out to be invalid.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Warm the connection to PayFast ahead of time (not gated on anything —
   // cheap to add, and it's the one thing we can do before we even know if
   // this order will end up paying via PayFast).
@@ -112,6 +139,21 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     }, 450);
     return () => clearTimeout(t);
   }, [redirectUrl]);
+
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      // e.persisted === true means this page was restored from the
+      // back-forward cache rather than freshly loaded — i.e. the customer
+      // pressed Back after being sent to PayFast. Clear the stale redirect
+      // state so they land on a normal, usable checkout page instead of the
+      // frozen (or auto-re-firing) "Redirecting to secure payment" screen.
+      if (e.persisted) {
+        setRedirectUrl(null);
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   const shipping = totals?.shipping ?? 0;
   const grandTotal = totals?.grandTotal ?? totalPrice;
@@ -144,7 +186,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
     setSubmitting(true);
     try {
-      const { result, paymentMethod } = await performCheckout(
+      const { result } = await performCheckout(
         items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
         {
           first_name: form.firstName,
@@ -158,7 +200,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         {
           turnstileToken,
           honeypot,
-        }
+        },
+        paymentMethod
       );
 
       if (result.payment_result?.redirect_url && paymentMethod !== 'cod' && paymentMethod !== 'bacs') {
@@ -310,6 +353,38 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               {phoneError && <p className="text-red-400 text-xs mt-2">{phoneError}</p>}
             </div>
 
+            {paymentMethods.length > 0 && (
+              <div>
+                <h2 className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-4">
+                  Payment Method
+                </h2>
+                <div className="space-y-2">
+                  {paymentMethods.map((method) => (
+                    <label
+                      key={method}
+                      className="flex items-center gap-3 border border-white/20 px-4 py-3 text-sm text-white cursor-pointer has-[:checked]:border-white transition-colors"
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method}
+                        checked={paymentMethod === method}
+                        onChange={() => setPaymentMethod(method)}
+                        className="accent-white"
+                      />
+                      {method === 'cod'
+                        ? 'Cash on Delivery'
+                        : method === 'bacs'
+                        ? 'Bank Transfer'
+                        : method === 'payfast'
+                        ? 'Card / PayFast'
+                        : method}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div ref={turnstileRef} />
             <HoneypotField value={honeypot} onChange={setHoneypot} />
 
@@ -319,13 +394,15 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
             <button
               type="submit"
-              disabled={submitting || totalsLoading}
+              disabled={submitting || totalsLoading || !turnstileToken}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
               {submitting
                 ? 'Placing Order…'
                 : totalsLoading
                 ? 'Calculating…'
+                : !turnstileToken
+                ? 'Preparing Secure Checkout…'
                 : `Place Order — ${formatPrice(grandTotal)}`}
             </button>
           </form>
