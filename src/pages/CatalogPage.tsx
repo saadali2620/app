@@ -89,11 +89,14 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
         {loading ? (
           <div className="grid grid-cols-1 gap-10">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
-                <div className="space-y-4">
-                  <div className="h-6 bg-neutral-900 animate-pulse w-3/4" />
-                  <div className="h-5 bg-neutral-900 animate-pulse w-1/3" />
+              <div
+                key={i}
+                className="w-full bg-neutral-900 animate-pulse relative overflow-hidden"
+                style={{ aspectRatio: '3/4' }}
+              >
+                <div className="absolute bottom-0 left-0 right-0 px-3 py-3 space-y-2">
+                  <div className="h-4 bg-neutral-800 w-2/3" />
+                  <div className="h-4 bg-neutral-800 w-1/4" />
                 </div>
               </div>
             ))}
