@@ -355,3 +355,23 @@ export async function performCheckout(
 
   return { result: checkoutRes.data, paymentMethod };
 }
+
+export const COD_DEPOSIT_THRESHOLD = 6000;
+
+export interface CodDepositResult {
+  depositAmount: number;
+  remainingAmount: number;
+}
+
+export async function markCodDeposit(orderId: number): Promise<CodDepositResult> {
+  const res = await fetch('https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/mark-cod-deposit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Could not apply the advance payment split.');
+  }
+  return { depositAmount: data.depositAmount, remainingAmount: data.remainingAmount };
+}
