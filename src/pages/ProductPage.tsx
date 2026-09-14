@@ -57,6 +57,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [slideDir, setSlideDir] = useState<'next' | 'prev'>('next');
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { addItem, openCart } = useCart();
@@ -186,8 +187,14 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const images = product.images.length > 0 ? product.images : [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
-  const goPrev = () => setActiveImage((i) => (i - 1 + images.length) % images.length);
-  const goNext = () => setActiveImage((i) => (i + 1) % images.length);
+  const goPrev = () => {
+    setSlideDir('prev');
+    setActiveImage((i) => (i - 1 + images.length) % images.length);
+  };
+  const goNext = () => {
+    setSlideDir('next');
+    setActiveImage((i) => (i + 1) % images.length);
+  };
 
   const titleBlock = (
     <div className="mb-4 lg:mb-0">
@@ -225,11 +232,14 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         aria-label="View larger image"
       >
         <img
+          key={activeImage}
           src={images[activeImage]}
           alt={product.name}
           draggable={false}
           onContextMenu={(e) => e.preventDefault()}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+            slideDir === 'next' ? 'gallery-slide-next' : 'gallery-slide-prev'
+          }`}
         />
         <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <ZoomIn size={16} strokeWidth={1.5} />
@@ -436,12 +446,15 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           )}
 
           <img
+            key={activeImage}
             src={images[activeImage]}
             alt={product.name}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
             onClick={(e) => e.stopPropagation()}
-            className="max-w-full max-h-full object-contain"
+            className={`max-w-full max-h-full object-contain ${
+              slideDir === 'next' ? 'gallery-slide-next' : 'gallery-slide-prev'
+            }`}
           />
 
           {images.length > 1 && (
