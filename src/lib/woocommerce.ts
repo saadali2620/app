@@ -230,7 +230,7 @@ export interface CartTotals {
  * accurate order summary on the checkout page *before* the customer submits,
  * so the number they see matches what they're actually charged.
  */
-export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTotals> {
+async function getCartTotalsImpl(items: CheckoutLineItem[]): Promise<CartTotals> {
   // no-store: a couple of environments run a page/edge cache in front of
   // WooCommerce, and this endpoint's response carries the customer's live
   // cart state and Nonce/Cart-Token — serving a cached copy of it makes the
@@ -295,7 +295,7 @@ export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTota
  * whenever available), which is why Cash on Delivery was never actually
  * offered even when it was enabled in WooCommerce.
  */
-export async function performCheckout(
+async function performCheckoutImpl(
   items: CheckoutLineItem[],
   billing: CheckoutBilling,
   security: CheckoutSecurity,
@@ -354,6 +354,32 @@ export async function performCheckout(
   }
 
   return { result: checkoutRes.data, paymentMethod };
+}
+
+// All cart mutations below (getCartTotals, performCheckout) work by wiping
+// the live WooCommerce session cart and re-adding items to read back fresh
+// totals/checkout results. If two calls ever run concurrently (repeated
+// effect fires, fast page navigation) their remove/add steps interleave and
+// items get double-added before the other call's cleanup catches up — this
+// queue forces every call to run strictly one after another.
+let cartOpQueue: Promise<unknown> = Promise.resolve();
+function withCartLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = cartOpQueue.then(fn, fn);
+  cartOpQueue = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
+
+export function getCartTotals(items: CheckoutLineItem[]): Promise<CartTotals> {
+  return withCartLock(() => getCartTotalsImpl(items));
+}
+
+export function performCheckout(
+  ...args: Parameters<typeof performCheckoutImpl>
+): ReturnType<typeof performCheckoutImpl> {
+  return withCartLock(() => performCheckoutImpl(...args));
 }
 
 export const COD_DEPOSIT_THRESHOLD = 6000;
