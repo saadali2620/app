@@ -57,7 +57,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
-  const [slideDir, setSlideDir] = useState<'next' | 'prev'>('next');
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { addItem, openCart } = useCart();
@@ -65,32 +64,90 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   // Touch-swipe between product photos (mobile/touchscreen only — these
   // handlers only ever fire from touch input, so desktop mouse users are
   // unaffected and keep using the arrow buttons / thumbnails).
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [dragX, setDragX] = useState(0);
+  const [animating, setAnimating] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchAxisRef = useRef<'x' | 'y' | null>(null);
+  const pendingStepRef = useRef<1 | -1 | 0>(0);
   const didSwipeRef = useRef(false);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-    didSwipeRef.current = false;
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setContainerWidth(el.offsetWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Commits the pending index change (set by a released drag or a
+  // completed arrow-button animation) once the slide transition finishes,
+  // then resets the track to center with no transition so it is ready for
+  // the next gesture.
+  const commit = () => {
+    const step = pendingStepRef.current;
+    pendingStepRef.current = 0;
+    if (step !== 0) {
+      setActiveImage((i) => (i + step + images.length) % images.length);
+    }
+    setAnimating(false);
+    setDragX(0);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent, imageCount: number) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (images.length <= 1) return;
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    touchAxisRef.current = null;
+    didSwipeRef.current = false;
+    setAnimating(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
     const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start || imageCount <= 1) return;
-    const t = e.changedTouches[0];
+    if (!start || images.length <= 1) return;
+    const t = e.touches[0];
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
-    // Require a clearly horizontal, deliberate gesture so vertical page
-    // scrolling and plain taps (which open/close the lightbox) still work.
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      didSwipeRef.current = true;
-      if (dx < 0) {
-        goNext();
-      } else {
-        goPrev();
-      }
+
+    if (touchAxisRef.current === null) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      touchAxisRef.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     }
+    if (touchAxisRef.current !== 'x') return;
+
+    // Once it is clearly a horizontal swipe, stop the page from also
+    // scrolling vertically while the finger drags the image.
+    e.preventDefault();
+    didSwipeRef.current = true;
+    setDragX(dx);
+  };
+
+  const handleTouchEnd = () => {
+    const wasDrag = touchAxisRef.current === 'x';
+    touchStartRef.current = null;
+    touchAxisRef.current = null;
+    if (!wasDrag || images.length <= 1) return;
+
+    const width = containerWidth || 1;
+    setAnimating(true);
+    setDragX((current) => {
+      // Whichever picture covers more than half the frame is the one that
+      // finishes coming fully into view; otherwise the drag springs back.
+      if (current <= -width / 2) {
+        pendingStepRef.current = 1;
+        return -width;
+      }
+      if (current >= width / 2) {
+        pendingStepRef.current = -1;
+        return width;
+      }
+      pendingStepRef.current = 0;
+      return 0;
+    });
   };
 
   useEffect(() => {
@@ -188,12 +245,16 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const images = product.images.length > 0 ? product.images : [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
   const goPrev = () => {
-    setSlideDir('prev');
-    setActiveImage((i) => (i - 1 + images.length) % images.length);
+    if (images.length <= 1) return;
+    pendingStepRef.current = -1;
+    setAnimating(true);
+    setDragX(containerWidth || 1);
   };
   const goNext = () => {
-    setSlideDir('next');
-    setActiveImage((i) => (i + 1) % images.length);
+    if (images.length <= 1) return;
+    pendingStepRef.current = 1;
+    setAnimating(true);
+    setDragX(-(containerWidth || 1));
   };
 
   const titleBlock = (
@@ -217,8 +278,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const imagesBlock = (
     <div className="flex flex-col gap-3 mb-8 lg:mb-0">
       <div
+        ref={containerRef}
         className="w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
-        style={{ aspectRatio: '3/4' }}
+        style={{ aspectRatio: '3/4', touchAction: 'pan-y' }}
         onClick={() => {
           if (didSwipeRef.current) {
             didSwipeRef.current = false;
@@ -227,20 +289,42 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           setLightboxOpen(true);
         }}
         onTouchStart={handleTouchStart}
-        onTouchEnd={(e) => handleTouchEnd(e, images.length)}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         role="button"
         aria-label="View larger image"
       >
-        <img
-          key={activeImage}
-          src={images[activeImage]}
-          alt={product.name}
-          draggable={false}
-          onContextMenu={(e) => e.preventDefault()}
-          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${
-            slideDir === 'next' ? 'gallery-slide-next' : 'gallery-slide-prev'
-          }`}
-        />
+        <div
+          className="absolute inset-0 flex"
+          style={{
+            transform: `translateX(${-containerWidth + dragX}px)`,
+            transition: animating ? 'transform 260ms ease-out' : 'none',
+          }}
+          onTransitionEnd={commit}
+        >
+          <img
+            src={images[(activeImage - 1 + images.length) % images.length]}
+            alt=""
+            draggable={false}
+            style={{ width: containerWidth, flexShrink: 0 }}
+            className="h-full object-cover"
+          />
+          <img
+            src={images[activeImage]}
+            alt={product.name}
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ width: containerWidth, flexShrink: 0 }}
+            className="h-full object-cover"
+          />
+          <img
+            src={images[(activeImage + 1) % images.length]}
+            alt=""
+            draggable={false}
+            style={{ width: containerWidth, flexShrink: 0 }}
+            className="h-full object-cover"
+          />
+        </div>
         <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <ZoomIn size={16} strokeWidth={1.5} />
         </div>
@@ -446,15 +530,12 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           )}
 
           <img
-            key={activeImage}
             src={images[activeImage]}
             alt={product.name}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
             onClick={(e) => e.stopPropagation()}
-            className={`max-w-full max-h-full object-contain ${
-              slideDir === 'next' ? 'gallery-slide-next' : 'gallery-slide-prev'
-            }`}
+            className="max-w-full max-h-full object-contain"
           />
 
           {images.length > 1 && (
