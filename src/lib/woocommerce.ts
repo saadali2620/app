@@ -186,7 +186,11 @@ async function wcCall(path: string, tokens: WcTokens, options: RequestInit = {})
 }
 
 export async function getPaymentMethods(): Promise<string[]> {
-  const res = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const res = await fetch(`${WC_BASE}/cart&_=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   const cart = await res.json();
   return cart.payment_methods ?? [];
 }
@@ -231,7 +235,11 @@ export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTota
   // WooCommerce, and this endpoint's response carries the customer's live
   // cart state and Nonce/Cart-Token — serving a cached copy of it makes the
   // remove-item step below act on stale data.
-  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include', cache: 'no-store' });
+  const initRes = await fetch(`${WC_BASE}/cart&_=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
 
@@ -293,7 +301,11 @@ export async function performCheckout(
   security: CheckoutSecurity,
   paymentMethod: string
 ) {
-  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include', cache: 'no-store' });
+  const initRes = await fetch(`${WC_BASE}/cart&_=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
 
