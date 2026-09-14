@@ -1,15 +1,1 @@
-{
-  "redirects": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "nors-store.vercel.app"
-        }
-      ],
-      "destination": "https://nors.com.pk/",
-      "permanent": true
-    }
-  ]
-}
+{}
