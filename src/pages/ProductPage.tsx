@@ -64,7 +64,20 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   // Touch-swipe between product photos (mobile/touchscreen only — these
   // handlers only ever fire from touch input, so desktop mouse users are
   // unaffected and keep using the arrow buttons / thumbnails).
-  const containerRef = useRef<HTMLDivElement>(null);
+  // The images block below is rendered twice (once in the mobile layout,
+  // once in the desktop layout) and only one copy is ever visible at a
+  // given viewport width. A single ref would only ever point to whichever
+  // copy mounted last, silently breaking touch/width handling on whatever
+  // breakpoint isn't that one. Targeting every '.nors-gallery-touch' node
+  // instead is safe: a hidden (display:none) element never receives real
+  // touch input, so only the actually-visible copy ever matters.
+  const getGalleryWidth = () => {
+    const els = document.querySelectorAll<HTMLDivElement>('.nors-gallery-touch');
+    for (const el of els) {
+      if (el.offsetWidth > 0) return el.offsetWidth;
+    }
+    return 1;
+  };
   const [dragX, setDragX] = useState(0);
   const [animating, setAnimating] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -73,8 +86,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const didSwipeRef = useRef(false);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const els = Array.from(document.querySelectorAll<HTMLDivElement>('.nors-gallery-touch'));
+    if (els.length === 0) return;
 
     // Attached natively (not via React's onTouchMove prop) because React
     // registers touch listeners as passive by default, which silently
@@ -98,10 +111,10 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       didSwipeRef.current = true;
       setDragX(deltaX);
     };
-    el.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+    els.forEach((el) => el.addEventListener('touchmove', handleNativeTouchMove, { passive: false }));
 
     return () => {
-      el.removeEventListener('touchmove', handleNativeTouchMove);
+      els.forEach((el) => el.removeEventListener('touchmove', handleNativeTouchMove));
     };
   }, []);
 
@@ -135,7 +148,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     touchAxisRef.current = null;
     if (!wasDrag || images.length <= 1) return;
 
-    const width = containerRef.current?.offsetWidth || 1;
+    const width = getGalleryWidth();
     setAnimating(true);
     setDragX((current) => {
       // Whichever picture covers more than half the frame is the one that
@@ -251,13 +264,13 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     if (images.length <= 1) return;
     pendingStepRef.current = -1;
     setAnimating(true);
-    setDragX(containerRef.current?.offsetWidth || 1);
+    setDragX(getGalleryWidth());
   };
   const goNext = () => {
     if (images.length <= 1) return;
     pendingStepRef.current = 1;
     setAnimating(true);
-    setDragX(-(containerRef.current?.offsetWidth || 1));
+    setDragX(-getGalleryWidth());
   };
 
   const titleBlock = (
@@ -281,8 +294,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const imagesBlock = (
     <div className="flex flex-col gap-3 mb-8 lg:mb-0">
       <div
-        ref={containerRef}
-        className="w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
+        className="nors-gallery-touch w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
         style={{ aspectRatio: '3/4', touchAction: 'pan-y' }}
         onClick={() => {
           if (didSwipeRef.current) {
