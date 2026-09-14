@@ -77,27 +77,6 @@ export default function HomePage({ navigate }: HomePageProps) {
 
       {/* <LookbookCarousel /> hidden for now, image selection needs more work */}
 
-      {/* Brand story */}
-      {/* Background image removed — was a hotlinked Pexels stock photo with
-          no connection to the brand. A plain dark gradient reads cleaner
-          than a placeholder shot of someone else's product. */}
-      <section className="relative py-32 lg:py-40 overflow-hidden bg-gradient-to-b from-neutral-950 via-black to-black">
-        <div className="relative max-w-2xl mx-auto text-center px-6">
-          <p className="text-white/40 text-[11px] uppercase tracking-[0.3em] mb-6">est. 2021</p>
-          <h2 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-8 leading-tight">
-            Built for Both, Loyal to Neither
-          </h2>
-          <p className="text-white/70 text-base leading-relaxed">
-            Every batch is small on purpose. We'd rather sell out in a week than sit in a
-            warehouse for a year. Fabric gets picked apart by hand before it's approved, cuts
-            get argued over in the studio, and nothing ships until it's right — not just done.
-            That's the whole operation, start to finish.
-          </p>
-          {/* "Read Our Story" button removed — it linked to /about, which is
-              temporarily hidden site-wide. Re-add once About is back. */}
-        </div>
-      </section>
-
       {/* FAQs — sits right before the global Footer (rendered in App.tsx) */}
       <FAQAccordion navigate={navigate} />
     </div>
