@@ -16,20 +16,19 @@ function parseHash(): Route {
 // scroll offset.
 const scrollPositions = new Map<string, number>();
 
-// Set as early as possible (module scope, not inside an effect) so the
-// browser never gets a chance to run its own scroll restoration before our
-// listener is wired up — waiting until the first render's effect left a gap
-// where a fresh page could still flash at a restored scroll offset first.
-if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
-  window.history.scrollRestoration = 'manual';
-}
-
 export function useRouter() {
   const [route, setRoute] = useState<Route>(parseHash);
   const pathRef = useRef(route.path);
   const isPopRef = useRef(false);
 
   useEffect(() => {
+    // Disable the browser's own scroll restoration so it can't fight with
+    // ours — that fight is what caused a new page to render at the old
+    // scroll offset for a frame before snapping to the top.
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
     const onPopState = () => {
       isPopRef.current = true;
     };
@@ -48,8 +47,8 @@ export function useRouter() {
 
       // Explicit behavior: 'auto' overrides the global CSS
       // `scroll-behavior: smooth`, so this reset/restore is an instant
-      // jump, never an animated scroll. Applied both synchronously (wins the
-      // common case immediately, before any layout shift from the new
+      // jump, never an animated scroll. Applied both synchronously (wins
+      // the common case immediately, before any layout shift from the new
       // page's content can make a delayed jump look like a scroll
       // animation) and again on the next frame as a safety net — Safari
       // performs its own async scroll adjustment after a hashchange (it
