@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/woocommerce';
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -19,7 +19,25 @@ const SIZE_ORDER = [
 function sizeSortIndex(size: string): number {
   const norm = size.trim().toLowerCase();
   const idx = SIZE_ORDER.indexOf(norm);
-  return idx === -1 ? SIZE_ORDER.length : idx;
+  if (idx !== -1) return idx;
+
+  // Compound sizes like "S/M" or "L/XL" bundle two adjacent sizes together —
+  // sort them between the two by averaging each part's index, so e.g. "S/M"
+  // lands between S and M rather than falling through to the unmatched
+  // bucket at the end (which is what happened before: only exact single
+  // sizes were recognized).
+  if (norm.includes('/')) {
+    const parts = norm.split('/').map((p) => p.trim());
+    const partIndexes = parts.map((p) => {
+      const i = SIZE_ORDER.indexOf(p);
+      return i === -1 ? SIZE_ORDER.length : i;
+    });
+    if (partIndexes.some((i) => i !== SIZE_ORDER.length)) {
+      return partIndexes.reduce((a, b) => a + b, 0) / partIndexes.length;
+    }
+  }
+
+  return SIZE_ORDER.length;
 }
 
 function sortSizes(list: ProductSize[]): ProductSize[] {
@@ -42,6 +60,37 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { addItem, openCart } = useCart();
+
+  // Touch-swipe between product photos (mobile/touchscreen only — these
+  // handlers only ever fire from touch input, so desktop mouse users are
+  // unaffected and keep using the arrow buttons / thumbnails).
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const didSwipeRef = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    didSwipeRef.current = false;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, imageCount: number) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || imageCount <= 1) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Require a clearly horizontal, deliberate gesture so vertical page
+    // scrolling and plain taps (which open/close the lightbox) still work.
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      didSwipeRef.current = true;
+      if (dx < 0) {
+        goNext();
+      } else {
+        goPrev();
+      }
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -163,7 +212,15 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       <div
         className="w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
         style={{ aspectRatio: '3/4' }}
-        onClick={() => setLightboxOpen(true)}
+        onClick={() => {
+          if (didSwipeRef.current) {
+            didSwipeRef.current = false;
+            return;
+          }
+          setLightboxOpen(true);
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={(e) => handleTouchEnd(e, images.length)}
         role="button"
         aria-label="View larger image"
       >
@@ -347,7 +404,15 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10"
-          onClick={() => setLightboxOpen(false)}
+          onClick={() => {
+            if (didSwipeRef.current) {
+              didSwipeRef.current = false;
+              return;
+            }
+            setLightboxOpen(false);
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={(e) => handleTouchEnd(e, images.length)}
         >
           <button
             onClick={() => setLightboxOpen(false)}
