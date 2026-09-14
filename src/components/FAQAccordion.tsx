@@ -11,8 +11,8 @@ interface FAQAccordionProps {
 }
 
 // Starter FAQ content — grounded in what the site actually does today
-// (per-product sizing, Track Order page, Policies page, PayFast + COD at
-// checkout, Karachi/Pakistan-only shipping). Edit freely; nothing here is
+// (per-product sizing, Track Order page, Policies page, online payment + COD
+// at checkout, Karachi/Pakistan-only shipping). Edit freely; nothing here is
 // final copy.
 const FAQ_ITEMS: FAQItem[] = [
   {
@@ -33,7 +33,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'What payment methods do you accept?',
     answer:
-      'Cash on Delivery, or secure online payment via PayFast (card, bank account, or mobile wallet).',
+      'Cash on Delivery, or secure online payment (card, bank account, or mobile wallet).',
   },
   {
     question: 'Where are you based, and do you ship internationally?',
