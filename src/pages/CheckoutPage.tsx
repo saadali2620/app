@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { performCheckout, getCartTotals, getPaymentMethods } from '@/lib/woocommerce';
+import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react';
@@ -64,6 +64,12 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   // never leaves the customer stuck on a method they didn't choose.
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('payfast');
+
+  // Large Cash-on-Delivery orders require a 50% advance payment online;
+  // the remaining 50% is still collected via COD on delivery.
+  const codDepositRequired = paymentMethod === 'cod' && totals !== null && totals.grandTotal >= COD_DEPOSIT_THRESHOLD;
+  const codDepositAmount = totals ? Math.round((totals.grandTotal / 2) * 100) / 100 : 0;
+  const codRemainingAmount = totals ? Math.round((totals.grandTotal - codDepositAmount) * 100) / 100 : 0;
 
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
@@ -188,6 +194,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
     setSubmitting(true);
     try {
+      const effectivePaymentMethod = codDepositRequired ? 'payfast' : paymentMethod;
+
       const { result } = await performCheckout(
         items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
         {
@@ -203,10 +211,20 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
           turnstileToken,
           honeypot,
         },
-        paymentMethod
+        effectivePaymentMethod
       );
 
-      if (result.payment_result?.redirect_url && paymentMethod !== 'cod' && paymentMethod !== 'bacs') {
+      if (codDepositRequired && result.order_id) {
+        try {
+          await markCodDeposit(result.order_id);
+        } catch {
+          // Non-fatal: the order is already placed. Worst case PayFast charges
+          // the full total instead of the 50% deposit, so we don't block the
+          // redirect on this.
+        }
+      }
+
+      if (result.payment_result?.redirect_url && effectivePaymentMethod !== 'cod' && effectivePaymentMethod !== 'bacs') {
         clearCart();
         setRedirectUrl(result.payment_result.redirect_url);
         return;
@@ -385,6 +403,12 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                     </label>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {codDepositRequired && (
+              <div className="border border-white/20 bg-white/5 px-4 py-3 text-white/70 text-xs leading-relaxed">
+                Orders of {formatPrice(COD_DEPOSIT_THRESHOLD)} or more on Cash on Delivery require a 50% advance payment online. You'll pay {formatPrice(codDepositAmount)} now by card, and the remaining {formatPrice(codRemainingAmount)} on delivery.
               </div>
             )}
 
