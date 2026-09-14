@@ -227,7 +227,11 @@ export interface CartTotals {
  * so the number they see matches what they're actually charged.
  */
 export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTotals> {
-  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  // no-store: a couple of environments run a page/edge cache in front of
+  // WooCommerce, and this endpoint's response carries the customer's live
+  // cart state and Nonce/Cart-Token — serving a cached copy of it makes the
+  // remove-item step below act on stale data.
+  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include', cache: 'no-store' });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
 
@@ -237,6 +241,13 @@ export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTota
       method: 'POST',
       body: JSON.stringify({ key: existing.key }),
     });
+    // A failed remove (stale nonce, session hiccup) must not be swallowed —
+    // otherwise the old item stays in the server cart and the items added
+    // just below land on top of it, so the total silently grows on every
+    // reload instead of reflecting only the current local cart.
+    if (!r.res.ok) {
+      throw new Error(r.data?.message || 'Could not reset cart before totaling.');
+    }
     tokens = r.tokens;
   }
 
@@ -265,23 +276,26 @@ export async function getCartTotals(items: CheckoutLineItem[]): Promise<CartTota
  * Runs the full checkout sequence (sync server cart to match the local cart,
  * submit the order) as one chain that fetches the Nonce/Cart-Token pair once
  * and threads it through every call, instead of re-fetching a fresh nonce
- * before each step. Payment methods are read from the very first plain GET
- * (before any items are added) rather than a second fetch later, and a small
- * pause separates each preflighted request. Shared hosting can trip a
- * PHP-FPM concurrency/rate limit on a tight burst of back-to-back
- * CORS-preflighted requests, surfacing as an unrelated "Failed to fetch";
- * both changes keep the request volume and pacing comfortably under that.
+ * before each step. A small pause separates each preflighted request.
+ * Shared hosting can trip a PHP-FPM concurrency/rate limit on a tight burst
+ * of back-to-back CORS-preflighted requests, surfacing as an unrelated
+ * "Failed to fetch"; both changes keep the request volume and pacing
+ * comfortably under that.
+ *
+ * paymentMethod is the customer's own choice from the checkout form (see
+ * getPaymentMethods) — it used to be decided here automatically (PayFast
+ * whenever available), which is why Cash on Delivery was never actually
+ * offered even when it was enabled in WooCommerce.
  */
 export async function performCheckout(
   items: CheckoutLineItem[],
   billing: CheckoutBilling,
-  security: CheckoutSecurity
+  security: CheckoutSecurity,
+  paymentMethod: string
 ) {
-  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include' });
+  const initRes = await fetch(`${WC_BASE}/cart`, { credentials: 'include', cache: 'no-store' });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
-  const paymentMethods: string[] = currentCart.payment_methods ?? [];
-  const paymentMethod = paymentMethods.includes('payfast') ? 'payfast' : paymentMethods[0] ?? 'cod';
 
   for (const existing of currentCart.items ?? []) {
     await pause(STEP_GAP_MS);
@@ -289,6 +303,9 @@ export async function performCheckout(
       method: 'POST',
       body: JSON.stringify({ key: existing.key }),
     });
+    if (!r.res.ok) {
+      throw new Error(r.data?.message || 'Could not reset cart before checkout.');
+    }
     tokens = r.tokens;
   }
 
