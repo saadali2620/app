@@ -63,7 +63,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   // WooCommerce. Defaulting to 'cod' here means a slow/failed methods fetch
   // never leaves the customer stuck on a method they didn't choose.
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('payfast');
 
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
@@ -102,7 +102,9 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         if (cancelled) return;
         setPaymentMethods(methods);
         if (methods.length > 0) {
-          setPaymentMethod(methods.includes('cod') ? 'cod' : methods[0]);
+          setPaymentMethod(
+            methods.includes('payfast') ? 'payfast' : methods.includes('cod') ? 'cod' : methods[0]
+          );
         }
       })
       .catch(() => {
@@ -234,7 +236,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         <div>
           <h1 className="text-white text-xl font-medium mb-2">Redirecting to secure payment</h1>
           <p className="text-white/50 text-sm max-w-sm">
-            Taking you to PayFast to complete your order. Hang tight — this only takes a second.
+            Taking you to our secure payment partner to complete your order. Hang tight — this
+            only takes a second.
           </p>
         </div>
       </div>
@@ -377,8 +380,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                         : method === 'bacs'
                         ? 'Bank Transfer'
                         : method === 'payfast'
-                        ? 'Card / PayFast'
-                        : method}
+                        ? 'Card / Online Payment'
+                        : 'Online Payment'}
                     </label>
                   ))}
                 </div>
