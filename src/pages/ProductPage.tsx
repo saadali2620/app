@@ -65,7 +65,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   // handlers only ever fire from touch input, so desktop mouse users are
   // unaffected and keep using the arrow buttons / thumbnails).
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [animating, setAnimating] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -76,10 +75,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const measure = () => setContainerWidth(el.offsetWidth);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
 
     // Attached natively (not via React's onTouchMove prop) because React
     // registers touch listeners as passive by default, which silently
@@ -106,7 +101,6 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     el.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
 
     return () => {
-      observer.disconnect();
       el.removeEventListener('touchmove', handleNativeTouchMove);
     };
   }, []);
@@ -141,7 +135,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     touchAxisRef.current = null;
     if (!wasDrag || images.length <= 1) return;
 
-    const width = containerWidth || 1;
+    const width = containerRef.current?.offsetWidth || 1;
     setAnimating(true);
     setDragX((current) => {
       // Whichever picture covers more than half the frame is the one that
@@ -257,13 +251,13 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     if (images.length <= 1) return;
     pendingStepRef.current = -1;
     setAnimating(true);
-    setDragX(containerWidth || 1);
+    setDragX(containerRef.current?.offsetWidth || 1);
   };
   const goNext = () => {
     if (images.length <= 1) return;
     pendingStepRef.current = 1;
     setAnimating(true);
-    setDragX(-(containerWidth || 1));
+    setDragX(-(containerRef.current?.offsetWidth || 1));
   };
 
   const titleBlock = (
@@ -305,7 +299,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         <div
           className="absolute inset-0 flex"
           style={{
-            transform: `translateX(${-containerWidth + dragX}px)`,
+            transform: `translateX(calc(-100% + ${dragX}px))`,
             transition: animating ? 'transform 260ms ease-out' : 'none',
           }}
           onTransitionEnd={commit}
@@ -314,7 +308,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             src={images[(activeImage - 1 + images.length) % images.length]}
             alt=""
             draggable={false}
-            style={{ width: containerWidth, flexShrink: 0 }}
+            style={{ width: '100%', flexShrink: 0 }}
             className="h-full object-cover"
           />
           <img
@@ -322,14 +316,14 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             alt={product.name}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
-            style={{ width: containerWidth, flexShrink: 0 }}
+            style={{ width: '100%', flexShrink: 0 }}
             className="h-full object-cover"
           />
           <img
             src={images[(activeImage + 1) % images.length]}
             alt=""
             draggable={false}
-            style={{ width: containerWidth, flexShrink: 0 }}
+            style={{ width: '100%', flexShrink: 0 }}
             className="h-full object-cover"
           />
         </div>
