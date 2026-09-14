@@ -88,7 +88,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     // of that with { passive: false }.
     const handleNativeTouchMove = (evt: TouchEvent) => {
       const startPoint = touchStartRef.current;
-      if (!startPoint || images.length <= 1) return;
+      if (!startPoint) return;
       const touchPoint = evt.touches[0];
       const deltaX = touchPoint.clientX - startPoint.x;
       const deltaY = touchPoint.clientY - startPoint.y;
@@ -109,7 +109,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       observer.disconnect();
       el.removeEventListener('touchmove', handleNativeTouchMove);
     };
-  }, [images.length]);
+  }, []);
 
   // Commits the pending index change (set by a released drag or a
   // completed arrow-button animation) once the slide transition finishes,
