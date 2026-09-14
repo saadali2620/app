@@ -83,36 +83,3 @@ a {
     touch-action: manipulation;
 }
 
-
-/* Product gallery swipe transition — replays whenever the active image
-   changes (ProductPage keys the <img> on activeImage), matching the
-   direction the user swiped or navigated. */
-@keyframes gallerySlideFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes gallerySlideFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.gallery-slide-next {
-  animation: gallerySlideFromRight 0.32s ease-out;
-}
-
-.gallery-slide-prev {
-  animation: gallerySlideFromLeft 0.32s ease-out;
-}
