@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "nors-store.vercel.app"
+        }
+      ],
+      "destination": "https://nors.com.pk/:path*",
+      "permanent": true
+    }
+  ]
+}
