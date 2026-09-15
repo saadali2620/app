@@ -45,19 +45,19 @@ export function useRouter() {
 
       const restoreY = wasPop ? scrollPositions.get(nextRoute.path) ?? 0 : 0;
 
-      // Explicit behavior: 'auto' overrides the global CSS
-      // `scroll-behavior: smooth`, so this reset/restore is an instant
-      // jump, never an animated scroll. Applied both synchronously (wins
-      // the common case immediately, before any layout shift from the new
-      // page's content can make a delayed jump look like a scroll
-      // animation) and again on the next frame as a safety net — Safari
-      // performs its own async scroll adjustment after a hashchange (it
-      // tries to jump to any element matching the new hash), which can run
-      // after a synchronous scrollTo here and leave the page stuck
-      // mid-scroll, so the rAF call re-asserts our position after that.
-      window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
+      // 'instant' forces the jump regardless of the global CSS
+      // `scroll-behavior: smooth` — 'auto' would defer to it and animate
+      // instead of snapping. Applied both synchronously (wins the common
+      // case immediately, before any layout shift from the new page's
+      // content can make a delayed jump look like a scroll animation) and
+      // again on the next frame as a safety net — Safari performs its own
+      // async scroll adjustment after a hashchange (it tries to jump to
+      // any element matching the new hash), which can run after a
+      // synchronous scrollTo here and leave the page stuck mid-scroll, so
+      // the rAF call re-asserts our position after that.
+      window.scrollTo({ top: restoreY, left: 0, behavior: 'instant' });
       requestAnimationFrame(() => {
-        window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
+        window.scrollTo({ top: restoreY, left: 0, behavior: 'instant' });
       });
     };
 
