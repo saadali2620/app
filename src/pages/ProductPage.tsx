@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/woocommerce';
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -61,145 +61,58 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const { addItem, openCart } = useCart();
 
-  // Touch-swipe between product photos (mobile/touchscreen only — these
-  // handlers only ever fire from touch input, so desktop mouse users are
-  // unaffected and keep using the arrow buttons / thumbnails).
-  // The images block below is rendered twice (once in the mobile layout,
-  // once in the desktop layout) and only one copy is ever visible at a
-  // given viewport width. A single ref would only ever point to whichever
-  // copy mounted last, silently breaking touch/width handling on whatever
-  // breakpoint isn't that one. Targeting every '.nors-gallery-touch' node
-  // instead is safe: a hidden (display:none) element never receives real
-  // touch input, so only the actually-visible copy ever matters.
-  const getGalleryWidth = () => {
-    const els = document.querySelectorAll<HTMLDivElement>('.nors-gallery-touch');
-    for (const el of els) {
-      if (el.offsetWidth > 0) return el.offsetWidth;
-    }
-    return 1;
+  // Swipe between product photos via native horizontal scroll-snap rather
+  // than hand-rolled touch math. A browser's own scroller already gives us
+  // 60fps-tracked dragging, correct momentum/deceleration, edge rubber-band,
+  // and automatic vertical-scroll fallback at the edges of the gesture — all
+  // per-device-tuned by the OS, which a custom touchmove handler can only
+  // ever approximate. The gallery is rendered twice (mobile layout, desktop
+  // layout) and only one copy is ever visible at a given viewport width, so
+  // every helper below targets every '.nors-gallery-scroll' node and skips
+  // whichever copy is hidden (offsetWidth === 0) rather than relying on a
+  // single ref that would only ever point at whichever copy mounted last.
+  const scrollGalleryTo = (i: number, smooth = true) => {
+    document.querySelectorAll<HTMLDivElement>('.nors-gallery-scroll').forEach((el) => {
+      if (el.offsetWidth > 0) {
+        el.scrollTo({ left: i * el.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+      }
+    });
   };
-  const [dragX, setDragX] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const touchAxisRef = useRef<'x' | 'y' | null>(null);
-  const pendingStepRef = useRef<1 | -1 | 0>(0);
-  const didSwipeRef = useRef(false);
-  // Last touch point + time seen by handleNativeTouchMove, used to compute
-  // release velocity so a quick flick can advance the gallery even when the
-  // finger barely moved (real momentum, not just a distance threshold).
-  const lastMoveRef = useRef<{ x: number; t: number } | null>(null);
-  const velocityRef = useRef(0);
-  // How long the settle/commit transition runs, set by handleTouchEnd. A
-  // flick already has momentum so it commits faster than a slow drag
-  // settling into place.
-  const transitionMsRef = useRef(260);
 
-  // Depends on [loading] (not [product] or []): the gallery markup below is
-  // gated behind `if (loading) { return <Skeleton/> }`, and `product` is set
-  // (via setProduct) several renders before `loading` is finally set to false
-  // at the end of the async load chain. A [product] dependency fires this
-  // effect while the gallery is still hidden behind the skeleton and never
-  // fires again once the skeleton is replaced by the real gallery DOM. Using
-  // [loading] instead ensures this effect (re)runs exactly when loading
-  // flips from true to false, i.e. exactly when the gallery DOM appears.
+  // Keeps activeImage in sync with wherever the user actually scrolled to
+  // (a swipe, a trackpad scroll, or a momentum settle) — scroll position is
+  // the single source of truth; buttons and thumbnails just call
+  // scrollGalleryTo and let this effect update the index once the browser
+  // gets there.
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll<HTMLDivElement>('.nors-gallery-touch'));
+    if (loading) return;
+    const els = Array.from(document.querySelectorAll<HTMLDivElement>('.nors-gallery-scroll'));
     if (els.length === 0) return;
 
-    // Attached natively (not via React's onTouchMove prop) because React
-    // registers touch listeners as passive by default, which silently
-    // ignores preventDefault() and lets the page's own vertical scroll
-    // fight the horizontal drag. A manually-added listener can opt out
-    // of that with { passive: false }.
-    const handleNativeTouchMove = (evt: TouchEvent) => {
-      const startPoint = touchStartRef.current;
-      if (!startPoint) return;
-      const touchPoint = evt.touches[0];
-      const deltaX = touchPoint.clientX - startPoint.x;
-      const deltaY = touchPoint.clientY - startPoint.y;
-
-      const now = performance.now();
-      const last = lastMoveRef.current;
-      if (last) {
-        const dt = now - last.t;
-        if (dt > 0) velocityRef.current = (touchPoint.clientX - last.x) / dt;
-      }
-      lastMoveRef.current = { x: touchPoint.clientX, t: now };
-
-      if (touchAxisRef.current === null) {
-        if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
-        touchAxisRef.current = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
-      }
-      if (touchAxisRef.current !== 'x') return;
-
-      evt.preventDefault();
-      didSwipeRef.current = true;
-      setDragX(deltaX);
+    let raf = 0;
+    const onScroll = (e: Event) => {
+      const el = e.currentTarget as HTMLDivElement;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const i = Math.round(el.scrollLeft / el.clientWidth);
+        setActiveImage((prev) => (i !== prev ? i : prev));
+      });
     };
-    els.forEach((el) => el.addEventListener('touchmove', handleNativeTouchMove, { passive: false }));
-
+    els.forEach((el) => el.addEventListener('scroll', onScroll, { passive: true }));
     return () => {
-      els.forEach((el) => el.removeEventListener('touchmove', handleNativeTouchMove));
+      els.forEach((el) => el.removeEventListener('scroll', onScroll));
+      cancelAnimationFrame(raf);
     };
   }, [loading]);
 
-  // Commits the pending index change (set by a released drag or a
-  // completed arrow-button animation) once the slide transition finishes,
-  // then resets the track to center with no transition so it is ready for
-  // the next gesture.
-  const commit = () => {
-    const step = pendingStepRef.current;
-    pendingStepRef.current = 0;
-    if (step !== 0) {
-      setActiveImage((i) => (i + step + images.length) % images.length);
-    }
-    setAnimating(false);
-    setDragX(0);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (images.length <= 1) return;
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-    lastMoveRef.current = { x: t.clientX, t: performance.now() };
-    velocityRef.current = 0;
-    touchAxisRef.current = null;
-    didSwipeRef.current = false;
-    setAnimating(false);
-  };
-
-
-  const handleTouchEnd = () => {
-    const wasDrag = touchAxisRef.current === 'x';
-    touchStartRef.current = null;
-    touchAxisRef.current = null;
-    if (!wasDrag || images.length <= 1) return;
-
-    const width = getGalleryWidth();
-    // Release velocity in px/ms, signed the same way as dragX (negative =
-    // swiping toward the next image). A fast-enough flick advances the
-    // gallery even when the finger barely moved, instead of requiring a
-    // half-width drag — real swipes carry momentum, not just distance.
-    const velocity = velocityRef.current;
-    const isFlick = Math.abs(velocity) > 0.5; // px/ms (~500px/s)
-    transitionMsRef.current = isFlick ? 180 : 260;
-    setAnimating(true);
-    setDragX((current) => {
-      // Whichever picture covers more than half the frame is the one that
-      // finishes coming fully into view; otherwise the drag springs back.
-      // A fast-enough flick commits in its direction even short of halfway.
-      if (current <= -width / 2 || (isFlick && velocity < 0)) {
-        pendingStepRef.current = 1;
-        return -width;
-      }
-      if (current >= width / 2 || (isFlick && velocity > 0)) {
-        pendingStepRef.current = -1;
-        return width;
-      }
-      pendingStepRef.current = 0;
-      return 0;
-    });
-  };
+  // The lightbox mounts its own scroll copy fresh each time it opens, so it
+  // needs to jump (no animation — this is restoring state, not a swipe) to
+  // whatever image was active in the inline gallery.
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    requestAnimationFrame(() => scrollGalleryTo(activeImage, false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxOpen]);
 
   useEffect(() => {
     (async () => {
@@ -296,16 +209,12 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const images = product.images.length > 0 ? product.images : [product.image_url, product.image_url_2].filter(Boolean) as string[];
 
   const goPrev = () => {
-    if (images.length <= 1) return;
-    pendingStepRef.current = -1;
-    setAnimating(true);
-    setDragX(getGalleryWidth());
+    if (activeImage === 0) return;
+    scrollGalleryTo(activeImage - 1);
   };
   const goNext = () => {
-    if (images.length <= 1) return;
-    pendingStepRef.current = 1;
-    setAnimating(true);
-    setDragX(-getGalleryWidth());
+    if (activeImage === images.length - 1) return;
+    scrollGalleryTo(activeImage + 1);
   };
 
   const titleBlock = (
@@ -329,57 +238,34 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const imagesBlock = (
     <div className="flex flex-col gap-3 mb-8 lg:mb-0">
       <div
-        className="nors-gallery-touch w-full bg-neutral-900 overflow-hidden relative group cursor-zoom-in"
-        style={{ aspectRatio: '3/4', touchAction: 'pan-y' }}
-        onClick={() => {
-          if (didSwipeRef.current) {
-            didSwipeRef.current = false;
-            return;
-          }
-          setLightboxOpen(true);
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        role="button"
-        aria-label="View larger image"
+        className="w-full bg-neutral-900 overflow-hidden relative group"
+        style={{ aspectRatio: '3/4' }}
       >
         <div
-          className="absolute inset-0 flex"
-          style={{
-            transform: `translateX(calc(-100% + ${dragX}px))`,
-            transition: animating ? `transform ${transitionMsRef.current}ms cubic-bezier(0.16, 1, 0.3, 1)` : 'none',
-          }}
-          onTransitionEnd={commit}
+          className="nors-gallery-scroll no-scrollbar flex h-full overflow-x-auto cursor-zoom-in"
+          style={{ scrollSnapType: 'x mandatory' }}
+          onClick={() => setLightboxOpen(true)}
+          role="button"
+          aria-label="View larger image"
         >
-          <img
-            src={images[(activeImage - 1 + images.length) % images.length]}
-            alt=""
-            draggable={false}
-            style={{ width: '100%', flexShrink: 0 }}
-            className="h-full object-cover"
-          />
-          <img
-            src={images[activeImage]}
-            alt={product.name}
-            draggable={false}
-            onContextMenu={(e) => e.preventDefault()}
-            style={{ width: '100%', flexShrink: 0 }}
-            className="h-full object-cover"
-          />
-          <img
-            src={images[(activeImage + 1) % images.length]}
-            alt=""
-            draggable={false}
-            style={{ width: '100%', flexShrink: 0 }}
-            className="h-full object-cover"
-          />
+          {images.map((img, i) => (
+            <img
+              key={i}
+              src={img}
+              alt={i === 0 ? product.name : ''}
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always', width: '100%', flexShrink: 0 }}
+              className="h-full object-cover"
+            />
+          ))}
         </div>
-        <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <ZoomIn size={16} strokeWidth={1.5} />
         </div>
         {product.badge && product.badge !== 'Sale' && (
           <span
-            className={`absolute top-4 left-4 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold ${
+            className={`absolute top-4 left-4 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold pointer-events-none ${
               product.badge === 'Sold Out'
                 ? 'bg-black/80 text-white/80'
                 : product.badge === 'Sale'
@@ -397,7 +283,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             <button
               key={i}
               type="button"
-              onClick={() => setActiveImage(i)}
+              onClick={() => scrollGalleryTo(i)}
               className={`flex-shrink-0 w-14 sm:w-16 overflow-hidden bg-neutral-900 border transition-colors ${
                 i === activeImage ? 'border-white' : 'border-transparent hover:border-white/30'
               }`}
@@ -430,7 +316,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
               key={s.id}
               onClick={() => s.in_stock && setSelectedSize(s.size)}
               disabled={!s.in_stock || isSoldOut}
-                          className={`min-w-[3rem] px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium border transition-all ${
+              className={`min-w-[3rem] px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium border transition-all ${
                 selectedSize === s.size
                   ? 'border-white bg-white text-black'
                   : s.in_stock && !isSoldOut
@@ -547,15 +433,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       {lightboxOpen && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10"
-          onClick={() => {
-            if (didSwipeRef.current) {
-              didSwipeRef.current = false;
-              return;
-            }
-            setLightboxOpen(false);
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={(e) => handleTouchEnd(e, images.length)}
+          onClick={() => setLightboxOpen(false)}
         >
           <button
             onClick={() => setLightboxOpen(false)}
@@ -578,14 +456,27 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             </button>
           )}
 
-          <img
-            src={images[activeImage]}
-            alt={product.name}
-            draggable={false}
-            onContextMenu={(e) => e.preventDefault()}
+          <div
+            className="nors-gallery-scroll no-scrollbar flex h-full w-full overflow-x-auto"
+            style={{ scrollSnapType: 'x mandatory' }}
             onClick={(e) => e.stopPropagation()}
-            className="max-w-full max-h-full object-contain"
-          />
+          >
+            {images.map((img, i) => (
+              <div
+                key={i}
+                className="h-full w-full flex items-center justify-center flex-shrink-0"
+                style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
+              >
+                <img
+                  src={img}
+                  alt={product.name}
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
 
           {images.length > 1 && (
             <button
@@ -601,7 +492,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           )}
 
           {images.length > 1 && (
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/50 text-xs uppercase tracking-[0.15em]">
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/50 text-xs uppercase tracking-[0.15em] pointer-events-none">
               {activeImage + 1} / {images.length}
             </div>
           )}
