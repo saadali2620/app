@@ -270,8 +270,10 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         </div>
         <h1 className="text-white text-3xl font-bold tracking-tight">Order Confirmed</h1>
         <p className="text-white/60 text-sm max-w-md leading-relaxed">
-          Thank you for your order. We'll send a confirmation email shortly. Due to high influx of
-          orders, please bear with us as we navigate through each and all queries.
+          {paymentMethod === 'bacs'
+            ? "Thank you for your order. Check your email for our bank/wallet transfer details — your order will be confirmed once we receive your payment."
+            : "Thank you for your order. We'll send a confirmation email shortly."}{' '}
+          Due to high order volume, please bear with us as we work through each order.
         </p>
         <button
           onClick={() => navigate('/')}
