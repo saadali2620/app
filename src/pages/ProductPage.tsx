@@ -84,6 +84,15 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const touchAxisRef = useRef<'x' | 'y' | null>(null);
   const pendingStepRef = useRef<1 | -1 | 0>(0);
   const didSwipeRef = useRef(false);
+  // Last touch point + time seen by handleNativeTouchMove, used to compute
+  // release velocity so a quick flick can advance the gallery even when the
+  // finger barely moved (real momentum, not just a distance threshold).
+  const lastMoveRef = useRef<{ x: number; t: number } | null>(null);
+  const velocityRef = useRef(0);
+  // How long the settle/commit transition runs, set by handleTouchEnd. A
+  // flick already has momentum so it commits faster than a slow drag
+  // settling into place.
+  const transitionMsRef = useRef(260);
 
   // Depends on [loading] (not [product] or []): the gallery markup below is
   // gated behind `if (loading) { return <Skeleton/> }`, and `product` is set
@@ -108,6 +117,14 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       const touchPoint = evt.touches[0];
       const deltaX = touchPoint.clientX - startPoint.x;
       const deltaY = touchPoint.clientY - startPoint.y;
+
+      const now = performance.now();
+      const last = lastMoveRef.current;
+      if (last) {
+        const dt = now - last.t;
+        if (dt > 0) velocityRef.current = (touchPoint.clientX - last.x) / dt;
+      }
+      lastMoveRef.current = { x: touchPoint.clientX, t: now };
 
       if (touchAxisRef.current === null) {
         if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
@@ -144,6 +161,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     if (images.length <= 1) return;
     const t = e.touches[0];
     touchStartRef.current = { x: t.clientX, y: t.clientY };
+    lastMoveRef.current = { x: t.clientX, t: performance.now() };
+    velocityRef.current = 0;
     touchAxisRef.current = null;
     didSwipeRef.current = false;
     setAnimating(false);
@@ -157,15 +176,23 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     if (!wasDrag || images.length <= 1) return;
 
     const width = getGalleryWidth();
+    // Release velocity in px/ms, signed the same way as dragX (negative =
+    // swiping toward the next image). A fast-enough flick advances the
+    // gallery even when the finger barely moved, instead of requiring a
+    // half-width drag — real swipes carry momentum, not just distance.
+    const velocity = velocityRef.current;
+    const isFlick = Math.abs(velocity) > 0.5; // px/ms (~500px/s)
+    transitionMsRef.current = isFlick ? 180 : 260;
     setAnimating(true);
     setDragX((current) => {
       // Whichever picture covers more than half the frame is the one that
       // finishes coming fully into view; otherwise the drag springs back.
-      if (current <= -width / 2) {
+      // A fast-enough flick commits in its direction even short of halfway.
+      if (current <= -width / 2 || (isFlick && velocity < 0)) {
         pendingStepRef.current = 1;
         return -width;
       }
-      if (current >= width / 2) {
+      if (current >= width / 2 || (isFlick && velocity > 0)) {
         pendingStepRef.current = -1;
         return width;
       }
@@ -320,7 +347,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           className="absolute inset-0 flex"
           style={{
             transform: `translateX(calc(-100% + ${dragX}px))`,
-            transition: animating ? 'transform 260ms ease-out' : 'none',
+            transition: animating ? `transform ${transitionMsRef.current}ms cubic-bezier(0.16, 1, 0.3, 1)` : 'none',
           }}
           onTransitionEnd={commit}
         >
