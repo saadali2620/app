@@ -85,6 +85,11 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const pendingStepRef = useRef<1 | -1 | 0>(0);
   const didSwipeRef = useRef(false);
 
+  // Depends on [product] (not []): product starts out null while the page is
+  // still loading, so the gallery markup below doesn't exist in the DOM yet on
+  // the very first render. An empty dependency array would run this effect
+  // once against that empty DOM, find nothing, and never attach the listener
+  // once the real gallery mounts a moment later when the fetch resolves.
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLDivElement>('.nors-gallery-touch'));
     if (els.length === 0) return;
@@ -116,7 +121,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     return () => {
       els.forEach((el) => el.removeEventListener('touchmove', handleNativeTouchMove));
     };
-  }, []);
+  }, [product]);
 
   // Commits the pending index change (set by a released drag or a
   // completed arrow-button animation) once the slide transition finishes,
