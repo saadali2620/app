@@ -21,13 +21,14 @@ function sizeSortIndex(size: string): number {
   const idx = SIZE_ORDER.indexOf(norm);
   if (idx !== -1) return idx;
 
-  // Compound sizes like "S/M" or "L/XL" bundle two adjacent sizes together —
-  // sort them between the two by averaging each part's index, so e.g. "S/M"
-  // lands between S and M rather than falling through to the unmatched
-  // bucket at the end (which is what happened before: only exact single
-  // sizes were recognized).
-  if (norm.includes('/')) {
-    const parts = norm.split('/').map((p) => p.trim());
+  // Compound sizes like "S/M", "S-M", or "L-XL" bundle two adjacent sizes
+  // together — sort them between the two by averaging each part's index, so
+  // e.g. "S-M" lands between S and M rather than falling through to the
+  // unmatched bucket at the end (which is what happened before: only exact
+  // single sizes were recognized, so "S-M" and "L-XL" both landed in that
+  // bucket and kept whatever order the backend happened to return).
+  if (/[/-]/.test(norm)) {
+    const parts = norm.split(/[/-]/).map((p) => p.trim());
     const partIndexes = parts.map((p) => {
       const i = SIZE_ORDER.indexOf(p);
       return i === -1 ? SIZE_ORDER.length : i;
@@ -58,6 +59,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const { addItem, openCart } = useCart();
 
@@ -369,29 +371,24 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       </h3>
       <div className="flex gap-6 text-white/50 text-sm">
         <a
-          href={`https://www.facebook.com/sharer.php?u=https://example.com/products/${product.slug}`}
+          href="https://instagram.com/nors.com.pk"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition-colors"
         >
-          Facebook
+          Instagram
         </a>
-        <a
-          href={`https://twitter.com/share?url=https://example.com/products/${product.slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard?.writeText(window.location.href);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+          }}
           className="hover:text-white transition-colors"
         >
-          Twitter
-        </a>
-        <a
-          href={`https://pinterest.com/pin/create/button/?url=https://example.com/products/${product.slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-white transition-colors"
-        >
-          Pinterest
-        </a>
+          {linkCopied ? 'Copied!' : 'Copy Link'}
+        </button>
       </div>
     </div>
   );
@@ -432,70 +429,82 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       {/* Lightbox */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10"
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col p-4 sm:p-10"
           onClick={() => setLightboxOpen(false)}
         >
-          <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors"
-            aria-label="Close"
-          >
-            <X size={28} strokeWidth={1.5} />
-          </button>
-
-          {images.length > 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                goPrev();
-              }}
-              className="absolute left-3 sm:left-8 text-white/70 hover:text-white transition-colors"
-              aria-label="Previous image"
-            >
-              <ChevronLeft size={32} strokeWidth={1.5} />
-            </button>
-          )}
-
-          <div
-            className="nors-gallery-scroll no-scrollbar flex h-full w-full overflow-x-auto"
-            style={{ scrollSnapType: 'x mandatory' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {images.map((img, i) => (
-              <div
-                key={i}
-                className="h-full w-full flex items-center justify-center flex-shrink-0"
-                style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
+          {/* Image area — takes whatever height is left after the footer
+              band below, and centers the photo within it. */}
+          <div className="relative flex-1 min-h-0 flex items-center justify-center">
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goPrev();
+                }}
+                className="absolute left-3 sm:left-8 text-white/70 hover:text-white transition-colors"
+                aria-label="Previous image"
               >
-                <img
-                  src={img}
-                  alt={product.name}
-                  draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            ))}
+                <ChevronLeft size={32} strokeWidth={1.5} />
+              </button>
+            )}
+
+            <div
+              className="nors-gallery-scroll no-scrollbar flex h-full w-full overflow-x-auto"
+              style={{ scrollSnapType: 'x mandatory' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {images.map((img, i) => (
+                <div
+                  key={i}
+                  className="h-full w-full flex items-center justify-center flex-shrink-0"
+                  style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
+                >
+                  <img
+                    src={img}
+                    alt={product.name}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goNext();
+                }}
+                className="absolute right-3 sm:right-8 text-white/70 hover:text-white transition-colors"
+                aria-label="Next image"
+              >
+                <ChevronRight size={32} strokeWidth={1.5} />
+              </button>
+            )}
           </div>
 
-          {images.length > 1 && (
+          {/* Footer band — reserves the space between the photo and the
+              bottom edge, and centers the close button (and the image
+              counter) inside it, instead of pinning close to the top-right
+              corner (awkward to reach one-handed) or the very bottom edge. */}
+          <div className="flex-shrink-0 min-h-[15%] flex flex-col items-center justify-center gap-3">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                goNext();
+                setLightboxOpen(false);
               }}
-              className="absolute right-3 sm:right-8 text-white/70 hover:text-white transition-colors"
-              aria-label="Next image"
+              className="text-white/70 hover:text-white transition-colors"
+              aria-label="Close"
             >
-              <ChevronRight size={32} strokeWidth={1.5} />
+              <X size={28} strokeWidth={1.5} />
             </button>
-          )}
-
-          {images.length > 1 && (
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/50 text-xs uppercase tracking-[0.15em] pointer-events-none">
-              {activeImage + 1} / {images.length}
-            </div>
-          )}
+            {images.length > 1 && (
+              <div className="text-white/50 text-xs uppercase tracking-[0.15em] pointer-events-none">
+                {activeImage + 1} / {images.length}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
