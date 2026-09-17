@@ -14,6 +14,18 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Pakistani mobile numbers: 03XXXXXXXXX (11 digits) or +923XXXXXXXXX
 const PHONE_PATTERN = /^(?:\+92|0)3\d{9}$/;
 
+// WooCommerce's own state codes for Pakistan (WC core i18n data) — must
+// match these exactly for shipping-zone-by-state matching to work.
+const PK_STATES: { code: string; name: string }[] = [
+  { code: 'PB', name: 'Punjab' },
+  { code: 'SD', name: 'Sindh' },
+  { code: 'KP', name: 'Khyber Pakhtunkhwa' },
+  { code: 'BA', name: 'Balochistan' },
+  { code: 'IS', name: 'Islamabad Capital Territory' },
+  { code: 'GB', name: 'Gilgit-Baltistan' },
+  { code: 'JK', name: 'Azad Kashmir' },
+];
+
 // PayFast's gateway hosts (UAT + production). Preconnecting on checkout
 // mount lets the browser finish DNS/TLS ahead of time, so the handoff at
 // the end of checkout lands on an already-warm connection instead of
@@ -31,12 +43,14 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [stateError, setStateError] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: '',
     firstName: '',
     lastName: '',
     address: '',
     city: '',
+    state: '',
     phone: '',
   });
   const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile();
@@ -85,7 +99,16 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     setTotalsError(false);
     (async () => {
       try {
-        const t = await getCartTotals(items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })));
+        // Once the customer has picked a province, price shipping against
+        // their actual destination instead of the store's default location
+        // — otherwise every preview (and, if never fixed before submit,
+        // every order) gets priced as if it shipped within the store's own
+        // province regardless of where it's actually going.
+        const location = form.state ? { city: form.city, state: form.state, country: 'PK' } : undefined;
+        const t = await getCartTotals(
+          items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
+          location
+        );
         if (!cancelled) {
           setTotals({ shipping: t.shippingTotal, grandTotal: t.grandTotal });
         }
@@ -99,7 +122,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsKey]);
+  }, [itemsKey, form.state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,13 +207,23 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     return true;
   };
 
+  const validateState = (value: string): boolean => {
+    if (!value) {
+      setStateError('Select your province.');
+      return false;
+    }
+    setStateError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     const emailOk = validateEmail(form.email);
     const phoneOk = validatePhone(form.phone);
-    if (!emailOk || !phoneOk) return;
+    const stateOk = validateState(form.state);
+    if (!emailOk || !phoneOk || !stateOk) return;
 
     setSubmitting(true);
     try {
@@ -203,6 +236,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
           last_name: form.lastName,
           address_1: form.address,
           city: form.city,
+          state: form.state,
           email: form.email,
           phone: form.phone,
           country: 'PK',
@@ -359,7 +393,26 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
                 />
-                <div>
+                <select
+                  required
+                  value={form.state}
+                  onChange={(e) => {
+                    setForm({ ...form, state: e.target.value });
+                    if (stateError) setStateError(null);
+                  }}
+                  className="bg-transparent border border-white/20 text-white px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors [&>option]:bg-black [&>option]:text-white"
+                >
+                  <option value="" disabled>
+                    Province
+                  </option>
+                  {PK_STATES.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                {stateError && <p className="sm:col-span-2 text-red-400 text-xs -mt-1">{stateError}</p>}
+                <div className="sm:col-span-2">
                   <input
                     required
                     placeholder="Phone"
