@@ -4,7 +4,7 @@ import { formatPrice } from '@/lib/format';
 import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
-import { Check } from 'lucide-react';
+import { Check } from 'lucide-react'; import { useAuth } from '@/context/AuthContext';
 
 interface CheckoutPageProps {
   navigate: (path: string) => void;
@@ -37,7 +37,7 @@ function normalizePhone(value: string): string {
 }
 
 export default function CheckoutPage({ navigate }: CheckoutPageProps) {
-  const { items, totalPrice, totalItems, clearCart } = useCart();
+  const { items, totalPrice, totalItems, clearCart } = useCart(); const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     state: '',
     phone: '',
   });
-  const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile();
+  const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile(); useEffect(() => { if (user?.email) { setForm((f) => (f.email ? f : { ...f, email: user.email })); } }, [user]);
   const [honeypot, setHoneypot] = useState('');
 
   // Set once performCheckout succeeds with a gateway redirect_url. Rendering
