@@ -22,8 +22,8 @@ const PK_STATES: { code: string; name: string }[] = [
   { code: 'KP', name: 'Khyber Pakhtunkhwa' },
   { code: 'BA', name: 'Balochistan' },
   { code: 'IS', name: 'Islamabad Capital Territory' },
-  { code: 'GB', name: 'Gilgit-Baltistan' },
-  { code: 'JK', name: 'Azad Kashmir' },
+  { code: 'GB', name: 'Gilgit Baltistan' },
+  { code: 'JK', name: 'Azad Kashmir' }, { code: 'TA', name: 'FATA' },
 ];
 
 // PayFast's gateway hosts (UAT + production). Preconnecting on checkout
