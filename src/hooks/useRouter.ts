@@ -69,7 +69,17 @@ export function useRouter() {
     };
   }, []);
 
+  // Setting window.location.hash to its current value is a no-op — it never
+  // fires a hashchange event, so onChange above (route update + scroll-to-
+  // top) never runs. That silently broke "tap a footer/nav link while
+  // already on that page": nothing happened instead of scrolling back to
+  // the top. Handled once here, in navigate itself, rather than in every
+  // caller that might re-navigate to the current page.
   const navigate = useCallback((path: string) => {
+    if (parseHash().path === path) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      return;
+    }
     window.location.hash = path;
   }, []);
 
