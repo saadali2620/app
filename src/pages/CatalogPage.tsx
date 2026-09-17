@@ -87,7 +87,7 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
       {/* Products — one per row, full width */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pb-20">
         {loading ? (
-          <div className="grid grid-cols-1 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
