@@ -488,7 +488,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
               bottom edge, and centers the close button (and the image
               counter) inside it, instead of pinning close to the top-right
               corner (awkward to reach one-handed) or the very bottom edge. */}
-          <div className="flex-shrink-0 min-h-[15%] flex flex-col items-center justify-center gap-3">
+          <div className="flex-shrink-0 min-h-[15%] flex flex-col items-center justify-between gap-3">
             <button
               onClick={(e) => {
                 e.stopPropagation();
