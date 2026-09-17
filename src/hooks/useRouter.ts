@@ -77,7 +77,7 @@ export function useRouter() {
   // caller that might re-navigate to the current page.
   const navigate = useCallback((path: string) => {
     if (parseHash().path === path) {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       return;
     }
     window.location.hash = path;
