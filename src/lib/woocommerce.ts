@@ -30,10 +30,10 @@ function parseAccordionSections(rawDescription: string | null): AccordionSection
     let content = match[2]
       .replace(/\[vc_column_text[^\]]*\]/g, '')
       .replace(/\[\/vc_column_text\]/g, '')
-      .replace(/&#8211;/g, '\u2013')
-      .replace(/&#8212;/g, '\u2014')
-      .replace(/&#8216;/g, '\u2018')
-      .replace(/&#8217;/g, '\u2019')
+      .replace(/&#8211;/g, '–')
+      .replace(/&#8212;/g, '—')
+      .replace(/&#8216;/g, '‘')
+      .replace(/&#8217;/g, '’')
       .trim();
     if (content) sections.push({ title, content });
   }
@@ -200,6 +200,7 @@ export interface CheckoutBilling {
   last_name: string;
   address_1: string;
   city: string;
+  state: string;
   postcode?: string;
   email: string;
   phone: string;
@@ -216,6 +217,14 @@ export interface CheckoutLineItem {
   quantity: number;
 }
 
+// Just enough of the shipping address to get an accurate shipping-zone
+// match before the customer has filled in the rest of the checkout form.
+export interface ShippingLocation {
+  city: string;
+  state: string;
+  country: string;
+}
+
 export interface CartTotals {
   itemsTotal: number;
   shippingTotal: number;
@@ -229,8 +238,15 @@ export interface CartTotals {
  * shipping zone, rather than guessing it on the frontend. Used to show an
  * accurate order summary on the checkout page *before* the customer submits,
  * so the number they see matches what they're actually charged.
+ *
+ * `location`, when given, is pushed to the cart's customer address first via
+ * /cart/update-customer. Without this, WooCommerce prices shipping against
+ * whatever the store's default customer location is (its own base address)
+ * regardless of what the shopper actually typed — which is why every order
+ * used to get priced (and recorded) as if it shipped within the store's own
+ * province, no matter the real destination.
  */
-async function getCartTotalsImpl(items: CheckoutLineItem[]): Promise<CartTotals> {
+async function getCartTotalsImpl(items: CheckoutLineItem[], location?: ShippingLocation): Promise<CartTotals> {
   // no-store: a couple of environments run a page/edge cache in front of
   // WooCommerce, and this endpoint's response carries the customer's live
   // cart state and Nonce/Cart-Token — serving a cached copy of it makes the
@@ -242,6 +258,18 @@ async function getCartTotalsImpl(items: CheckoutLineItem[]): Promise<CartTotals>
   });
   const currentCart = await initRes.json();
   let tokens: WcTokens = readTokens(initRes, { nonce: '', cartToken: '' });
+
+  if (location) {
+    await pause(STEP_GAP_MS);
+    const r = await wcCall('/cart/update-customer', tokens, {
+      method: 'POST',
+      body: JSON.stringify({
+        shipping_address: { city: location.city, state: location.state, country: location.country },
+        billing_address: { city: location.city, state: location.state, country: location.country },
+      }),
+    });
+    if (r.res.ok) tokens = r.tokens;
+  }
 
   for (const existing of currentCart.items ?? []) {
     await pause(STEP_GAP_MS);
@@ -372,8 +400,8 @@ function withCartLock<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-export function getCartTotals(items: CheckoutLineItem[]): Promise<CartTotals> {
-  return withCartLock(() => getCartTotalsImpl(items));
+export function getCartTotals(items: CheckoutLineItem[], location?: ShippingLocation): Promise<CartTotals> {
+  return withCartLock(() => getCartTotalsImpl(items, location));
 }
 
 export function performCheckout(
