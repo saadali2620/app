@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
+import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, getPostexServiceableCities, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
 import { Check } from 'lucide-react'; import { useAuth } from '@/context/AuthContext';
@@ -32,8 +32,24 @@ const PK_STATES: { code: string; name: string }[] = [
 // starting cold.
 const PAYFAST_HOSTS = ['https://ipg1.apps.net.pk', 'https://ipguat.apps.net.pk'];
 
+// Where customers send the payment screenshot to confirm a manually-verified
+// bank/wallet transfer (the COD deposit, and any other bacs order). There's
+// no automated way to confirm a bank/wallet transfer landed, so this is the
+// human-in-the-loop step until the order is manually marked confirmed.
+const DEPOSIT_INSTAGRAM_HANDLE = '@nors.com.pk';
+const DEPOSIT_INSTAGRAM_URL = 'https://instagram.com/nors.com.pk';
+
 function normalizePhone(value: string): string {
   return value.replace(/[\s-]/g, '');
+}
+
+// Loose match against PostEx's city names — lowercased, punctuation and
+// spaces stripped — so "Rawalpindi", "raw al pindi", and "Rawalpindi." all
+// match the same PostEx entry. This is a courtesy warning, not a hard
+// courier lookup, so it errs toward not flagging a real city as unserviced
+// over a spelling mismatch.
+function normalizeCityName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z]/g, '');
 }
 
 export default function CheckoutPage({ navigate }: CheckoutPageProps) {
@@ -79,11 +95,41 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('payfast');
 
+  // PostEx's serviceable-city list, used only to warn (never block) when the
+  // entered city looks like it might be outside courier coverage — checkout
+  // previously accepted any city with no signal at all, so an unreachable
+  // order (e.g. Turbat) only surfaced as a problem when someone tried to
+  // book the PostEx shipment in admin, well after the sale.
+  const [postexCities, setPostexCities] = useState<string[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getPostexServiceableCities().then((cities) => {
+      if (!cancelled) setPostexCities(cities);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const cityMaybeUnserviced =
+    postexCities !== null &&
+    postexCities.length > 0 &&
+    form.city.trim().length > 0 &&
+    !postexCities.some((c) => normalizeCityName(c) === normalizeCityName(form.city));
+
   // Large Cash-on-Delivery orders require a 50% advance payment online;
   // the remaining 50% is still collected via COD on delivery.
   const codDepositRequired = paymentMethod === 'cod' && totals !== null && totals.grandTotal >= COD_DEPOSIT_THRESHOLD;
   const codDepositAmount = totals ? Math.round((totals.grandTotal / 2) * 100) / 100 : 0;
   const codRemainingAmount = totals ? Math.round((totals.grandTotal - codDepositAmount) * 100) / 100 : 0;
+
+  // The 50% deposit on a large COD order is collected as a manual bank/mobile
+  // wallet transfer (WooCommerce's 'bacs' method, already configured with our
+  // account details) rather than through an online gateway — the customer
+  // transfers the deposit and DMs a screenshot on Instagram to confirm, since
+  // there's no automated way to verify a bank/wallet transfer landed.
+  // Previously this was hardcoded to 'payfast', which silently broke every
+  // ≥threshold COD order once PayFast was disabled as a gateway.
+  const codDepositBlocked = codDepositRequired && !paymentMethods.includes('bacs');
 
   // Stable key so the effect only re-runs when quantities/items actually
   // change, not on every render.
@@ -225,9 +271,19 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     const stateOk = validateState(form.state);
     if (!emailOk || !phoneOk || !stateOk) return;
 
+    if (codDepositBlocked) {
+      setError(
+        'Cash on Delivery isn\'t available for this order size right now — please choose Bank Transfer instead.'
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const effectivePaymentMethod = codDepositRequired ? 'payfast' : paymentMethod;
+      // The deposit itself is placed as a 'bacs' (bank/wallet transfer) order
+      // so WooCommerce sends our account details as usual; markCodDeposit
+      // below tags it as a partial-payment COD order for fulfillment.
+      const effectivePaymentMethod = codDepositRequired ? 'bacs' : paymentMethod;
 
       const { result } = await performCheckout(
         items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
@@ -252,9 +308,10 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         try {
           await markCodDeposit(result.order_id);
         } catch {
-          // Non-fatal: the order is already placed. Worst case PayFast charges
-          // the full total instead of the 50% deposit, so we don't block the
-          // redirect on this.
+          // Non-fatal: the order is already placed. Worst case the order
+          // isn't tagged as a deposit order in admin, so we don't block
+          // confirmation on this — Saad still gets the Instagram DM to
+          // confirm payment manually either way.
         }
       }
 
@@ -304,9 +361,25 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         </div>
         <h1 className="text-white text-3xl font-bold tracking-tight">Order Confirmed</h1>
         <p className="text-white/60 text-sm max-w-md leading-relaxed">
-          {paymentMethod === 'bacs'
-            ? "Thank you for your order. Check your email for our bank/wallet transfer details — your order will be confirmed once we receive your payment."
-            : "Thank you for your order. We'll send a confirmation email shortly."}{' '}
+          {codDepositRequired ? (
+            <>
+              Thank you for your order. Check your email for our bank/wallet transfer details,
+              then send your payment screenshot to our Instagram DM (
+              <a
+                href={DEPOSIT_INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                {DEPOSIT_INSTAGRAM_HANDLE}
+              </a>
+              ) to confirm your order. The remaining balance is paid on delivery.
+            </>
+          ) : paymentMethod === 'bacs' ? (
+            "Thank you for your order. Check your email for our bank/wallet transfer details — your order will be confirmed once we receive your payment."
+          ) : (
+            "Thank you for your order. We'll send a confirmation email shortly."
+          )}{' '}
           Due to high order volume, please bear with us as we work through each order.
         </p>
         <button
@@ -393,6 +466,12 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
                 />
+                {cityMaybeUnserviced && (
+                  <p className="sm:col-span-2 text-amber-400 text-xs -mt-1">
+                    We may not be able to deliver to "{form.city}" — double-check the spelling, or
+                    reach out first if you're not sure we cover this area.
+                  </p>
+                )}
                 <select
                   required
                   value={form.state}
@@ -461,9 +540,24 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               </div>
             )}
 
-            {codDepositRequired && (
+            {codDepositRequired && codDepositBlocked && (
+              <div className="border border-red-400/40 bg-red-400/5 px-4 py-3 text-red-400 text-xs leading-relaxed">
+                Cash on Delivery isn't available for orders of {formatPrice(COD_DEPOSIT_THRESHOLD)} or more right now — please select Bank Transfer instead.
+              </div>
+            )}
+
+            {codDepositRequired && !codDepositBlocked && (
               <div className="border border-white/20 bg-white/5 px-4 py-3 text-white/70 text-xs leading-relaxed">
-                Orders of {formatPrice(COD_DEPOSIT_THRESHOLD)} or more on Cash on Delivery require a 50% advance payment online. You'll pay {formatPrice(codDepositAmount)} now by card, and the remaining {formatPrice(codRemainingAmount)} on delivery.
+                Orders of {formatPrice(COD_DEPOSIT_THRESHOLD)} or more on Cash on Delivery require a 50% advance payment by bank or mobile wallet transfer. After placing your order, transfer {formatPrice(codDepositAmount)} using the account details in your confirmation email, then send the payment screenshot to our Instagram DM (
+                <a
+                  href={DEPOSIT_INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white underline"
+                >
+                  {DEPOSIT_INSTAGRAM_HANDLE}
+                </a>
+                ) to confirm your order. The remaining {formatPrice(codRemainingAmount)} is paid on delivery.
               </div>
             )}
 
@@ -476,7 +570,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
 
             <button
               type="submit"
-              disabled={submitting || totalsLoading || !turnstileToken}
+              disabled={submitting || totalsLoading || !turnstileToken || codDepositBlocked}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
               {submitting
@@ -485,6 +579,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 ? 'Calculating…'
                 : !turnstileToken
                 ? 'Preparing Secure Checkout…'
+                : codDepositBlocked
+                ? 'Cash on Delivery Unavailable'
                 : `Place Order — ${formatPrice(grandTotal)}`}
             </button>
           </form>
