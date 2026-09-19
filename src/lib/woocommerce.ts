@@ -429,3 +429,33 @@ export async function markCodDeposit(orderId: number): Promise<CodDepositResult>
   }
   return { depositAmount: data.depositAmount, remainingAmount: data.remainingAmount };
 }
+
+// PostEx's operational-city list, fetched once per page load and cached in
+// module scope. Backed by a server-side cached REST route (the PostEx API
+// itself is neither fast nor meant to be hit on every checkout keystroke),
+// but this still avoids re-fetching it on every render/effect re-run within
+// a single visit.
+let cachedPostexCities: string[] | null = null;
+let postexCitiesPromise: Promise<string[]> | null = null;
+
+export function getPostexServiceableCities(): Promise<string[]> {
+  if (cachedPostexCities) return Promise.resolve(cachedPostexCities);
+  if (!postexCitiesPromise) {
+    postexCitiesPromise = fetch('https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/postex-cities')
+      .then((res) => res.json())
+      .then((data) => {
+        const cities: string[] = Array.isArray(data?.cities) ? data.cities : [];
+        cachedPostexCities = cities;
+        return cities;
+      })
+      .catch(() => {
+        // Non-fatal: checkout should never be blocked by this lookup
+        // failing. Clear the in-flight promise so a later call can retry
+        // instead of permanently caching an empty result from a transient
+        // failure.
+        postexCitiesPromise = null;
+        return [];
+      });
+  }
+  return postexCitiesPromise;
+            }
