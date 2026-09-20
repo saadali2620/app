@@ -3,7 +3,7 @@ import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/wo
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
-import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn, Share2, Link } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
 
 const SIZE_ORDER = [
@@ -366,18 +366,28 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
 
   const shareBlock = (
     <div className="pt-8 mt-8 border-t border-white/10">
-      <h3 className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-4">
-        Share
-      </h3>
       <div className="flex gap-6 text-white/50 text-sm">
-        <a
-          href="https://instagram.com/nors.com.pk"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-white transition-colors"
+        <button
+          type="button"
+          onClick={async () => {
+            const shareData = { title: product.name, url: window.location.href };
+            if (navigator.share) {
+              try {
+                await navigator.share(shareData);
+                return;
+              } catch {
+                // Cancelled or unsupported target — fall back to copy.
+              }
+            }
+            navigator.clipboard?.writeText(window.location.href);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+          }}
+          className="flex items-center gap-2 hover:text-white transition-colors"
         >
-          Instagram
-        </a>
+          <Share2 size={15} strokeWidth={1.5} />
+          Share
+        </button>
         <button
           type="button"
           onClick={() => {
@@ -385,8 +395,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="hover:text-white transition-colors"
+          className="flex items-center gap-2 hover:text-white transition-colors"
         >
+          <Link size={15} strokeWidth={1.5} />
           {linkCopied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
