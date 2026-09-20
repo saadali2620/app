@@ -52,6 +52,33 @@ function normalizeCityName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z]/g, '');
 }
 
+// Well-known Pakistani cities mapped to their real province, used to block
+// an obviously wrong city/province combination at checkout (e.g. "Karachi"
+// typed next to a "Balochistan" province selection — nothing previously
+// cross-checked the two, and free-text city + a separate province dropdown
+// let that go straight through to a real order). Deliberately limited to
+// unambiguous major cities rather than an exhaustive gazetteer: a smaller
+// town that isn't listed here is simply not checked, rather than risk
+// blocking a legitimate order on an incomplete map.
+const KNOWN_CITY_PROVINCE: Record<string, string> = {
+  karachi: 'SD', hyderabad: 'SD', sukkur: 'SD', larkana: 'SD', nawabshah: 'SD',
+  mirpurkhas: 'SD', jacobabad: 'SD', shikarpur: 'SD', dadu: 'SD', thatta: 'SD',
+  badin: 'SD', khairpur: 'SD', sanghar: 'SD', ghotki: 'SD',
+  lahore: 'PB', faisalabad: 'PB', rawalpindi: 'PB', multan: 'PB', gujranwala: 'PB',
+  sialkot: 'PB', bahawalpur: 'PB', sargodha: 'PB', sheikhupura: 'PB', jhelum: 'PB',
+  gujrat: 'PB', kasur: 'PB', sahiwal: 'PB', okara: 'PB', rahimyarkhan: 'PB',
+  deraghazikhan: 'PB', muzaffargarh: 'PB', attock: 'PB', vehari: 'PB',
+  khanewal: 'PB', chiniot: 'PB', jhang: 'PB', mianwali: 'PB',
+  peshawar: 'KP', mardan: 'KP', abbottabad: 'KP', swat: 'KP', mingora: 'KP',
+  kohat: 'KP', bannu: 'KP', deraismailkhan: 'KP', nowshera: 'KP',
+  charsadda: 'KP', swabi: 'KP', chitral: 'KP',
+  quetta: 'BA', gwadar: 'BA', turbat: 'BA', khuzdar: 'BA', sibi: 'BA',
+  chaman: 'BA', zhob: 'BA', loralai: 'BA', hub: 'BA',
+  islamabad: 'IS',
+  gilgit: 'GB', skardu: 'GB', hunza: 'GB', chilas: 'GB',
+  muzaffarabad: 'JK', mirpurajk: 'JK', rawalakot: 'JK', bagh: 'JK', kotli: 'JK',
+};
+
 export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const { items, totalPrice, totalItems, clearCart } = useCart(); const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
@@ -60,6 +87,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [stateError, setStateError] = useState<string | null>(null);
+  const [cityStateError, setCityStateError] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: '',
     firstName: '',
@@ -262,6 +290,20 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     return true;
   };
 
+  // Only fires for cities we can actually confirm (KNOWN_CITY_PROVINCE) —
+  // an unrecognized city never blocks submission, same reasoning as the
+  // PostEx coverage check above.
+  const validateCityState = (city: string, state: string): boolean => {
+    const expected = KNOWN_CITY_PROVINCE[normalizeCityName(city)];
+    if (expected && state && expected !== state) {
+      const expectedName = PK_STATES.find((s) => s.code === expected)?.name ?? expected;
+      setCityStateError(`"${city}" is in ${expectedName}, not the selected province.`);
+      return false;
+    }
+    setCityStateError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -269,7 +311,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     const emailOk = validateEmail(form.email);
     const phoneOk = validatePhone(form.phone);
     const stateOk = validateState(form.state);
-    if (!emailOk || !phoneOk || !stateOk) return;
+    const cityStateOk = validateCityState(form.city, form.state);
+    if (!emailOk || !phoneOk || !stateOk || !cityStateOk) return;
 
     if (codDepositBlocked) {
       setError(
@@ -463,9 +506,14 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   required
                   placeholder="City"
                   value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, city: e.target.value });
+                    if (cityStateError) setCityStateError(null);
+                  }}
+                  onBlur={(e) => e.target.value && form.state && validateCityState(e.target.value, form.state)}
                   className="bg-transparent border border-white/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors"
                 />
+                {cityStateError && <p className="sm:col-span-2 text-red-400 text-xs -mt-1">{cityStateError}</p>}
                 {cityMaybeUnserviced && (
                   <p className="sm:col-span-2 text-amber-400 text-xs -mt-1">
                     We may not be able to deliver to "{form.city}" — double-check the spelling, or
@@ -478,6 +526,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   onChange={(e) => {
                     setForm({ ...form, state: e.target.value });
                     if (stateError) setStateError(null);
+                    if (cityStateError) setCityStateError(null);
                   }}
                   className="bg-transparent border border-white/20 text-white px-4 py-3 text-sm focus:border-white focus:outline-none transition-colors [&>option]:bg-black [&>option]:text-white"
                 >
