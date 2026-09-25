@@ -66,12 +66,25 @@ export function StarIcon({ filled = true, ...props }: IconProps) {
   );
 }
 
-// A coin with a star cut out of it.
-export function PointsIcon(props: IconProps) {
+// A coin: outer rim, inner rim and the nors. triangle.
+export function PointsIcon({ size = 32, className }: IconProps) {
   return (
-    <Svg {...props}>
-      <path d="M16 3a13 13 0 1 0 0 26 13 13 0 0 0 0-26zM16 10l1.47 3.98 4.24.17-3.33 2.62 1.15 4.08L16 18.5l-3.53 2.35 1.15-4.08-3.33-2.62 4.24-.17z" />
-    </Svg>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="16" r="12" />
+      <circle cx="16" cy="16" r="8.6" opacity="0.45" />
+      <path d="m16 10.8 4.7 8.1h-9.4z" />
+    </svg>
   );
 }
 
