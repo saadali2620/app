@@ -7,7 +7,7 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  register: (email: string, password: string, firstName: string, lastName: string, marketingOptIn?: boolean) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
   refreshMe: () => Promise<void>;
@@ -52,8 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     applyAuth(await authApi.login(email, password));
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
-    applyAuth(await authApi.register(email, password, firstName, lastName));
+  const register = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    marketingOptIn = false
+  ) => {
+    applyAuth(await authApi.register(email, password, firstName, lastName, marketingOptIn));
   };
 
   const loginWithGoogle = async (idToken: string) => {
