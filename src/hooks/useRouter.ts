@@ -5,82 +5,79 @@ export interface Route {
   params: Record<string, string>;
 }
 
-function parseHash(): Route {
-  const hash = window.location.hash.replace(/^#/, '') || '/';
-  return { path: hash, params: {} };
+// The same build is served at the domain root and from the /enterprise copy.
+const BASE = /^\/enterprise(\/|$)/.test(window.location.pathname) ? '/enterprise' : '';
+
+// Route path = pathname (minus BASE, no trailing slash) + query string.
+function parsePath(): Route {
+  let pathname = window.location.pathname;
+  if (BASE && pathname.startsWith(BASE)) pathname = pathname.slice(BASE.length);
+  pathname = pathname.replace(/\/+$/, '') || '/';
+  return { path: pathname + window.location.search, params: {} };
+}
+
+// Old links look like /#/login. Rewrite them once to /login.
+function migrateHash() {
+  const h = window.location.hash;
+  if (h.startsWith('#/')) {
+    window.history.replaceState(null, '', BASE + h.slice(1));
+  }
 }
 
 // Remembers scroll position per path so navigating back restores where the
-// user left off, while a fresh navigation (into a product, a collection,
-// etc.) always starts at the top instead of inheriting the previous page's
-// scroll offset.
+// user left off, while a fresh navigation always starts at the top.
 const scrollPositions = new Map<string, number>();
 
+function jumpTo(y: number) {
+  // 'instant' beats the global CSS scroll-behavior: smooth; repeated on the
+  // next frame as a safety net for browsers that adjust scroll asynchronously.
+  window.scrollTo({ top: y, left: 0, behavior: 'instant' });
+  requestAnimationFrame(() => window.scrollTo({ top: y, left: 0, behavior: 'instant' }));
+}
+
 export function useRouter() {
-  const [route, setRoute] = useState<Route>(parseHash);
+  const [route, setRoute] = useState<Route>(() => {
+    migrateHash();
+    return parsePath();
+  });
   const pathRef = useRef(route.path);
-  const isPopRef = useRef(false);
 
   useEffect(() => {
-    // Disable the browser's own scroll restoration so it can't fight with
-    // ours — that fight is what caused a new page to render at the old
-    // scroll offset for a frame before snapping to the top.
+    // Disable the browser's own scroll restoration so it can't fight ours.
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
 
-    const onPopState = () => {
-      isPopRef.current = true;
-    };
-
-    const onChange = () => {
+    const sync = (restore: boolean) => {
       scrollPositions.set(pathRef.current, window.scrollY);
-
-      const nextRoute = parseHash();
-      const wasPop = isPopRef.current;
-      isPopRef.current = false;
-
-      pathRef.current = nextRoute.path;
-      setRoute(nextRoute);
-
-      const restoreY = wasPop ? scrollPositions.get(nextRoute.path) ?? 0 : 0;
-
-      // 'instant' forces the jump regardless of the global CSS
-      // `scroll-behavior: smooth` — 'auto' would defer to it and animate
-      // instead of snapping. Applied both synchronously (wins the common
-      // case immediately, before any layout shift from the new page's
-      // content can make a delayed jump look like a scroll animation) and
-      // again on the next frame as a safety net — Safari performs its own
-      // async scroll adjustment after a hashchange (it tries to jump to
-      // any element matching the new hash), which can run after a
-      // synchronous scrollTo here and leave the page stuck mid-scroll, so
-      // the rAF call re-asserts our position after that.
-      window.scrollTo({ top: restoreY, left: 0, behavior: 'instant' });
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: restoreY, left: 0, behavior: 'instant' });
-      });
+      migrateHash();
+      const next = parsePath();
+      pathRef.current = next.path;
+      setRoute(next);
+      jumpTo(restore ? scrollPositions.get(next.path) ?? 0 : 0);
     };
 
-    window.addEventListener('popstate', onPopState);
-    window.addEventListener('hashchange', onChange);
+    const onPop = () => sync(true);
+    const onHash = () => sync(false); // old-style #/path links still work
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('hashchange', onHash);
     return () => {
-      window.removeEventListener('popstate', onPopState);
-      window.removeEventListener('hashchange', onChange);
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('hashchange', onHash);
     };
   }, []);
 
-  // Setting window.location.hash to its current value is a no-op — it never
-  // fires a hashchange event, so onChange above (route update + scroll-to-
-  // top) never runs. That silently broke "tap a footer/nav link while
-  // already on that page": nothing happened instead of scrolling back to
-  // the top. Handled once here, in navigate itself, rather than in every
-  // caller that might re-navigate to the current page.
+  // Navigating to the page you're already on scrolls to the top instead.
   const navigate = useCallback((path: string) => {
-    if (parseHash().path === path) {
+    if (parsePath().path === path) {
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       return;
     }
-    window.location.hash = path;
+    scrollPositions.set(pathRef.current, window.scrollY);
+    window.history.pushState(null, '', BASE + path);
+    pathRef.current = path;
+    setRoute({ path, params: {} });
+    jumpTo(0);
   }, []);
 
   return { route, navigate };
