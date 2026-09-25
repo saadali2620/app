@@ -42,7 +42,7 @@ export default function ContactPage({ navigate }: ContactPageProps) {
             footer's fine print. */}
         <div className="flex items-center justify-center gap-2 text-white/40 text-sm mt-10">
           <MapPin size={16} strokeWidth={1.5} />
-          8-D, Block #2, PECHS, Karachi
+          PECHS, Karachi
         </div>
       </div>
     </div>
