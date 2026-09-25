@@ -12,6 +12,7 @@ export default function RegisterPage({ navigate }: RegisterPageProps) {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function RegisterPage({ navigate }: RegisterPageProps) {
     setError(null);
     setLoading(true);
     try {
-      await register(email, password, firstName, lastName);
+      await register(email, password, firstName, lastName, marketingOptIn);
       navigate('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create your account.');
@@ -91,6 +92,17 @@ export default function RegisterPage({ navigate }: RegisterPageProps) {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-transparent border border-white/20 focus:border-white/50 text-white text-sm px-4 py-3.5 outline-none transition-colors placeholder:text-white/30"
           />
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={marketingOptIn}
+              onChange={(e) => setMarketingOptIn(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-white"
+            />
+            <span className="text-white/50 text-xs leading-relaxed">
+              Email me about new drops, restocks and offers. Unsubscribe anytime.
+            </span>
+          </label>
           <button
             type="submit"
             disabled={loading}
