@@ -14,6 +14,7 @@ export interface AuthUser {
   last_name: string;
   phone: string;
   points: number;
+  marketing_optin?: boolean;
   token: string;
 }
 
@@ -22,6 +23,8 @@ export interface OrderItemSummary {
   quantity: number;
   total: string;
   image: string | null;
+  product_id?: number;
+  reviewed?: boolean;
 }
 
 export interface OrderSummary {
@@ -33,6 +36,7 @@ export interface OrderSummary {
   currency: string;
   payment_method: string;
   items: OrderItemSummary[];
+  stage?: 'to_ship' | 'to_receive' | 'delivered' | 'closed';
 }
 
 async function handle<T>(res: Response): Promise<T> {
@@ -47,12 +51,13 @@ export async function register(
   email: string,
   password: string,
   firstName: string,
-  lastName: string
+  lastName: string,
+  marketingOptIn = false
 ): Promise<AuthUser> {
   const res = await fetch(`${NORS_BASE}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName }),
+    body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName, marketing_optin: marketingOptIn }),
   });
   return handle<AuthUser>(res);
 }
@@ -82,7 +87,7 @@ export async function getMe(token: string): Promise<AuthUser> {
   return handle<AuthUser>(res);
 }
 
-export async function updateMe(token: string, fields: Record<string, string>): Promise<AuthUser> {
+export async function updateMe(token: string, fields: Record<string, string | boolean>): Promise<AuthUser> {
   const res = await fetch(`${NORS_BASE}/me`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -96,4 +101,34 @@ export async function getOrders(token: string): Promise<OrderSummary[]> {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handle<OrderSummary[]>(res);
+}
+
+export interface ReviewSummary {
+  id: number;
+  product_id: number;
+  product_name: string;
+  rating: number;
+  text: string;
+  date: string | null;
+}
+
+export async function getReviews(token: string): Promise<ReviewSummary[]> {
+  const res = await fetch(`${NORS_BASE}/reviews`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handle<ReviewSummary[]>(res);
+}
+
+export async function submitReview(
+  token: string,
+  productId: number,
+  rating: number,
+  text: string
+): Promise<{ id: number }> {
+  const res = await fetch(`${NORS_BASE}/reviews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ product_id: productId, rating, text }),
+  });
+  return handle<{ id: number }>(res);
 }
