@@ -17,6 +17,7 @@ import TrackOrderPage from '@/pages/TrackOrderPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import AccountPage from '@/pages/AccountPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -81,7 +82,7 @@ function App() {
     }
 
     // /policies
-    if (path === '/policies') {
+    if (path === '/policies' || path.startsWith('/policies/')) {
       return <PolicyPage navigate={navigate} />;
     }
 
@@ -110,8 +111,13 @@ function App() {
       return <OrderConfirmationPage path={path} navigate={navigate} />;
     }
 
-    // / (home) — also covers /faqs, which scrolls to the FAQ section above.
-    return <HomePage navigate={navigate} />;
+    // / (home) — also covers /faqs (scrolls to the FAQ section above) and the
+    // temporarily hidden /collections/all and /about.
+    if (['/', '/faqs', '/collections/all', '/about'].includes(path.split('?')[0])) {
+      return <HomePage navigate={navigate} />;
+    }
+
+    return <NotFoundPage navigate={navigate} />;
   };
 
   return (
