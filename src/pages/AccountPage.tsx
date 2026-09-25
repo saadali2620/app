@@ -3,6 +3,7 @@ import { Pencil, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getOrders, updateMe, type OrderSummary } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
+import AccountOverview from '@/components/account/AccountOverview';
 
 interface AccountPageProps {
   navigate: (path: string) => void;
@@ -174,6 +175,8 @@ export default function AccountPage({ navigate }: AccountPageProps) {
           </button>
         </div>
 
+        <AccountOverview />
+
         <div className="border border-white/10 p-6 mb-10">
           <div className="flex items-center justify-between mb-5">
             <p className="text-white/60 text-[11px] uppercase tracking-[0.2em]">Profile</p>
@@ -255,7 +258,7 @@ export default function AccountPage({ navigate }: AccountPageProps) {
           )}
         </div>
 
-        <h2 className="text-white/60 text-[11px] uppercase tracking-[0.2em] mb-4">Order History</h2>
+        <h2 id="order-history" className="text-white/60 text-[11px] uppercase tracking-[0.2em] mb-4 scroll-mt-28">Order History</h2>
 
         {ordersLoading ? (
           <div className="space-y-3">
