@@ -41,11 +41,11 @@ export function ShipIcon(props: IconProps) {
 export function ReceiveIcon(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M3 8h16v13H3z" />
-      <path d="M19 12h5l4 4.5V21H19" />
-      <circle cx="9" cy="23.5" r="2.6" />
-      <circle cx="23" cy="23.5" r="2.6" />
-      <path d="M6.2 11.2h10.6v6.6H6.2z" opacity="0.45" />
+      <path d="M6.6 20H3V8h16v12h-7.6" />
+      <path d="M20.6 20H19v-8h5.2l3.8 4.2V20h-2.6" />
+      <circle cx="9" cy="22.4" r="2.4" />
+      <circle cx="23" cy="22.4" r="2.4" />
+      <path d="M5.6 10.6h10.8v6.8H5.6z" opacity="0.45" />
     </Svg>
   );
 }
@@ -54,8 +54,8 @@ export function ReceiveIcon(props: IconProps) {
 export function ReviewIcon(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="m16 3.5 3.8 8.1 8.7 1.1-6.4 6 1.7 8.7L16 23.1l-7.8 4.3 1.7-8.7-6.4-6 8.7-1.1z" />
-      <path d="m16 9.5 1.9 4 4.3.6-3.2 3 .85 4.3L16 21.5l-3.85 1.9.85-4.3-3.2-3 4.3-.6z" opacity="0.45" />
+      <path d="M16.00 3.60L19.12 12.31L28.36 12.58L21.04 18.24L23.64 27.12L16.00 21.90L8.36 27.12L10.96 18.24L3.64 12.58L12.88 12.31z" />
+      <path d="M16.00 10.00L17.59 14.42L22.28 14.56L18.57 17.43L19.88 21.94L16.00 19.30L12.12 21.94L13.43 17.43L9.72 14.56L14.41 14.42z" opacity="0.45" />
     </Svg>
   );
 }
