@@ -182,7 +182,7 @@ export default function AccountOverview() {
         </div>
       </section>
 
-      <section id="account-reviews" className="border border-white/10 p-6 mb-6 scroll-mt-28">
+      {false && (<section id="account-reviews" className="border border-white/10 p-6 mb-6 scroll-mt-28">
         <div className="flex items-center gap-3 mb-6 text-white/80">
           <StarIcon size={22} />
           <p className={label}>Your reviews</p>
@@ -262,7 +262,7 @@ export default function AccountOverview() {
             </p>
           )
         )}
-      </section>
+      </section>)}
 
       <section className="border border-white/10 p-6 mb-10">
         <label className="flex items-start gap-4 cursor-pointer select-none">
