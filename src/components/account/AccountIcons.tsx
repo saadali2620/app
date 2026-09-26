@@ -1,13 +1,16 @@
-// Original nors. account icons, drawn in the same language as the nors. coin:
-// a crisp outer line plus a fainter inner echo, in currentColor on a 32px grid.
+// Original nors. account icons, built like the nors. coin: a crisp outer line,
+// an inner line inset by the same 3.4 units, then a small mark at the centre.
+// Everything is drawn on a 32px grid with solid strokes (no transparency), so
+// crossings never look brighter than the rest of the line.
 interface IconProps {
   size?: number;
   className?: string;
   filled?: boolean;
 }
 
-// The inner echo line: the same colour as the outer line at 45%, but fully solid.
-const ECHO = { stroke: 'color-mix(in srgb, currentColor 45%, black)' };
+// Solid colour of the outer lines, and the same colour at 45% strength over black.
+const INK = '#cccccc';
+const ECHO = { stroke: 'color-mix(in srgb, #cccccc 45%, black)' };
 
 function Svg({ size = 32, className, children }: IconProps & { children: React.ReactNode }) {
   return (
@@ -21,6 +24,7 @@ function Svg({ size = 32, className, children }: IconProps & { children: React.R
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={{ color: INK }}
       aria-hidden="true"
     >
       {children}
@@ -32,10 +36,10 @@ function Svg({ size = 32, className, children }: IconProps & { children: React.R
 export function ShipIcon(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75z" />
-      <path d="m5 9.75 11 6.25 11-6.25" />
-      <path d="M16 16v12.5" />
-      <path d="M16 8.2 22.6 12v8L16 23.8 9.4 20v-8z" style={ECHO} />
+      <path d="M16.00 3.00L27.26 9.50L27.26 22.50L16.00 29.00L4.74 22.50L4.74 9.50z" />
+      <path d="M16.00 6.92L23.86 11.46L23.86 20.54L16.00 25.08L8.14 20.54L8.14 11.46z" style={ECHO} />
+      <path d="M16.00 10.80L20.50 13.40L20.50 18.60L16.00 21.20L11.50 18.60L11.50 13.40z" />
+      <path d="M11.50 13.40L16 16L20.50 13.40M16 16L16.00 21.20" />
     </Svg>
   );
 }
@@ -48,7 +52,7 @@ export function ReceiveIcon(props: IconProps) {
       <path d="M19.7 20H19v-8h5.2L28 16.2V20h-1.7" />
       <circle cx="9" cy="21.2" r="2.6" />
       <circle cx="23" cy="21.2" r="2.6" />
-      <path d="M5.6 10.6h10.8v6.8H5.6z" style={ECHO} />
+      <path d="M6.4 11.4h9.2v5.7H6.4z" style={ECHO} />
     </Svg>
   );
 }
@@ -75,12 +79,12 @@ export function StarIcon({ size = 32, className, filled = true }: IconProps) {
   );
 }
 
-// The nors. coin: outer rim, inner rim and the nors. triangle.
+// The nors. coin: outer rim, inner rim (3.4 inside) and the nors. triangle.
 export function PointsIcon(props: IconProps) {
   return (
     <Svg {...props}>
       <circle cx="16" cy="16" r="12" />
-      <circle cx="16" cy="16" r="8.6" opacity="0.45" />
+      <circle cx="16" cy="16" r="8.6" style={ECHO} />
       <path d="m16 10.8 4.7 8.1h-9.4z" />
     </Svg>
   );
@@ -92,7 +96,7 @@ export function MailIcon(props: IconProps) {
     <Svg {...props}>
       <path d="M3 7h26v18H3z" />
       <path d="m3 8 13 10L29 8" />
-      <path d="M7 12.6h18v9.4H7z" opacity="0.45" />
+      <path d="M7 12.6h18v9.4H7z" style={ECHO} />
     </Svg>
   );
 }
