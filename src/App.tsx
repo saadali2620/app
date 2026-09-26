@@ -17,6 +17,7 @@ import TrackOrderPage from '@/pages/TrackOrderPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import AccountPage from '@/pages/AccountPage';
+import AccountOrdersPage, { type OrdersView } from '@/pages/AccountOrdersPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 function App() {
@@ -102,6 +103,11 @@ function App() {
     }
 
     // /account
+    const ordersView = path.match(/^\/account\/(to-ship|to-receive|to-review)$/);
+    if (ordersView) {
+      return <AccountOrdersPage view={ordersView[1] as OrdersView} navigate={navigate} />;
+    }
+
     if (path === '/account') {
       return <AccountPage navigate={navigate} />;
     }
