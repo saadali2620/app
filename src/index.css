@@ -99,3 +99,16 @@ body {
   background: #ffffff;
   color: #000000;
 }
+
+/* Touch screens: text is only selectable after a press-and-hold (see lib/longPressSelect.ts). */
+@media (hover: none) and (pointer: coarse) {
+  html:not(.allow-select) {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  html:not(.allow-select) input,
+  html:not(.allow-select) textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
