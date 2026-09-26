@@ -4,7 +4,7 @@
 // Mirrors the same VITE_WC_BASE_URL pattern woocommerce.ts uses, so this
 // automatically points at the right backend whether the app is served from
 // / or /enterprise.
-const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/enterprise/index.php?rest_route=/wc/store/v1';
+const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/index.php?rest_route=/wc/store/v1';
 const NORS_BASE = WC_BASE.replace('/wc/store/v1', '/nors/v1');
 
 export interface AuthUser {
