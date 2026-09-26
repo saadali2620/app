@@ -71,39 +71,49 @@ export default function ProductReviews({ productId, navigate }: Props) {
 
   const avg = mine.length ? mine.reduce((s, r) => s + r.rating, 0) / mine.length : 0;
 
+  // Spacing follows an 8px grid: 24 under the title, 12 inside groups, 40 between groups.
   return (
-    <section className="py-8 border-t border-white/10">
-      <p className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-5">Reviews</p>
+    <section className="pt-10">
+      <p className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-6">Reviews</p>
 
-      <div className="flex items-center gap-4 mb-2">
-        <span className="text-white text-4xl font-medium leading-none">{mine.length ? avg.toFixed(1) : '-'}</span>
-        <div>
-          <Stars value={avg} size={18} />
-          <p className="text-white/50 text-xs mt-1">
-            {mine.length ? 'Based on ' + mine.length + (mine.length === 1 ? ' review' : ' reviews') : 'No reviews yet'}
-          </p>
+      {mine.length ? (
+        <div className="flex items-center gap-4">
+          <span className="text-white text-4xl font-medium leading-none tabular-nums">{avg.toFixed(1)}</span>
+          <div className="flex flex-col gap-1.5">
+            <Stars value={avg} size={16} />
+            <p className="text-white/60 text-xs">
+              Based on {mine.length} {mine.length === 1 ? 'review' : 'reviews'}
+            </p>
+          </div>
         </div>
-      </div>
-      <button
-        onClick={() => navigate('/account/to-review')}
-        className="text-white/50 hover:text-white text-[11px] uppercase tracking-[0.15em] border-b border-white/20 pb-1 mb-8 transition-colors"
-      >
-        Bought this? Review it
+      ) : (
+        <div className="flex items-center gap-3">
+          <Stars value={0} size={16} />
+          <p className="text-white/60 text-xs">No reviews yet</p>
+        </div>
+      )}
+
+      <button onClick={() => navigate('/account/to-review')} className="inline-block py-3 mt-2 mb-8 -ml-px">
+        <span className="text-white/60 hover:text-white text-[11px] uppercase tracking-[0.15em] border-b border-white/25 pb-1 transition-colors">
+          Bought this? Review it
+        </span>
       </button>
 
       {recent.length > 0 && (
         <>
-          <p className="text-white/40 text-[11px] uppercase tracking-[0.2em] mb-4">Latest from our customers</p>
+          <p className="text-white/50 text-[11px] uppercase tracking-[0.2em] mb-1">Latest from our customers</p>
           {recent.map((r) => (
-            <article key={r.id} className="border-b border-white/10 py-4 last:border-b-0">
-              <div className="flex items-center justify-between mb-2">
+            <article key={r.id} className="border-b border-white/10 py-5 last:border-b-0 last:pb-6">
+              <div className="flex items-center justify-between mb-3">
                 <Stars value={r.rating} size={13} />
-                <span className="text-white/40 text-xs">{new Date(r.date_created_gmt + 'Z').toLocaleDateString()}</span>
+                <span className="text-white/50 text-xs tabular-nums">
+                  {new Date(r.date_created_gmt + 'Z').toLocaleDateString()}
+                </span>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed mb-2">{plain(r.review)}</p>
-              <p className="text-white/40 text-xs">
+              <p className="text-white/85 text-[15px] leading-relaxed mb-3">{plain(r.review)}</p>
+              <p className="text-white/50 text-xs leading-relaxed">
                 {r.reviewer}
-                {r.verified ? ' · Verified purchase' : ''} · {plain(r.product_name)}
+                {r.verified ? ' \u00b7 Verified purchase' : ''} · {plain(r.product_name)}
               </p>
             </article>
           ))}
