@@ -18,7 +18,7 @@ interface TrackResult {
   statusHistory: StatusEvent[];
 }
 
-const TRACK_ENDPOINT = 'https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/track-order';
+const TRACK_ENDPOINT = 'https://nors.com.pk/index.php?rest_route=/nors/v1/track-order';
 
 export default function TrackOrderPage({ navigate }: TrackOrderPageProps) {
   const [orderNumber, setOrderNumber] = useState('');
