@@ -46,7 +46,7 @@ function Stars({ value, onChange }: { value: number; onChange?: (n: number) => v
 }
 
 // Points, order status shortcuts, reviews and email preferences for the account page.
-export default function AccountOverview() {
+export default function AccountOverview({ navigate }: { navigate: (path: string) => void }) {
   const { user, token, refreshMe } = useAuth();
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [reviews, setReviews] = useState<ReviewSummary[]>([]);
@@ -122,9 +122,9 @@ export default function AccountOverview() {
   }
 
   const tiles = [
-    { key: 'ship', label: 'To ship', count: toShip, Icon: ShipIcon, target: 'order-history' },
-    { key: 'receive', label: 'To receive', count: toReceive, Icon: ReceiveIcon, target: 'order-history' },
-    { key: 'review', label: 'To review', count: pending.length, Icon: ReviewIcon, target: 'account-reviews' },
+    { key: 'ship', label: 'To ship', count: toShip, Icon: ShipIcon, target: '/account/to-ship' },
+    { key: 'receive', label: 'To receive', count: toReceive, Icon: ReceiveIcon, target: '/account/to-receive' },
+    { key: 'review', label: 'To review', count: pending.length, Icon: ReviewIcon, target: '/account/to-review' },
   ];
 
   const label = 'text-white/60 text-[11px] uppercase tracking-[0.2em]';
@@ -163,7 +163,7 @@ export default function AccountOverview() {
           {tiles.map(({ key, label: name, count, Icon, target }) => (
             <button
               key={key}
-              onClick={() => scrollToId(target)}
+              onClick={() => navigate(target)}
               className="group flex flex-col items-center gap-3 py-2 text-white/80 hover:text-white transition-colors"
             >
               <span className="relative">
