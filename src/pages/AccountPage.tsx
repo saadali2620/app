@@ -175,7 +175,7 @@ export default function AccountPage({ navigate }: AccountPageProps) {
           </button>
         </div>
 
-        <AccountOverview />
+        <AccountOverview navigate={navigate} />
 
         <div className="border border-white/10 p-6 mb-10">
           <div className="flex items-center justify-between mb-5">
