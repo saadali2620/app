@@ -21,7 +21,7 @@ interface TrackState {
   statusHistory: StatusEvent[];
 }
 
-const TRACK_ENDPOINT = 'https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/track-order';
+const TRACK_ENDPOINT = 'https://nors.com.pk/index.php?rest_route=/nors/v1/track-order';
 
 export default function AccountPage({ navigate }: AccountPageProps) {
   const { user, token, loading, logout, refreshMe } = useAuth();
