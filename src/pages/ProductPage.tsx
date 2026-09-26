@@ -431,7 +431,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
+          className="flex items-center gap-2 py-3.5 uppercase hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
         >
           <Share2 size={14} strokeWidth={1.5} />
           Share
@@ -443,7 +443,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2 py-3 min-w-[7.5rem] hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
+          className="flex items-center gap-2 py-3.5 uppercase min-w-[7.5rem] hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
         >
           <Link size={14} strokeWidth={1.5} />
           {linkCopied ? 'Copied!' : 'Copy Link'}
