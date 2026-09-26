@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
 import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn, Share2, Link } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
+import ProductReviews from '@/components/ProductReviews';
 
 const SIZE_ORDER = [
   'xxs', '2xs', 'extra extra small', 'xs', 'extra small', 'x-small', 'extra-small',
@@ -362,7 +363,10 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     </div>
   );
 
-  const accordionBlock = <ProductAccordion sections={product.accordion} />;
+  const accordionBlock = (
+    <ProductAccordion sections={product.accordion.filter((sec) => !/^reviews?$/i.test(sec.title.trim()))} />
+  );
+  const reviewsBlock = <ProductReviews productId={product.id} navigate={navigate} />;
 
   const shareBlock = (
     <div className="pt-8 mt-8 border-t border-white/10">
@@ -423,7 +427,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         {imagesBlock}
         {sizeCtaBlock}
         {accordionBlock}
-        {shareBlock}
+        {reviewsBlock}
+{shareBlock}
       </div>
 
       {/* Desktop layout: images | title, accordions, size/cta, share */}
@@ -433,7 +438,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           {titleBlock}
           {accordionBlock}
           {sizeCtaBlock}
-          {shareBlock}
+          {reviewsBlock}
+{shareBlock}
         </div>
       </div>
 
