@@ -6,6 +6,9 @@ interface IconProps {
   filled?: boolean;
 }
 
+// The inner echo line: the same colour as the outer line at 45%, but fully solid.
+const ECHO = { stroke: 'color-mix(in srgb, currentColor 45%, black)' };
+
 function Svg({ size = 32, className, children }: IconProps & { children: React.ReactNode }) {
   return (
     <svg
@@ -32,7 +35,7 @@ export function ShipIcon(props: IconProps) {
       <path d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75z" />
       <path d="m5 9.75 11 6.25 11-6.25" />
       <path d="M16 16v12.5" />
-      <path d="M16 8.2 22.6 12v8L16 23.8 9.4 20v-8z" opacity="0.45" />
+      <path d="M16 8.2 22.6 12v8L16 23.8 9.4 20v-8z" style={ECHO} />
     </Svg>
   );
 }
@@ -45,7 +48,7 @@ export function ReceiveIcon(props: IconProps) {
       <path d="M19.7 20H19v-8h5.2L28 16.2V20h-1.7" />
       <circle cx="9" cy="21.2" r="2.6" />
       <circle cx="23" cy="21.2" r="2.6" />
-      <path d="M5.6 10.6h10.8v6.8H5.6z" opacity="0.45" />
+      <path d="M5.6 10.6h10.8v6.8H5.6z" style={ECHO} />
     </Svg>
   );
 }
@@ -55,7 +58,7 @@ export function ReviewIcon(props: IconProps) {
   return (
     <Svg {...props}>
       <path d="M16.00 3.60L19.12 12.31L28.36 12.58L21.04 18.24L23.64 27.12L16.00 21.90L8.36 27.12L10.96 18.24L3.64 12.58L12.88 12.31z" />
-      <path d="M16.00 10.00L17.59 14.42L22.28 14.56L18.57 17.43L19.88 21.94L16.00 19.30L12.12 21.94L13.43 17.43L9.72 14.56L14.41 14.42z" opacity="0.45" />
+      <path d="M16.00 10.00L17.59 14.42L22.28 14.56L18.57 17.43L19.88 21.94L16.00 19.30L12.12 21.94L13.43 17.43L9.72 14.56L14.41 14.42z" style={ECHO} />
     </Svg>
   );
 }
