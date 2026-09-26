@@ -93,7 +93,7 @@ export default function ProductReviews({ productId, navigate }: Props) {
         </div>
       )}
 
-      <button onClick={() => navigate('/account/to-review')} className="inline-block py-3 mt-2 mb-8 -ml-px">
+      <button onClick={() => navigate('/account/to-review')} className="inline-block py-3 mt-2 mb-8">
         <span className="text-white/60 hover:text-white text-[11px] uppercase tracking-[0.15em] border-b border-white/25 pb-1 transition-colors">
           Bought this? Review it
         </span>
