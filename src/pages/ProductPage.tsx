@@ -157,6 +157,50 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     }
   }, [lightboxOpen]);
 
+  // Search-engine basics: per-product title, description, canonical and Product structured data.
+  useEffect(() => {
+    if (!product) return;
+    const url = 'https://nors.com.pk/products/' + product.slug;
+    const price =
+      product.compare_at_price !== null && product.compare_at_price < product.price
+        ? product.compare_at_price
+        : product.price;
+    document.title = product.name + ' | nors.';
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = (product.name + '. ' + (product.description || '')).slice(0, 155);
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (canonical) canonical.href = url;
+    const ld = document.createElement('script');
+    ld.type = 'application/ld+json';
+    ld.id = 'product-ld';
+    ld.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: product.description || product.name,
+      image: product.images && product.images.length ? product.images : [product.image_url],
+      brand: { '@type': 'Brand', name: 'nors.' },
+      offers: {
+        '@type': 'Offer',
+        url,
+        priceCurrency: 'PKR',
+        price: String(price),
+        availability: product.in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    });
+    document.getElementById('product-ld')?.remove();
+    document.head.appendChild(ld);
+    return () => {
+      document.getElementById('product-ld')?.remove();
+      document.title = 'nors. | Official Site';
+    };
+  }, [product]);
+
   const isSoldOut = product ? !product.in_stock || product.badge === 'Sold Out' : false;
   const isOnSale =
     product && product.compare_at_price !== null && product.compare_at_price < product.price;
