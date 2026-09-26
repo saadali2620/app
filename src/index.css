@@ -86,3 +86,16 @@ a {
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+
+/* Taps should not start a text selection; form fields stay selectable. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
