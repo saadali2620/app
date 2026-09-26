@@ -87,15 +87,15 @@ a {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 
-/* Taps should not start a text selection; form fields stay selectable. */
+/* Text can be selected with tap-and-hold; highlight it white instead of blue. */
 body {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
-input,
-textarea {
-  -webkit-user-select: text;
-  user-select: text;
+::selection {
+  background: #ffffff;
+  color: #000000;
+}
+::-moz-selection {
+  background: #ffffff;
+  color: #000000;
 }
