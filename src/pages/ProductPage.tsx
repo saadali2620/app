@@ -308,7 +308,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           ))}
         </div>
         <div className="absolute bottom-3 right-3 bg-black/60 text-white/90 p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <ZoomIn size={16} strokeWidth={1.5} />
+          <ZoomIn size={14} strokeWidth={1.5} />
         </div>
         {product.badge && product.badge !== 'Sale' && (
           <span
@@ -413,8 +413,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const reviewsBlock = <ProductReviews productId={product.id} navigate={navigate} />;
 
   const shareBlock = (
-    <div className="pt-5 pb-10 border-t border-white/10">
-      <div className="flex gap-8 text-white/60 text-sm">
+    <div className="pt-3 border-t border-white/10">
+      <div className="flex gap-8 text-white/60 text-[11px] uppercase tracking-[0.18em]">
         <button
           type="button"
           onClick={async () => {
@@ -431,9 +431,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2.5 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
+          className="flex items-center gap-2 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
         >
-          <Share2 size={16} strokeWidth={1.5} />
+          <Share2 size={14} strokeWidth={1.5} />
           Share
         </button>
         <button
@@ -443,9 +443,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2.5 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150 min-w-[6.5rem]"
+          className="flex items-center gap-2 py-3 min-w-[7.5rem] hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
         >
-          <Link size={16} strokeWidth={1.5} />
+          <Link size={14} strokeWidth={1.5} />
           {linkCopied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
@@ -460,13 +460,13 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           onClick={() => navigate(collection ? `/collections/${collection.slug}` : '/collections/all')}
           className="flex items-center gap-2 text-white/50 hover:text-white text-[11px] uppercase tracking-[0.18em] transition-colors"
         >
-          <ChevronLeft size={16} strokeWidth={1.5} />
+          <ChevronLeft size={14} strokeWidth={1.5} />
           {collection ? collection.name : 'All Products'}
         </button>
       </div>
 
       {/* Mobile layout: title -> images -> size/cta -> accordions -> share */}
-      <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-20 flex flex-col">
+      <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-10 flex flex-col">
         {titleBlock}
         {imagesBlock}
         {sizeCtaBlock}
@@ -476,7 +476,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       </div>
 
       {/* Desktop layout: images | title, accordions, size/cta, share */}
-      <div className="hidden lg:grid max-w-[1600px] mx-auto px-6 lg:px-10 pb-20 lg:grid-cols-2 gap-8 lg:gap-16">
+      <div className="hidden lg:grid max-w-[1600px] mx-auto px-6 lg:px-10 pb-16 lg:grid-cols-2 gap-8 lg:gap-16">
         {imagesBlock}
         <div className="flex flex-col lg:pt-4">
           {titleBlock}
