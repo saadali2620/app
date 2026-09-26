@@ -41,10 +41,10 @@ export function ShipIcon(props: IconProps) {
 export function ReceiveIcon(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M6.6 20H3V8h16v12h-7.6" />
-      <path d="M20.6 20H19v-8h5.2l3.8 4.2V20h-2.6" />
-      <circle cx="9" cy="22.4" r="2.4" />
-      <circle cx="23" cy="22.4" r="2.4" />
+      <path d="M5.7 20H3V8h16v12h-6.7" />
+      <path d="M19.7 20H19v-8h5.2L28 16.2V20h-1.7" />
+      <circle cx="9" cy="21.2" r="2.6" />
+      <circle cx="23" cy="21.2" r="2.6" />
       <path d="M5.6 10.6h10.8v6.8H5.6z" opacity="0.45" />
     </Svg>
   );
