@@ -1,6 +1,6 @@
 import type { Product, Collection, ProductSize, AccordionSection } from '@/types';
 
-const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/enterprise/index.php?rest_route=/wc/store/v1';
+const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/index.php?rest_route=/wc/store/v1';
 
 function decodeEntities(text: string): string {
   return text
@@ -418,7 +418,7 @@ export interface CodDepositResult {
 }
 
 export async function markCodDeposit(orderId: number): Promise<CodDepositResult> {
-  const res = await fetch('https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/mark-cod-deposit', {
+  const res = await fetch('https://nors.com.pk/index.php?rest_route=/nors/v1/mark-cod-deposit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orderId }),
@@ -441,7 +441,7 @@ let postexCitiesPromise: Promise<string[]> | null = null;
 export function getPostexServiceableCities(): Promise<string[]> {
   if (cachedPostexCities) return Promise.resolve(cachedPostexCities);
   if (!postexCitiesPromise) {
-    postexCitiesPromise = fetch('https://nors.com.pk/enterprise/index.php?rest_route=/nors/v1/postex-cities')
+    postexCitiesPromise = fetch('https://nors.com.pk/index.php?rest_route=/nors/v1/postex-cities')
       .then((res) => res.json())
       .then((data) => {
         const cities: string[] = Array.isArray(data?.cities) ? data.cities : [];
