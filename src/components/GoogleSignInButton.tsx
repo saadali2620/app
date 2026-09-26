@@ -7,11 +7,20 @@ import { useEffect, useRef } from 'react';
 const GOOGLE_CLIENT_ID = '547446426995-sav89a3p9qlm2lktu71r8ib8gad5lrd3.apps.googleusercontent.com';
 
 interface GoogleAccountsId {
-  initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void;
+  initialize: (config: {
+    client_id: string;
+    callback: (response: { credential: string }) => void;
+    use_fedcm_for_prompt?: boolean;
+    use_fedcm_for_button?: boolean;
+    itp_support?: boolean;
+    cancel_on_tap_outside?: boolean;
+  }) => void;
   renderButton: (
     parent: HTMLElement,
-    options: { theme: string; size: string; width: number; text: string }
+    options: { theme: string; size: string; width: number; text: string; shape?: string }
   ) => void;
+  prompt: () => void;
+  cancel: () => void;
 }
 
 declare global {
@@ -24,40 +33,63 @@ interface GoogleSignInButtonProps {
   onToken: (idToken: string) => void;
 }
 
+// Load Google's script once, as soon as this module is imported, so the button
+// is ready the moment the login page opens instead of appearing a beat later.
+let scriptPromise: Promise<void> | null = null;
+function loadGoogle(): Promise<void> {
+  if (window.google) return Promise.resolve();
+  if (!scriptPromise) {
+    scriptPromise = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = () => resolve();
+      document.head.appendChild(script);
+    });
+  }
+  return scriptPromise;
+}
+if (typeof window !== 'undefined') void loadGoogle();
+
 export default function GoogleSignInButton({ onToken }: GoogleSignInButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const tokenRef = useRef(onToken);
+  tokenRef.current = onToken;
 
   useEffect(() => {
     let cancelled = false;
 
-    const render = () => {
+    void loadGoogle().then(() => {
       if (cancelled || !window.google || !ref.current) return;
-      window.google.accounts.id.initialize({
+      const gid = window.google.accounts.id;
+      // FedCM makes Chrome show its own account picker in place, so there is
+      // no redirect to a separate accounts.google.com page.
+      gid.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: (response) => onToken(response.credential),
+        callback: (response) => tokenRef.current(response.credential),
+        use_fedcm_for_prompt: true,
+        use_fedcm_for_button: true,
+        itp_support: true,
+        cancel_on_tap_outside: false,
       });
-      window.google.accounts.id.renderButton(ref.current, {
+      const width = Math.min(360, Math.max(240, ref.current.parentElement?.clientWidth ?? 360));
+      gid.renderButton(ref.current, {
         theme: 'filled_black',
         size: 'large',
-        width: 360,
+        width,
         text: 'continue_with',
+        shape: 'rectangular',
       });
-    };
-
-    if (window.google) {
-      render();
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.onload = render;
-      document.head.appendChild(script);
-    }
+      // One Tap: the native "Continue as ..." sheet appears straight away.
+      gid.prompt();
+    });
 
     return () => {
       cancelled = true;
+      window.google?.accounts.id.cancel();
     };
-  }, [onToken]);
+  }, []);
 
-  return <div ref={ref} className="flex justify-center" />;
+  // Reserve the button's height so the page does not jump when it appears.
+  return <div ref={ref} className="flex justify-center min-h-[44px]" />;
 }
