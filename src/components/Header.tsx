@@ -70,7 +70,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
             className="absolute left-1/2 -translate-x-1/2 select-none flex-shrink-0"
           >
             <img
-              src="https://nors.com.pk/enterprise/wp-content/uploads/2026/08/nors-updated-logo-resized-300-px-width-white.svg"
+              src="https://nors.com.pk/wp-content/uploads/2026/08/nors-updated-logo-resized-300-px-width-white.svg"
               alt="nors."
               className="h-6 sm:h-7 w-auto"
             />
