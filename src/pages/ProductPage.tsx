@@ -413,8 +413,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const reviewsBlock = <ProductReviews productId={product.id} navigate={navigate} />;
 
   const shareBlock = (
-    <div className="pt-8 border-t border-white/10">
-      <div className="flex gap-6 text-white/50 text-sm">
+    <div className="pt-5 pb-10 border-t border-white/10">
+      <div className="flex gap-8 text-white/60 text-sm">
         <button
           type="button"
           onClick={async () => {
@@ -431,9 +431,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2 hover:text-white transition-colors"
+          className="flex items-center gap-2.5 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150"
         >
-          <Share2 size={15} strokeWidth={1.5} />
+          <Share2 size={16} strokeWidth={1.5} />
           Share
         </button>
         <button
@@ -443,9 +443,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
-          className="flex items-center gap-2 hover:text-white transition-colors"
+          className="flex items-center gap-2.5 py-3 hover:text-white active:text-white active:scale-[0.97] transition-[color,transform] duration-150 min-w-[6.5rem]"
         >
-          <Link size={15} strokeWidth={1.5} />
+          <Link size={16} strokeWidth={1.5} />
           {linkCopied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
