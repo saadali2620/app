@@ -413,7 +413,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const reviewsBlock = <ProductReviews productId={product.id} navigate={navigate} />;
 
   const shareBlock = (
-    <div className="pt-8 mt-8 border-t border-white/10">
+    <div className="pt-8 border-t border-white/10">
       <div className="flex gap-6 text-white/50 text-sm">
         <button
           type="button"
