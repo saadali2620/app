@@ -103,7 +103,7 @@ export default function ProductReviews({ productId, navigate }: Props) {
         <>
           <p className="text-white/50 text-[11px] uppercase tracking-[0.2em] mb-1">Latest from our customers</p>
           {recent.map((r) => (
-            <article key={r.id} className="border-b border-white/10 py-5 last:border-b-0 last:pb-6">
+            <article key={r.id} className="border-b border-white/10 py-5 last:border-b-0 last:pb-8">
               <div className="flex items-center justify-between mb-3">
                 <Stars value={r.rating} size={13} />
                 <span className="text-white/50 text-xs tabular-nums">
