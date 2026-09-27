@@ -115,6 +115,15 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
               </div>
             </div>
 
+                          <div className="px-6 pb-5 pt-2">
+                <button
+                  onClick={closeCart}
+                  className="w-full border border-white/25 text-white py-3.5 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white/10 hover:border-white/40 transition-colors"
+                >
+                  Continue shopping
+                </button>
+              </div>
+
             {/* Footer */}
             <div className="px-6 py-5 border-t border-white/10 space-y-4">
               <div className="flex items-center justify-between">
@@ -127,12 +136,6 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
                 className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors"
               >
                 Checkout
-              </button>
-              <button
-                onClick={closeCart}
-                className="w-full border border-white/25 text-white py-4 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white/10 transition-colors"
-              >
-                Continue shopping
               </button>
             </div>
           </>
