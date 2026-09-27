@@ -28,7 +28,7 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 bottom-0 z-[80] w-[75%] max-w-[320px] bg-black border-l border-white/10 flex flex-col transition-transform duration-500 ease-out ${
+        className={`fixed top-0 right-0 bottom-0 z-[80] w-[75%] max-w-[320px] bg-black border-l border-white/10 flex flex-col transition-transform duration-500 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
