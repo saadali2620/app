@@ -125,7 +125,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
   const vids = (product.variations ?? []).map((v: any) => v.id);
   if (vids.length) {
     try {
-      const vr = await fetch(`${WC_BASE}/products?type=variation&per_page=100&include=${vids.join(',')}&nors_cb=2`);
+      const vr = await fetch(`${WC_BASE}/products&type=variation&per_page=100&include=${vids.join(',')}&nors_cb=2`);
       for (const x of await vr.json()) stock[String(x.id)] = x.is_in_stock === true;
     } catch { /* fall back to in stock */ }
   }
