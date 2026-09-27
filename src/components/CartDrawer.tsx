@@ -128,6 +128,12 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
               >
                 Checkout
               </button>
+              <button
+                onClick={closeCart}
+                className="w-full border border-white/25 text-white py-4 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-white/10 transition-colors"
+              >
+                Continue shopping
+              </button>
             </div>
           </>
         )}
