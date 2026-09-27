@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -13,6 +13,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const touchStartX = useRef(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -127,6 +128,8 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
           className={`absolute left-0 top-0 bottom-0 w-[75%] max-w-[320px] bg-black border-r border-white/10 p-8 flex flex-col transition-transform duration-500 ${
             menuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => { if (touchStartX.current - e.changedTouches[0].clientX > 50) setMenuOpen(false); }}
         >
           <div className="flex items-center justify-between mb-12">
             <span className="text-white font-bold tracking-[0.3em] text-lg">nors.</span>
@@ -161,10 +164,6 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
               {user ? 'My Account' : 'Log In'}
             </button>
           </nav>
-          <div className="mt-auto pt-8 border-t border-white/10">
-            <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Designed in Karachi</p>
-            <p className="text-white/40 text-[11px] uppercase tracking-[0.15em]">Proudly made in Pakistan</p>
-          </div>
         </div>
       </div>
     </>
