@@ -97,14 +97,14 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   params.set('orderby', orderby);
   params.set('order', order);
 
-  const res = await fetch(`${WC_BASE}/products&${params.toString()}`);
+  const res = await fetch(`${WC_BASE}/products&${params.toString()}&nors_cb=2`);
   const data = await res.json();
   const total = Number(res.headers.get('X-WP-Total') ?? data.length);
   return { data: data.map((p: any) => mapWcProduct(p)), count: total };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`${WC_BASE}/products&per_page=100`);
+  const res = await fetch(`${WC_BASE}/products&per_page=100&nors_cb=2`);
   const list = await res.json();
   const match = list.find((p: any) => p.slug === slug);
   if (!match) return null;
@@ -112,7 +112,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function getProductSizes(productId: string): Promise<ProductSize[]> {
-  const productRes = await fetch(`${WC_BASE}/products&include=${productId}`);
+  const productRes = await fetch(`${WC_BASE}/products&include=${productId}&nors_cb=2`);
   const productList = await productRes.json();
   const product = productList[0];
   const sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL'];
@@ -125,7 +125,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
   const vids = (product.variations ?? []).map((v: any) => v.id);
   if (vids.length) {
     try {
-      const vr = await fetch(`${WC_BASE}/products?type=variation&per_page=100&include=${vids.join(',')}`);
+      const vr = await fetch(`${WC_BASE}/products?type=variation&per_page=100&include=${vids.join(',')}&nors_cb=2`);
       for (const x of await vr.json()) stock[String(x.id)] = x.is_in_stock !== false;
     } catch { /* fall back to in stock */ }
   }
@@ -144,7 +144,7 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  const res = await fetch(`${WC_BASE}/products/categories&per_page=50`);
+  const res = await fetch(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`);
   const data = await res.json();
   return data.map((c: any) => ({
     id: String(c.id),
@@ -180,7 +180,7 @@ function pause(ms: number) {
 }
 
 async function wcCall(path: string, tokens: WcTokens, options: RequestInit = {}): Promise<{ data: any; res: Response; tokens: WcTokens }> {
-  const res = await fetch(`${WC_BASE}${path}`, {
+  const res = await fetch(`${WC_BASE}${path}&nors_cb=2`, {
     ...options,
     credentials: 'include',
     headers: {
