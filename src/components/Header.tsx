@@ -123,7 +123,12 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
           menuOpen ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
       >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
+        <div
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${
+            menuOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setMenuOpen(false)}
+        />
         <div
           className={`absolute left-0 top-0 bottom-0 w-[75%] max-w-[320px] bg-black border-r border-white/10 p-8 flex flex-col transition-transform duration-500 ${
             menuOpen ? 'translate-x-0' : '-translate-x-full'
