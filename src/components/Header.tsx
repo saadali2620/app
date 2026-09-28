@@ -120,7 +120,7 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
       {/* Mobile menu overlay */}
       <div
         className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${
-          menuOpen ? 'visible opacity-100' : 'invisible opacity-0'
+          menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <div
