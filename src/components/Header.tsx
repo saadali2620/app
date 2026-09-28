@@ -119,8 +119,8 @@ export default function Header({ navigate, currentPath }: HeaderProps) {
 
       {/* Mobile menu overlay */}
       <div
-        className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${
-          menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 z-[60] lg:hidden ${
+          menuOpen ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
       >
         <div
