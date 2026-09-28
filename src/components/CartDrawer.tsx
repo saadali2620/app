@@ -20,7 +20,7 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${
+        className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-all duration-500 ${
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
         onClick={closeCart}
