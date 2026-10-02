@@ -78,7 +78,7 @@ function App() {
     }
 
     // /track-order
-    if (path === '/track-order') {
+    if (path === '/track-order' || path.startsWith('/track-order?')) {
       return <TrackOrderPage navigate={navigate} />;
     }
 
