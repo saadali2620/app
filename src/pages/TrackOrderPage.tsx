@@ -21,7 +21,7 @@ interface TrackResult {
 const TRACK_ENDPOINT = 'https://nors.com.pk/index.php?rest_route=/nors/v1/track-order';
 
 export default function TrackOrderPage({ navigate }: TrackOrderPageProps) {
-  const [orderNumber, setOrderNumber] = useState('');
+  const [orderNumber, setOrderNumber] = useState(() => new URLSearchParams(window.location.search).get('order') ?? '');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
