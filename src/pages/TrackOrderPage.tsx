@@ -25,11 +25,13 @@ export default function TrackOrderPage({ navigate }: TrackOrderPageProps) {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [result, setResult] = useState<TrackResult | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     setResult(null);
 
     if (!orderNumber.trim()) {
@@ -50,6 +52,10 @@ export default function TrackOrderPage({ navigate }: TrackOrderPageProps) {
       });
       const data = await res.json();
 
+      if (res.ok && !data.found) {
+        setNotice(data.message || 'Your order is confirmed. We will share tracking as soon as it ships.');
+        return;
+      }
       if (!res.ok || !data.found) {
         setError(data.message || 'We could not find that order. Check the order number and phone number and try again.');
         return;
@@ -93,6 +99,12 @@ export default function TrackOrderPage({ navigate }: TrackOrderPageProps) {
           />
 
           {error && <p className="text-red-400 text-xs">{error}</p>}
+          {notice && (
+            <div className="mt-4 border border-white/10 p-5">
+              <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Order status</p>
+              <p className="text-white text-sm leading-relaxed">{notice}</p>
+            </div>
+          )}
 
           <button
             type="submit"
