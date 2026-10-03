@@ -1,0 +1,549 @@
+#!/usr/bin/env node
+/**
+ * Build-time pre-render for search engines and AI crawlers.
+ *
+ * Why this exists: the site is a client-side React app, so every URL used to
+ * return the same empty HTML shell (homepage title, homepage canonical, no H1,
+ * no schema). Googlebot renders JavaScript, but most AI crawlers (GPTBot,
+ * ClaudeBot, PerplexityBot) do not. This script runs after `vite build` and
+ * writes a real HTML file per route into dist/ with the correct <title>,
+ * meta description, canonical URL, Open Graph tags, JSON-LD and readable
+ * content. React replaces the static content as soon as it mounts, so the
+ * visible app behaves exactly as before.
+ *
+ * URL form: the host redirects /dir to /dir/ for directories that contain an
+ * index.html, so every canonical, sitemap entry and schema URL for the
+ * pre-rendered routes uses the trailing-slash form to match what is served.
+ *
+ * Safety: if the WooCommerce Store API cannot be reached, the script logs a
+ * warning and leaves dist/ untouched, so a deploy is never broken by it.
+ *
+ * Env (all optional):
+ *   PRERENDER_SITE_URL   default https://nors.com.pk
+ *   PRERENDER_WC_BASE    default <site>/index.php?rest_route=/wc/store/v1
+ *   PRERENDER_FIXTURE    path to a JSON file { products, categories } for offline tests
+ *   PRERENDER_DIST       default ./dist
+ */
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import path from 'node:path';
+
+const SITE = (process.env.PRERENDER_SITE_URL || 'https://nors.com.pk').replace(/\/$/, '');
+const API = process.env.PRERENDER_WC_BASE || `${SITE}/index.php?rest_route=/wc/store/v1`;
+const FIXTURE = process.env.PRERENDER_FIXTURE || '';
+const DIST = path.resolve(process.env.PRERENDER_DIST || 'dist');
+
+const BRAND = 'nors.';
+const LOGO = `${SITE}/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png`;
+const HOME_TITLE = 'nors. | Independent Streetwear from Karachi';
+
+// Collections worth indexing. Only add a slug here once the app links to it
+// and it has real content (a short intro and several products); a thin
+// collection page can hurt rankings.
+const COLLECTION_SLUGS = ['batch-01'];
+
+// Pages that must never appear in search results.
+const NOINDEX_ROUTES = [
+  { route: '/track-order', title: `Track your order | ${BRAND}` },
+  { route: '/checkout', title: `Checkout | ${BRAND}` },
+  { route: '/login', title: `Log in | ${BRAND}` },
+  { route: '/register', title: `Create account | ${BRAND}` },
+  { route: '/account', title: `Your account | ${BRAND}` },
+];
+
+// ---------- text helpers ----------
+
+function decodeEntities(text) {
+  return String(text ?? '')
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(parseInt(d, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
+function stripHtml(html) {
+  return decodeEntities(String(html ?? '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function esc(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function clip(text, max) {
+  const t = String(text ?? '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.\-–—]+$/, '') + '…';
+}
+
+function rs(n) {
+  return `Rs. ${Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}.00`;
+}
+
+function money(value, minor) {
+  return Number(value) / Math.pow(10, Number(minor ?? 0));
+}
+
+function titleCase(s) {
+  return String(s)
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Same shortcode parsing the app uses for the product accordion.
+function parseAccordion(rawDescription) {
+  if (!rawDescription || !rawDescription.includes('[vc_accordion')) return [];
+  const norm = rawDescription.replace(/&#8220;|&#8221;|&#8243;/g, '"');
+  const sections = [];
+  const tabRe = /\[vc_accordion_tab[^\]]*title="([^"]+)"[^\]]*\]([\s\S]*?)\[\/vc_accordion_tab\]/g;
+  let m;
+  while ((m = tabRe.exec(norm))) {
+    const title = decodeEntities(m[1]).trim();
+    const content = stripHtml(
+      m[2].replace(/\[vc_column_text[^\]]*\]/g, '').replace(/\[\/vc_column_text\]/g, ''),
+    );
+    if (title && content) sections.push({ title, content });
+  }
+  return sections;
+}
+
+// ---------- data ----------
+
+async function getJson(url) {
+  let lastErr;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
+  throw lastErr;
+}
+
+async function loadData() {
+  if (FIXTURE) return JSON.parse(await readFile(FIXTURE, 'utf8'));
+  const products = [];
+  for (let page = 1; page <= 10; page++) {
+    const batch = await getJson(`${API}/products&per_page=100&page=${page}`);
+    if (!Array.isArray(batch)) throw new Error('Unexpected products response');
+    products.push(...batch);
+    if (batch.length < 100) break;
+  }
+  const categories = await getJson(`${API}/products/categories&per_page=100`);
+  if (!Array.isArray(categories)) throw new Error('Unexpected categories response');
+  return { products, categories };
+}
+
+// Reads the FAQ list straight from the component so the FAQ schema can never
+// drift from what the page shows.
+async function loadFaqs() {
+  try {
+    const src = await readFile(path.resolve('src/components/FAQAccordion.tsx'), 'utf8');
+    const re = /question:\s*(['"])((?:\\.|(?!\1)[^\\])*)\1\s*,\s*answer:\s*(['"])((?:\\.|(?!\3)[^\\])*)\3/g;
+    const unescape = (s) => s.replace(/\\(['"\\])/g, '$1');
+    const faqs = [];
+    let m;
+    while ((m = re.exec(src))) faqs.push({ question: unescape(m[2]), answer: unescape(m[4]) });
+    return faqs;
+  } catch {
+    return [];
+  }
+}
+
+function normalizeProduct(p) {
+  const minor = p.prices?.currency_minor_unit ?? p.minor ?? 0;
+  const price = money(p.prices?.price ?? p.price, minor);
+  const regular = money(p.prices?.regular_price ?? p.regular ?? p.prices?.price ?? p.price, minor);
+  const sizes = (p.variations ?? [])
+    .map((v) => (v.attributes ?? []).find((a) => /^size$/i.test(a.name))?.value)
+    .filter(Boolean)
+    .map(titleCase);
+  return {
+    id: p.id,
+    name: stripHtml(p.name),
+    slug: p.slug,
+    sku: p.sku || '',
+    currency: p.prices?.currency_code ?? p.cur ?? 'PKR',
+    price,
+    regular: regular > price ? regular : null,
+    inStock: p.is_in_stock !== false,
+    short: stripHtml(p.short_description),
+    long: stripHtml((p.description ?? '').replace(/\[[^\]]*\]/g, ' ')),
+    accordion: parseAccordion(p.description),
+    images: (p.images ?? []).map((i) => i.src).filter(Boolean),
+    sizes: [...new Set(sizes)],
+    categories: (p.categories ?? []).map((c) => c.slug),
+  };
+}
+
+// ---------- html ----------
+
+function wrap(inner) {
+  return (
+    '<div data-prerender="true" style="min-height:100vh;background:#000;color:#fff;' +
+    'font-family:Inter,Arial,sans-serif;line-height:1.6;padding:96px 24px 48px">' +
+    `<div style="max-width:880px;margin:0 auto">${inner}</div></div>`
+  );
+}
+
+function ld(obj) {
+  return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+}
+
+function swap(html, re, replacement) {
+  return re.test(html) ? html.replace(re, () => replacement) : html.replace('</head>', () => `${replacement}\n</head>`);
+}
+
+function makeRenderer(template) {
+  return function render(o) {
+    let html = template;
+    html = swap(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(o.title)}</title>`);
+    html = swap(html, /<meta\s+name="description"[^>]*>/, `<meta name="description" content="${esc(o.description)}" />`);
+    html = swap(html, /<link\s+rel="canonical"[^>]*>/, `<link rel="canonical" href="${esc(o.canonical)}" />`);
+    html = swap(html, /<meta\s+property="og:title"[^>]*>/, `<meta property="og:title" content="${esc(o.ogTitle ?? o.title)}" />`);
+    html = swap(html, /<meta\s+property="og:description"[^>]*>/, `<meta property="og:description" content="${esc(o.ogDescription ?? o.description)}" />`);
+    html = swap(html, /<meta\s+property="og:url"[^>]*>/, `<meta property="og:url" content="${esc(o.canonical)}" />`);
+    html = swap(html, /<meta\s+property="og:type"[^>]*>/, `<meta property="og:type" content="${esc(o.ogType ?? 'website')}" />`);
+    html = swap(html, /<meta\s+property="og:image"[^>]*>/, `<meta property="og:image" content="${esc(o.image ?? LOGO)}" />`);
+    const extra = [];
+    if (o.noindex) extra.push('<meta name="robots" content="noindex, nofollow" />');
+    extra.push(`<meta name="twitter:title" content="${esc(o.ogTitle ?? o.title)}" />`);
+    extra.push(`<meta name="twitter:description" content="${esc(o.ogDescription ?? o.description)}" />`);
+    extra.push(`<meta name="twitter:image" content="${esc(o.image ?? LOGO)}" />`);
+    for (const s of o.schema ?? []) extra.push(ld(s));
+    html = html.replace('</head>', () => `${extra.join('\n')}\n</head>`);
+    if (o.body) html = html.replace('<div id="root"></div>', () => `<div id="root">${o.body}</div>`);
+    return html;
+  };
+}
+
+async function writeRoute(route, html) {
+  const file = route === '/' ? path.join(DIST, 'index.html') : path.join(DIST, route, 'index.html');
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, html);
+}
+
+function breadcrumb(items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      item: it.url,
+    })),
+  };
+}
+
+// ---------- pages ----------
+
+function productPage(render, p) {
+  const url = `${SITE}/products/${p.slug}/`;
+  const priceLine = `${rs(p.price)}${p.regular ? ` (was ${rs(p.regular)})` : ''}`;
+  const lead = p.short || p.long || p.name;
+  const description = `${clip(lead, 108)} ${rs(p.price)}. Cash on delivery across Pakistan.`;
+
+  const offer = {
+    '@type': 'Offer',
+    url,
+    priceCurrency: p.currency,
+    price: String(p.price),
+    availability: p.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    itemCondition: 'https://schema.org/NewCondition',
+  };
+  const product = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.name,
+    description: p.short || p.long || p.name,
+    image: p.images,
+    brand: { '@type': 'Brand', name: BRAND },
+    offers: offer,
+  };
+  if (p.sku) product.sku = p.sku;
+
+  const sections = p.accordion
+    .filter((s) => !/^reviews?$/i.test(s.title))
+    .map((s) => `<h2>${esc(s.title)}</h2><p>${esc(s.content)}</p>`)
+    .join('');
+
+  const body = wrap(
+    `<nav aria-label="Breadcrumb"><a href="/" style="color:inherit">Home</a> / ${esc(p.name)}</nav>` +
+      `<h1>${esc(p.name)}</h1>` +
+      `<p>${esc(priceLine)}</p>` +
+      (p.short ? `<p>${esc(p.short)}</p>` : '') +
+      (p.sizes.length ? `<h2>Sizes</h2><p>${esc(p.sizes.join(', '))}</p>` : '') +
+      sections +
+      '<p>Ships within Pakistan. Pay by cash on delivery or secure online payment.</p>',
+  );
+
+  return render({
+    title: `${p.name} | ${BRAND}`,
+    description,
+    canonical: url,
+    ogType: 'product',
+    image: p.images[0],
+    schema: [
+      product,
+      breadcrumb([
+        { name: 'Home', url: `${SITE}/` },
+        { name: p.name, url },
+      ]),
+    ],
+    body,
+  });
+}
+
+function collectionPage(render, cat, items) {
+  const url = `${SITE}/collections/${cat.slug}/`;
+  const name = stripHtml(cat.name);
+  const intro = stripHtml(cat.description);
+  const description = clip(
+    intro || `Shop ${name} from ${BRAND}: independent streetwear designed in Karachi. Cash on delivery across Pakistan.`,
+    155,
+  );
+  const list = items
+    .map((p) => `<li><a href="/products/${esc(p.slug)}/" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
+    .join('');
+  const body = wrap(
+    `<nav aria-label="Breadcrumb"><a href="/" style="color:inherit">Home</a> / ${esc(name)}</nav>` +
+      `<h1>${esc(name)}</h1>` +
+      (intro ? `<p>${esc(intro)}</p>` : '') +
+      `<ul>${list}</ul>`,
+  );
+  return render({
+    title: `${name} | ${BRAND}`,
+    description,
+    canonical: url,
+    image: items[0]?.images[0],
+    schema: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name,
+        url,
+        description,
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: items.map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: `${SITE}/products/${p.slug}/`,
+            name: p.name,
+          })),
+        },
+      },
+      breadcrumb([
+        { name: 'Home', url: `${SITE}/` },
+        { name, url },
+      ]),
+    ],
+    body,
+  });
+}
+
+function homePage(render, homeDescription, products, faqs) {
+  const schema = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: BRAND,
+      url: `${SITE}/`,
+      logo: LOGO,
+      foundingDate: '2021',
+      description: homeDescription,
+      address: { '@type': 'PostalAddress', addressLocality: 'Karachi', addressCountry: 'PK' },
+    },
+    { '@context': 'https://schema.org', '@type': 'WebSite', name: BRAND, url: `${SITE}/` },
+  ];
+  if (faqs.length) {
+    schema.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.question,
+        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      })),
+    });
+  }
+  const list = products
+    .map((p) => `<li><a href="/products/${esc(p.slug)}/" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
+    .join('');
+  const faqHtml = faqs.length
+    ? '<h2>FAQs</h2>' + faqs.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join('')
+    : '';
+  const body = wrap(
+    `<h1>nors. – independent streetwear from Karachi</h1><p>${esc(stripHtml(homeDescription))}</p>` +
+      `<h2>Shop</h2><ul>${list}</ul>${faqHtml}`,
+  );
+  return render({
+    title: HOME_TITLE,
+    description: stripHtml(homeDescription),
+    canonical: `${SITE}/`,
+    ogTitle: 'nors. — Karachi, est. 2021 / WORN IN, NOT WORN OUT',
+    schema,
+    body,
+  });
+}
+
+function sitemapXml(urls) {
+  const rows = urls
+    .map((u) => {
+      const imgs = (u.images ?? [])
+        .slice(0, 5)
+        .map((src) => `<image:image><image:loc>${esc(src)}</image:loc></image:image>`)
+        .join('');
+      return `<url><loc>${esc(u.loc)}</loc>${imgs}</url>`;
+    })
+    .join('\n');
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
+    `${rows}\n</urlset>\n`
+  );
+}
+
+function llmsTxt(homeDescription, products) {
+  const lines = [
+    `# ${BRAND}`,
+    '',
+    `> ${stripHtml(homeDescription)}`,
+    '',
+    '## Products',
+    ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}/): ${clip(p.short || p.name, 140)} ${rs(p.price)}.`),
+    '',
+    '## Info',
+    `- [Policies](${SITE}/policies/): Exchange and refund policy, shipping and payment information.`,
+    `- [Contact](${SITE}/contact/): Sizing help and order questions.`,
+    `- [Track your order](${SITE}/track-order/): Check order status with your order number and phone number.`,
+    '',
+  ];
+  return lines.join('\n');
+}
+
+// ---------- main ----------
+
+async function main() {
+  let template;
+  try {
+    template = await readFile(path.join(DIST, 'index.html'), 'utf8');
+  } catch {
+    console.warn('[prerender] dist/index.html not found; run `vite build` first. Skipping.');
+    return;
+  }
+
+  if (template.includes('data-prerender') || template.includes('application/ld+json')) {
+    console.warn('[prerender] dist/index.html is already pre-rendered; run `vite build` again. Skipping.');
+    return;
+  }
+
+  let data;
+  try {
+    data = await loadData();
+  } catch (err) {
+    console.warn(`[prerender] Could not load WooCommerce data (${err.message}). Leaving dist/ untouched.`);
+    return;
+  }
+
+  const products = (data.products ?? []).map(normalizeProduct).filter((p) => p.slug && p.name);
+  if (products.length === 0) {
+    console.warn('[prerender] No products returned. Leaving dist/ untouched.');
+    return;
+  }
+  const categories = data.categories ?? [];
+  const faqs = await loadFaqs();
+  const homeDescription = (template.match(/<meta\s+name="description"\s+content="([^"]*)"/) ?? [])[1] ?? '';
+  const render = makeRenderer(template);
+
+  const sitemapUrls = [{ loc: `${SITE}/` }];
+
+  // Products
+  for (const p of products) {
+    await writeRoute(`/products/${p.slug}`, productPage(render, p));
+    sitemapUrls.push({ loc: `${SITE}/products/${p.slug}/`, images: p.images });
+  }
+
+  // Collections
+  for (const slug of COLLECTION_SLUGS) {
+    const cat = categories.find((c) => c.slug === slug);
+    const items = products.filter((p) => p.categories.includes(slug));
+    if (!cat || items.length === 0) {
+      console.warn(`[prerender] Collection "${slug}" not found or empty; skipped.`);
+      continue;
+    }
+    await writeRoute(`/collections/${slug}`, collectionPage(render, cat, items));
+    sitemapUrls.push({ loc: `${SITE}/collections/${slug}/` });
+  }
+
+  // Static pages that stay client-rendered but get correct head tags
+  await writeRoute(
+    '/contact',
+    render({
+      title: `Contact | ${BRAND}`,
+      description: `Contact ${BRAND} in Karachi for sizing help and order questions.`,
+      canonical: `${SITE}/contact/`,
+      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact/` }])],
+    }),
+  );
+  await writeRoute(
+    '/policies',
+    render({
+      title: `Policies | ${BRAND}`,
+      description: `Exchange and refund policy, shipping and payment information for ${BRAND} orders.`,
+      canonical: `${SITE}/policies/`,
+      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Policies', url: `${SITE}/policies/` }])],
+    }),
+  );
+  sitemapUrls.push({ loc: `${SITE}/contact/` }, { loc: `${SITE}/policies/` });
+
+  // Never-index pages
+  for (const n of NOINDEX_ROUTES) {
+    await writeRoute(
+      n.route,
+      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}/`, noindex: true }),
+    );
+  }
+
+  // 404 page (served with a 404 status only if the host is configured for it)
+  await writeFile(
+    path.join(DIST, '404.html'),
+    render({
+      title: `Page not found | ${BRAND}`,
+      description: 'This page does not exist.',
+      canonical: `${SITE}/`,
+      noindex: true,
+    }),
+  );
+
+  // Home last, so every other route above was built from the pristine template
+  await writeRoute('/', homePage(render, homeDescription, products, faqs));
+
+  await writeFile(path.join(DIST, 'sitemap.xml'), sitemapXml(sitemapUrls));
+  await writeFile(path.join(DIST, 'llms.txt'), llmsTxt(homeDescription, products));
+
+  console.log(
+    `[prerender] ${products.length} products, ${COLLECTION_SLUGS.length} collection(s), ` +
+      `${sitemapUrls.length} sitemap URLs, ${faqs.length} FAQ(s).`,
+  );
+}
+
+main().catch((err) => {
+  // Never fail the build because of SEO output.
+  console.warn(`[prerender] Unexpected error: ${err.stack || err.message}. Leaving build as-is.`);
+});
