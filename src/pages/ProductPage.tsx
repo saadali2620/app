@@ -160,7 +160,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   // Search-engine basics: per-product title, description, canonical and Product structured data.
   useEffect(() => {
     if (!product) return;
-    const url = 'https://nors.com.pk/products/' + product.slug;
+    const url = 'https://nors.com.pk/products/' + product.slug + '/';
     const price =
       product.compare_at_price !== null && product.compare_at_price < product.price
         ? product.compare_at_price

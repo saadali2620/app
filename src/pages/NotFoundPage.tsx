@@ -1,8 +1,22 @@
+import { useEffect } from 'react';
+
 interface NotFoundPageProps {
   navigate: (path: string) => void;
 }
 
 export default function NotFoundPage({ navigate }: NotFoundPageProps) {
+  // The host serves the app shell for unknown URLs, so tell search engines
+  // not to index them once the page renders.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-black pt-28 pb-20">
       <div className="max-w-[700px] mx-auto px-6 lg:px-10 text-center">
