@@ -119,7 +119,7 @@ function parseAccordion(rawDescription) {
 
 // ---------- data ----------
 
-async function getJson(url) {
+async function getJson(url, maxAttempts = 5) {
   // Some hosts rate-limit or drop requests from CI servers now and then, so
   // retry with a growing pause, and look like an ordinary browser request.
   const headers = {
@@ -127,7 +127,7 @@ async function getJson(url) {
     'User-Agent': 'Mozilla/5.0 (compatible; nors-prerender/1.0; +https://nors.com.pk)',
   };
   let lastErr;
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -135,7 +135,7 @@ async function getJson(url) {
     } catch (err) {
       lastErr = err.cause?.message ? new Error(`${err.message}: ${err.cause.message}`) : err;
       console.warn(`[prerender] attempt ${attempt} failed: ${lastErr.message}`);
-      if (attempt < 5) await new Promise((r) => setTimeout(r, 4000 * attempt));
+      if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, 4000 * attempt));
     }
   }
   throw lastErr;
@@ -169,6 +169,45 @@ async function loadFaqs() {
   } catch {
     return [];
   }
+}
+
+// Policy pages (shipping, exchange/refund, payment, privacy) live in WordPress
+// and are fetched by the browser at runtime, so crawlers never see them. Pull
+// them in at build time and write the text into /policies. Best effort: any
+// failure just means the page keeps its head tags only.
+const POLICY_SLUGS = [
+  ['shipping-policy', 'Shipping Policy'],
+  ['exchange-refund-policy', 'Exchange & Refund Policy'],
+  ['payment-policy', 'Payment Policy'],
+  ['privacy-policy-2', 'Privacy Policy'],
+];
+
+function safeHtml(html) {
+  return decodeEntities(String(html ?? ''))
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/<(\/?)(h[1-6])\b[^>]*>/gi, (_, c) => (c ? '</h3>' : '<h3>'))
+    .replace(/<(\/?)(p|ul|ol|li|strong|em|br)\b[^>]*>/gi, '<$1$2>')
+    .replace(/<(?!\/?(?:h3|p|ul|ol|li|strong|em|br)>)[^>]+>/gi, '')
+    .replace(/<p>\s*<\/p>/gi, '')
+    .replace(/&/g, '&amp;')
+    .trim();
+}
+
+async function loadPolicies() {
+  const out = [];
+  let failures = 0;
+  for (const [slug, label] of POLICY_SLUGS) {
+    if (failures >= 2) break;
+    try {
+      const data = await getJson(`${SITE}/index.php?rest_route=/wp/v2/pages&slug=${slug}`, 2);
+      const html = safeHtml(data?.[0]?.content?.rendered);
+      if (stripHtml(html).length > 80) out.push({ slug, label, html });
+    } catch {
+      failures++; // skip this policy
+    }
+  }
+  return out;
 }
 
 function normalizeProduct(p) {
@@ -436,7 +475,7 @@ function llmsTxt(homeDescription, products) {
     ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}): ${clip(p.short || p.name, 140)} ${rs(p.price)}.`),
     '',
     '## Info',
-    `- [Policies](${SITE}/policies): Exchange and refund policy, shipping and payment information.`,
+    `- [Policies](${SITE}/policies): Shipping (nationwide courier delivery), exchange and refund rules, payment and privacy policies.`,
     `- [Contact](${SITE}/contact): Sizing help and order questions.`,
     `- [Track your order](${SITE}/track-order): Check order status with your order number and phone number.`,
     '',
@@ -508,6 +547,7 @@ async function main() {
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact` }])],
     }),
   );
+  const policies = await loadPolicies();
   await writeRoute(
     '/policies',
     render({
@@ -515,6 +555,12 @@ async function main() {
       description: `Exchange and refund policy, shipping and payment information for ${BRAND} orders.`,
       canonical: `${SITE}/policies`,
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Policies', url: `${SITE}/policies` }])],
+      body: policies.length
+        ? wrap(
+            '<h1>Policies</h1>' +
+              policies.map((x) => `<section id="${esc(x.slug)}"><h2>${esc(x.label)}</h2>${x.html}</section>`).join(''),
+          )
+        : undefined,
     }),
   );
   sitemapUrls.push({ loc: `${SITE}/contact` }, { loc: `${SITE}/policies` });
