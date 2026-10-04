@@ -245,10 +245,14 @@ function normalizeProduct(p) {
 // ---------- html ----------
 
 function wrap(inner) {
+  // Visually hidden but still in the HTML, so crawlers that do not run
+  // JavaScript can read it. Without this, visitors saw this unstyled text for a
+  // moment before React mounted and replaced it. React replaces it on mount.
   return (
-    '<div data-prerender="true" style="min-height:100vh;background:#000;color:#fff;' +
-    'font-family:Inter,Arial,sans-serif;line-height:1.6;padding:96px 24px 48px">' +
-    `<div style="max-width:880px;margin:0 auto">${inner}</div></div>`
+    '<div data-prerender="true" style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;' +
+    'overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0;' +
+    'font-family:Inter,Arial,sans-serif;line-height:1.6">' +
+    `<div>${inner}</div></div>`
   );
 }
 
