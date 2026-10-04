@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { CartItem } from '@/types';
+import { trackAddToCart } from '@/lib/pixel';
 
 interface CartContextValue {
   items: CartItem[];
@@ -44,6 +45,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const addItem = (item: CartItem) => {
+    // Meta Pixel / Conversions API. Fired here, outside the state updater
+    // below, because React may run updater functions more than once.
+    trackAddToCart({
+      content_name: item.name,
+      content_ids: [item.productId],
+      value: item.price * item.quantity,
+      currency: 'PKR',
+      contents: [{ id: item.productId, quantity: item.quantity, item_price: item.price }],
+    });
+
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === item.productId && i.size === item.size);
       if (existing) {
