@@ -11,9 +11,9 @@
  * content. React replaces the static content as soon as it mounts, so the
  * visible app behaves exactly as before.
  *
- * URL form: the host redirects /dir to /dir/ for directories that contain an
- * index.html, so every canonical, sitemap entry and schema URL for the
- * pre-rendered routes uses the trailing-slash form to match what is served.
+ * URL form: canonicals, sitemap entries and schema URLs use the no-slash form
+ * (/products/<slug>), matching what the app shows. The .htaccess rewrite serves
+ * each pre-rendered index.html at both /dir and /dir/.
  *
  * Safety: if the WooCommerce Store API cannot be reached, the script logs a
  * warning and leaves dist/ untouched, so a deploy is never broken by it.
@@ -253,7 +253,7 @@ function breadcrumb(items) {
 // ---------- pages ----------
 
 function productPage(render, p) {
-  const url = `${SITE}/products/${p.slug}/`;
+  const url = `${SITE}/products/${p.slug}`;
   const priceLine = `${rs(p.price)}${p.regular ? ` (was ${rs(p.regular)})` : ''}`;
   const lead = p.short || p.long || p.name;
   const description = `${clip(lead, 108)} ${rs(p.price)}. Cash on delivery across Pakistan.`;
@@ -310,7 +310,7 @@ function productPage(render, p) {
 }
 
 function collectionPage(render, cat, items) {
-  const url = `${SITE}/collections/${cat.slug}/`;
+  const url = `${SITE}/collections/${cat.slug}`;
   const name = stripHtml(cat.name);
   const intro = stripHtml(cat.description);
   const description = clip(
@@ -318,7 +318,7 @@ function collectionPage(render, cat, items) {
     155,
   );
   const list = items
-    .map((p) => `<li><a href="/products/${esc(p.slug)}/" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
+    .map((p) => `<li><a href="/products/${esc(p.slug)}" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
     .join('');
   const body = wrap(
     `<nav aria-label="Breadcrumb"><a href="/" style="color:inherit">Home</a> / ${esc(name)}</nav>` +
@@ -343,7 +343,7 @@ function collectionPage(render, cat, items) {
           itemListElement: items.map((p, i) => ({
             '@type': 'ListItem',
             position: i + 1,
-            url: `${SITE}/products/${p.slug}/`,
+            url: `${SITE}/products/${p.slug}`,
             name: p.name,
           })),
         },
@@ -383,7 +383,7 @@ function homePage(render, homeDescription, products, faqs) {
     });
   }
   const list = products
-    .map((p) => `<li><a href="/products/${esc(p.slug)}/" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
+    .map((p) => `<li><a href="/products/${esc(p.slug)}" style="color:inherit">${esc(p.name)}</a> – ${esc(rs(p.price))}</li>`)
     .join('');
   const faqHtml = faqs.length
     ? '<h2>FAQs</h2>' + faqs.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join('')
@@ -426,12 +426,12 @@ function llmsTxt(homeDescription, products) {
     `> ${stripHtml(homeDescription)}`,
     '',
     '## Products',
-    ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}/): ${clip(p.short || p.name, 140)} ${rs(p.price)}.`),
+    ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}): ${clip(p.short || p.name, 140)} ${rs(p.price)}.`),
     '',
     '## Info',
-    `- [Policies](${SITE}/policies/): Exchange and refund policy, shipping and payment information.`,
-    `- [Contact](${SITE}/contact/): Sizing help and order questions.`,
-    `- [Track your order](${SITE}/track-order/): Check order status with your order number and phone number.`,
+    `- [Policies](${SITE}/policies): Exchange and refund policy, shipping and payment information.`,
+    `- [Contact](${SITE}/contact): Sizing help and order questions.`,
+    `- [Track your order](${SITE}/track-order): Check order status with your order number and phone number.`,
     '',
   ];
   return lines.join('\n');
@@ -476,7 +476,7 @@ async function main() {
   // Products
   for (const p of products) {
     await writeRoute(`/products/${p.slug}`, productPage(render, p));
-    sitemapUrls.push({ loc: `${SITE}/products/${p.slug}/`, images: p.images });
+    sitemapUrls.push({ loc: `${SITE}/products/${p.slug}`, images: p.images });
   }
 
   // Collections
@@ -488,7 +488,7 @@ async function main() {
       continue;
     }
     await writeRoute(`/collections/${slug}`, collectionPage(render, cat, items));
-    sitemapUrls.push({ loc: `${SITE}/collections/${slug}/` });
+    sitemapUrls.push({ loc: `${SITE}/collections/${slug}` });
   }
 
   // Static pages that stay client-rendered but get correct head tags
@@ -497,8 +497,8 @@ async function main() {
     render({
       title: `Contact | ${BRAND}`,
       description: `Contact ${BRAND} in Karachi for sizing help and order questions.`,
-      canonical: `${SITE}/contact/`,
-      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact/` }])],
+      canonical: `${SITE}/contact`,
+      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact` }])],
     }),
   );
   await writeRoute(
@@ -506,17 +506,17 @@ async function main() {
     render({
       title: `Policies | ${BRAND}`,
       description: `Exchange and refund policy, shipping and payment information for ${BRAND} orders.`,
-      canonical: `${SITE}/policies/`,
-      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Policies', url: `${SITE}/policies/` }])],
+      canonical: `${SITE}/policies`,
+      schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Policies', url: `${SITE}/policies` }])],
     }),
   );
-  sitemapUrls.push({ loc: `${SITE}/contact/` }, { loc: `${SITE}/policies/` });
+  sitemapUrls.push({ loc: `${SITE}/contact` }, { loc: `${SITE}/policies` });
 
   // Never-index pages
   for (const n of NOINDEX_ROUTES) {
     await writeRoute(
       n.route,
-      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}/`, noindex: true }),
+      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}`, noindex: true }),
     );
   }
 
