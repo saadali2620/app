@@ -24,7 +24,14 @@ declare global {
 }
 
 const PIXEL_ID = (import.meta.env.VITE_META_PIXEL_ID as string | undefined) || '4640251216246898';
-const CAPI_ENDPOINT = '/api/meta-capi';
+// The live site is served from Hostinger, which cannot run the Vercel function,
+// so production posts cross-origin to the Vercel deployment. On Vercel itself
+// (and localhost) the relative path is used.
+const CAPI_ENDPOINT =
+  (import.meta.env.VITE_META_CAPI_ENDPOINT as string | undefined) ||
+  (typeof window !== 'undefined' && /(^|\.)nors\.com\.pk$/.test(window.location.hostname)
+    ? 'https://nors-store.vercel.app/api/meta-capi'
+    : '/api/meta-capi');
 const CURRENCY = 'PKR';
 const FBC_KEY = 'nors_fbc';
 const PENDING_PURCHASE_KEY = 'nors_pending_purchase';
