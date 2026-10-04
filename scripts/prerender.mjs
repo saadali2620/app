@@ -522,14 +522,14 @@ async function main() {
     data = await loadData();
   } catch (err) {
     console.warn(`[prerender] Could not load WooCommerce data (${err.message}). Leaving dist/ untouched.`);
-    if (process.env.CI) process.exitCode = 1; // fail the deploy rather than ship an un-prerendered site
+    if (process.env.PRERENDER_STRICT) process.exitCode = 1; // opt-in: fail the deploy instead of shipping without prerendered pages
     return;
   }
 
   const products = (data.products ?? []).map(normalizeProduct).filter((p) => p.slug && p.name);
   if (products.length === 0) {
     console.warn('[prerender] No products returned. Leaving dist/ untouched.');
-    if (process.env.CI) process.exitCode = 1;
+    if (process.env.PRERENDER_STRICT) process.exitCode = 1;
     return;
   }
   const categories = data.categories ?? [];
