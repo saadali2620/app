@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Check, X } from 'lucide-react';
+import { flushPendingPurchase } from '@/lib/pixel';
 
 interface OrderConfirmationPageProps {
   path: string;
@@ -17,6 +19,12 @@ function parseOrderConfirmation(path: string) {
 export default function OrderConfirmationPage({ path, navigate }: OrderConfirmationPageProps) {
   const { orderId, status } = parseOrderConfirmation(path);
   const isSuccess = status === 'success';
+
+  // Card/online-gateway orders leave the site to pay, so their Purchase event
+  // was stashed at checkout. Fire it now that payment is confirmed.
+  useEffect(() => {
+    if (isSuccess) flushPendingPurchase();
+  }, [isSuccess]);
 
   return (
     <div className="min-h-screen bg-black pt-20 flex flex-col items-center justify-center px-6 text-center gap-6">
