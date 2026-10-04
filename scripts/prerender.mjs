@@ -109,10 +109,16 @@ function parseAccordion(rawDescription) {
   let m;
   while ((m = tabRe.exec(norm))) {
     const title = decodeEntities(m[1]).trim();
-    const content = stripHtml(
-      m[2].replace(/\[vc_column_text[^\]]*\]/g, '').replace(/\[\/vc_column_text\]/g, ''),
-    );
-    if (title && content) sections.push({ title, content });
+    const inner = m[2].replace(/\[vc_column_text[^\]]*\]/g, '').replace(/\[\/vc_column_text\]/g, '');
+    // Keep real tables (the size guide) as rows and cells instead of flattening them.
+    const tableHtml = (inner.match(/<table[\s\S]*?<\/table>/i) || [])[0];
+    const table = tableHtml
+      ? [...tableHtml.matchAll(/<tr[\s\S]*?<\/tr>/gi)]
+          .map((r) => [...r[0].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((c) => stripHtml(c[1])))
+          .filter((row) => row.length > 0)
+      : [];
+    const content = stripHtml(tableHtml ? inner.replace(tableHtml, ' ') : inner);
+    if (title && (content || table.length > 1)) sections.push({ title, content, table: table.length > 1 ? table : null });
   }
   return sections;
 }
@@ -325,7 +331,19 @@ function productPage(render, p) {
 
   const sections = p.accordion
     .filter((s) => !/^reviews?$/i.test(s.title))
-    .map((s) => `<h2>${esc(s.title)}</h2><p>${esc(s.content)}</p>`)
+    .map((s) => {
+      const tbl = s.table
+        ? '<table style="border-collapse:collapse;margin:8px 0">' +
+          s.table
+            .map((row, r) => {
+              const tag = r === 0 ? 'th' : 'td';
+              return '<tr>' + row.map((c) => `<${tag} style="padding:6px 14px 6px 0;text-align:left">${esc(c)}</${tag}>`).join('') + '</tr>';
+            })
+            .join('') +
+          '</table>'
+        : '';
+      return `<h2>${esc(s.title)}</h2>${tbl}${s.content ? `<p>${esc(s.content)}</p>` : ''}`;
+    })
     .join('');
 
   const body = wrap(
