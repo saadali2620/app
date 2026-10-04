@@ -120,15 +120,22 @@ function parseAccordion(rawDescription) {
 // ---------- data ----------
 
 async function getJson(url) {
+  // Some hosts rate-limit or drop requests from CI servers now and then, so
+  // retry with a growing pause, and look like an ordinary browser request.
+  const headers = {
+    Accept: 'application/json',
+    'User-Agent': 'Mozilla/5.0 (compatible; nors-prerender/1.0; +https://nors.com.pk)',
+  };
   let lastErr;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { Accept: 'application/json' } });
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {
-      lastErr = err;
-      await new Promise((r) => setTimeout(r, 1000 * attempt));
+      lastErr = err.cause?.message ? new Error(`${err.message}: ${err.cause.message}`) : err;
+      console.warn(`[prerender] attempt ${attempt} failed: ${lastErr.message}`);
+      if (attempt < 5) await new Promise((r) => setTimeout(r, 4000 * attempt));
     }
   }
   throw lastErr;
