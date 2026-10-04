@@ -3,6 +3,7 @@ import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/wo
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
+import { trackViewContent } from '@/lib/pixel';
 import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn, Share2, Link } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
 import ProductReviews from '@/components/ProductReviews';
@@ -200,6 +201,21 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       document.title = 'nors. | Official Site';
     };
   }, [product]);
+
+  // Meta Pixel / Conversions API: one ViewContent per product page view.
+  // Uses the same price the page charges (see isOnSale / handleAddToCart).
+  useEffect(() => {
+    if (!product) return;
+    const onSale = product.compare_at_price !== null && product.compare_at_price < product.price;
+    trackViewContent({
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: onSale ? product.compare_at_price! : product.price,
+      currency: 'PKR',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   const isSoldOut = product ? !product.in_stock || product.badge === 'Sold Out' : false;
   const isOnSale =

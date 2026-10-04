@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
 import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, getPostexServiceableCities, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
+import { trackInitiateCheckout, trackPurchase, stashPendingPurchase } from '@/lib/pixel';
 import { Check } from 'lucide-react'; import { useAuth } from '@/context/AuthContext';
 
 interface CheckoutPageProps {
@@ -99,6 +100,23 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
   });
   const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile(); useEffect(() => { if (user?.email) { setForm((f) => (f.email ? f : { ...f, email: user.email })); } }, [user]);
   const [honeypot, setHoneypot] = useState('');
+
+  // Meta Pixel / Conversions API: InitiateCheckout fires once per visit to
+  // this page, using the cart as it was when the page opened (the cart is
+  // restored synchronously from localStorage, so it's already populated here).
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || items.length === 0) return;
+    checkoutTracked.current = true;
+    trackInitiateCheckout({
+      value: totalPrice,
+      currency: 'PKR',
+      num_items: totalItems,
+      content_ids: items.map((item) => item.productId),
+      contents: items.map((item) => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Set once performCheckout succeeds with a gateway redirect_url. Rendering
   // a dedicated "redirecting" screen (instead of firing window.location.href
@@ -358,12 +376,38 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
         }
       }
 
+      // Meta Pixel / Conversions API: build the Purchase payload from the cart
+      // BEFORE clearCart() empties it. The buyer's details are hashed on our
+      // server before they go to Meta.
+      const purchaseParams = {
+        value: grandTotal,
+        currency: 'PKR',
+        content_ids: items.map((item) => item.productId),
+        num_items: totalItems,
+        contents: items.map((item) => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
+        order_id: result.order_id ? String(result.order_id) : undefined,
+      };
+      const buyer = {
+        email: form.email,
+        phone: form.phone,
+        first_name: form.firstName,
+        last_name: form.lastName,
+        city: form.city,
+        state: form.state,
+        country: 'pk',
+      };
+
       if (result.payment_result?.redirect_url && effectivePaymentMethod !== 'cod' && effectivePaymentMethod !== 'bacs') {
+        // Paying on the gateway's site: the order only counts as a purchase
+        // once payment succeeds, so hand the event to the confirmation page.
+        stashPendingPurchase(purchaseParams, buyer);
         clearCart();
         setRedirectUrl(result.payment_result.redirect_url);
         return;
       }
 
+      // Cash on delivery / bank transfer: the order is placed, count it now.
+      trackPurchase(purchaseParams, buyer);
       clearCart();
       setSubmitted(true);
     } catch (err) {
