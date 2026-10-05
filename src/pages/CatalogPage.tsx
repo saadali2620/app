@@ -114,15 +114,9 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
       {/* Page header */}
       <div className="px-6 lg:px-10 pt-16 pb-12 text-center">
         {/* A blank space keeps the title's height while loading, so the page doesn't jump when the name arrives. */}
-        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3 uppercase">{title || '\u00A0'}</h1>
+        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3 uppercase">{title || <span className="inline-block align-middle w-48 sm:w-64 h-[0.8em] bg-neutral-900 animate-pulse" aria-hidden="true" />}</h1>
         {subtitle && (
           <p className="text-white/50 text-sm uppercase tracking-[0.2em]">{subtitle}</p>
-        )}
-        {loading && !collection && collectionSlug && collectionSlug !== 'all' && (
-          <div className="max-w-xl mx-auto mt-4 space-y-2" aria-hidden="true">
-            <div className="h-3 bg-neutral-900 animate-pulse w-full" />
-            <div className="h-3 bg-neutral-900 animate-pulse w-2/3 mx-auto" />
-          </div>
         )}
         {collection?.description && (
           <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto mt-4">

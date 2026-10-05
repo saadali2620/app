@@ -248,20 +248,48 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
       </div>
     );
-    // Heights match the real title (text-2xl / sm:text-3xl) and price rows.
+    // Block heights below are taken from the real page (measured), in the real
+    // order, so the placeholder boxes sit where the content will appear.
+    const bar = 'bg-neutral-900 animate-pulse';
+    // Title: shop product names are long, so reserve two lines; plus the price row.
     const titleSkeleton = (
       <div className="mb-4 lg:mb-0" aria-hidden="true">
-        <div className="h-[30px] sm:h-[38px] bg-neutral-900 animate-pulse w-3/4 mb-5" />
+        <div className="h-[60px] sm:h-[75px] flex flex-col justify-around mb-5">
+          <div className={`h-[20px] sm:h-[26px] w-full ${bar}`} />
+          <div className={`h-[20px] sm:h-[26px] w-2/3 ${bar}`} />
+        </div>
         <div className="mb-8">
-          <div className="h-7 bg-neutral-900 animate-pulse w-1/4" />
+          <div className={`h-7 w-1/4 ${bar}`} />
         </div>
       </div>
     );
-    const detailsSkeleton = (
-      <div className="space-y-6 mt-8" aria-hidden="true">
-        <div className="h-16 bg-neutral-900 animate-pulse" />
-        <div className="h-14 bg-neutral-900 animate-pulse" />
-        <div className="h-40 bg-neutral-900 animate-pulse" />
+    const accordionSkeleton = (
+      <div className="h-[150px] pt-3 space-y-3" aria-hidden="true">
+        <div className={`h-[26px] ${bar}`} />
+        <div className={`h-[26px] ${bar}`} />
+        <div className={`h-[26px] ${bar}`} />
+      </div>
+    );
+    const sizeCtaSkeleton = (
+      <div className="h-[184px] pt-8 mb-8 lg:mb-0" aria-hidden="true">
+        <div className={`h-3 w-10 mb-3 ${bar}`} />
+        <div className="flex gap-2 mb-8">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={`h-9 w-14 ${bar}`} />
+          ))}
+        </div>
+        <div className={`h-12 ${bar}`} />
+      </div>
+    );
+    const reviewsSkeleton = (
+      <div className="h-[185px] pt-8" aria-hidden="true">
+        <div className={`h-3 w-16 mb-5 ${bar}`} />
+        <div className={`h-4 w-40 ${bar}`} />
+      </div>
+    );
+    const shareSkeleton = (
+      <div className="h-[58px] pt-6" aria-hidden="true">
+        <div className={`h-3 w-32 ${bar}`} />
       </div>
     );
     return (
@@ -272,13 +300,19 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-10 flex flex-col">
           {titleSkeleton}
           {imageSkeleton}
-          {detailsSkeleton}
+          {sizeCtaSkeleton}
+          {accordionSkeleton}
+          {reviewsSkeleton}
+          {shareSkeleton}
         </div>
         <div className="hidden lg:grid max-w-[1600px] mx-auto px-6 lg:px-10 pb-16 lg:grid-cols-2 gap-8 lg:gap-16">
           {imageSkeleton}
           <div className="flex flex-col lg:pt-4">
             {titleSkeleton}
-            {detailsSkeleton}
+            {accordionSkeleton}
+            {sizeCtaSkeleton}
+            {reviewsSkeleton}
+            {shareSkeleton}
           </div>
         </div>
       </div>
