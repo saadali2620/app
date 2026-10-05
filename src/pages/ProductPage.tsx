@@ -248,7 +248,12 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     // stacked on mobile and side by side on desktop) so nothing moves on arrival.
     const photoCount = hint?.photos ?? 5;
     const sectionCount = hint?.sections ?? 3;
-    const sizeCount = hint?.sizes ?? 4;
+    // Real size labels when known (sorted and labelled like the real buttons);
+    // otherwise three typical-width boxes.
+    const sizeLabels: string[] = hint?.sizes?.length
+      ? sortSizes(hint.sizes.map((x, i) => ({ id: String(i), product_id: '', size: x, in_stock: true, sort_order: i })))
+          .map((x) => (x.size.toLowerCase().replace(/[^a-z]/g, '') === 'extralarge' ? 'X-Large' : x.size))
+      : ['Medium', 'Large', 'X-Large'];
     const imageSkeleton = (
       <div className="flex flex-col gap-3 mb-8 lg:mb-0">
         <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
@@ -294,14 +299,25 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         </div>
       ) : null;
     const sizeCtaSkeleton = (
-      <div className="h-[184px] pt-8 mb-8 lg:mb-0" aria-hidden="true">
-        <div className={`h-3 w-10 mb-3 ${bar}`} />
-        <div className="flex gap-2 mb-8">
-          {Array.from({ length: sizeCount }).map((_, i) => (
-            <div key={i} className={`h-9 w-14 ${bar}`} />
-          ))}
+      <div className="mb-8 lg:mb-0" aria-hidden="true">
+        <div className="mb-8 mt-8">
+          <h3 className="text-[11px] uppercase tracking-[0.18em] font-medium mb-3">
+            <span className={`text-transparent ${bar}`}>Size</span>
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {sizeLabels.map((l, i) => (
+              <div
+                key={i}
+                className={`min-w-[3rem] px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium border border-transparent text-transparent ${bar}`}
+              >
+                {l}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className={`h-12 ${bar}`} />
+        <div className={`w-full py-4 text-[11px] uppercase tracking-[0.2em] font-semibold text-transparent ${bar}`}>
+          Select a Size
+        </div>
       </div>
     );
     const reviewsSkeleton = (
