@@ -34,7 +34,7 @@ const DIST = path.resolve(process.env.PRERENDER_DIST || 'dist');
 
 const BRAND = 'nors.';
 const LOGO = `${SITE}/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png`;
-const HOME_TITLE = 'nors. | Independent Streetwear from Karachi';
+const HOME_TITLE = 'nors. | Official Site';
 
 // Collections worth indexing. Only add a slug here once the app links to it
 // and it has real content (a short intro and several products); a thin
