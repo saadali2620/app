@@ -125,7 +125,7 @@ function parseAccordion(rawDescription) {
 
 // ---------- data ----------
 
-async function getJson(url, maxAttempts = 5) {
+async function getJson(url, maxAttempts = 5, withTotal = false) {
   // Some hosts rate-limit or drop requests from CI servers now and then, so
   // retry with a growing pause, and look like an ordinary browser request.
   const headers = {
@@ -137,7 +137,8 @@ async function getJson(url, maxAttempts = 5) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const json = await res.json();
+      return withTotal ? { json, total: Number(res.headers.get('x-wp-total') ?? (Array.isArray(json) ? json.length : 0)) } : json;
     } catch (err) {
       lastErr = err.cause?.message ? new Error(`${err.message}: ${err.cause.message}`) : err;
       console.warn(`[prerender] attempt ${attempt} failed: ${lastErr.message}`);
@@ -201,12 +202,19 @@ function safeHtml(html) {
 }
 
 async function loadPolicies() {
+  if (FIXTURE) {
+    // Offline tests: policy texts can come from the fixture file.
+    const fx = JSON.parse(await readFile(FIXTURE, 'utf8')).policies ?? {};
+    Object.assign(RAW_POLICIES, fx);
+    return POLICY_SLUGS.filter(([slug]) => fx[slug]).map(([slug, label]) => ({ slug, label, html: safeHtml(fx[slug]) }));
+  }
   const out = [];
   let failures = 0;
   for (const [slug, label] of POLICY_SLUGS) {
     if (failures >= 2) break;
     try {
       const data = await getJson(`${SITE}/index.php?rest_route=/wp/v2/pages&slug=${slug}`, 2);
+      if (data?.[0]?.content?.rendered) RAW_POLICIES[slug] = data[0].content.rendered;
       const html = safeHtml(data?.[0]?.content?.rendered);
       if (stripHtml(html).length > 80) out.push({ slug, label, html });
     } catch {
@@ -288,12 +296,15 @@ function makeRenderer(template) {
       // instead of after it.
       html = html.replace('</head>', () => `<link rel="modulepreload" crossorigin href="${CHUNKS[o.chunk]}" />\n</head>`);
     }
+    html = html.replace(/__SEED_V__/g, SEED_VERSION);
     if (o.body) html = html.replace('<div id="root"></div>', () => `<div id="root">${o.body}</div>`);
     return html;
   };
 }
 
 // Built page files by name, e.g. { PolicyPage: '/assets/PolicyPage-abc123.js' }.
+const SEED_VERSION = Date.now().toString(36);
+const RAW_POLICIES = {};
 const CHUNKS = {};
 async function findChunks() {
   try {
@@ -595,6 +606,50 @@ async function main() {
     }),
   );
   const policies = await loadPolicies();
+
+  // Seed file: the exact lists the app asks the API for, as they are right now.
+  // The browser downloads this static file first and paints from it, then the
+  // live API answer replaces it if anything changed (see woocommerce.ts).
+  try {
+    const trim = (p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      prices: p.prices,
+      short_description: p.short_description,
+      images: (p.images ?? []).slice(0, 2).map((im) => ({ src: im.src, srcset: im.srcset, sizes: im.sizes })),
+      on_sale: p.on_sale,
+      is_purchasable: p.is_purchasable,
+      is_in_stock: p.is_in_stock,
+      menu_order: p.menu_order,
+      date_created: p.date_created,
+    });
+    const seed = { products: {}, categories: [], policies: RAW_POLICIES };
+    const ask = async (query, local) => {
+      if (FIXTURE) return local();
+      const { json, total } = await getJson(`${API}/products&${query}`, 3, true);
+      return { items: json, total };
+    };
+    const byOrder = (a, b) => (a.menu_order ?? 0) - (b.menu_order ?? 0);
+    const homeQ = 'per_page=50&orderby=menu_order&order=asc';
+    const home = await ask(homeQ, () => ({ items: [...(data.products ?? [])].sort(byOrder).slice(0, 50), total: (data.products ?? []).length }));
+    seed.products[homeQ] = { total: home.total, items: home.items.map(trim) };
+    for (const slug of COLLECTION_SLUGS) {
+      const cat = categories.find((c) => c.slug === slug);
+      if (!cat) continue;
+      seed.categories.push({ id: cat.id, name: cat.name, slug: cat.slug, description: cat.description });
+      const q = `per_page=8&category=${cat.id}&orderby=menu_order&order=asc`;
+      const col = await ask(q, () => {
+        const all = (data.products ?? []).filter((p) => (p.categories ?? []).some((c) => c.slug === slug)).sort(byOrder);
+        return { items: all.slice(0, 8), total: all.length };
+      });
+      seed.products[q] = { total: col.total, items: col.items.map(trim) };
+    }
+    await mkdir(path.join(DIST, 'data'), { recursive: true });
+    await writeFile(path.join(DIST, 'data', 'seed.json'), JSON.stringify(seed));
+  } catch (err) {
+    console.warn(`[prerender] Seed file skipped (${err.message}); pages load from the live API as before.`);
+  }
   await writeRoute(
     '/policies',
     render({

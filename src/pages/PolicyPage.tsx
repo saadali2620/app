@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchEarlyAware } from '@/lib/woocommerce';
+import { fetchEarlyAware, peekSeedPolicies } from '@/lib/woocommerce';
 
 interface PolicyPageProps {
   navigate: (path: string) => void;
@@ -67,6 +67,18 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
 
   useEffect(() => {
     let cancelled = false;
+    let gotFresh = false;
+    let shownSeed = false;
+    // Nothing saved on this device: show the build-time text (a static file)
+    // while the live text loads.
+    if (!saved) {
+      peekSeedPolicies().then((seed) => {
+        if (!seed || cancelled || gotFresh) return;
+        setDocs(POLICY_SLUGS.map(({ slug, label }) => ({ slug, label, content: cleanPolicyHtml(seed[slug] ?? '') })));
+        shownSeed = true;
+        setLoading(false);
+      });
+    }
     (async () => {
       const results = await Promise.all(
         POLICY_SLUGS.map(async ({ slug, label }) => {
@@ -80,10 +92,11 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
           }
         })
       );
+      gotFresh = true;
       if (!cancelled) {
         // Keep the saved text if the network failed this time.
         const failed = results.every((d) => !d.content);
-        if (!(failed && saved)) {
+        if (!(failed && (saved || shownSeed))) {
           setDocs(results);
           savePolicies(results);
         }
