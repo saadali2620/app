@@ -297,12 +297,16 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   return result;
 }
 
-/** Quietly loads the first page of every collection so opening one is instant. */
+// Only the collections the site links to. The shop has many more categories,
+// and loading all of them at once overloads the server and slows the page.
+const WARM_COLLECTION_SLUGS = ['batch-01'];
+
+/** Quietly loads the first page of the linked collections so opening one is instant. */
 export function warmCollections(): void {
   getCollections()
     .then((cols) => {
       for (const c of cols) {
-        if (c.slug === 'uncategorized') continue;
+        if (!WARM_COLLECTION_SLUGS.includes(c.slug)) continue;
         getProducts({ limit: 8, category: c.id, sortBy: 'featured' }).catch(() => {});
       }
     })
