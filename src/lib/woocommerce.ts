@@ -19,6 +19,7 @@ declare global {
   interface Window {
     __norsEarly?: Record<string, Promise<Response>>;
     __norsSeed?: Promise<Seed | null>;
+    __norsPdp?: ProductHint & { slug: string };
   }
 }
 
@@ -713,3 +714,38 @@ export function getPostexServiceableCities(): Promise<string[]> {
   }
   return postexCitiesPromise;
             }
+
+// ---------------------------------------------------------------------------
+// What a product page will look like, known before its data arrives, so the
+// loading placeholder can take the same shape. Comes from the page the build
+// wrote for this product, or else from a list this browser already saved.
+// ---------------------------------------------------------------------------
+export interface ProductHint {
+  name?: string;
+  photos?: number;
+  sections?: number;
+  sizes?: number;
+}
+
+const notReviews = (title: string) => !/^reviews?$/i.test(title.trim());
+
+export function peekProductHint(slug: string): ProductHint | null {
+  try {
+    const baked = typeof window !== 'undefined' ? window.__norsPdp : undefined;
+    if (baked && baked.slug === slug) return baked;
+    const lists = [peekHomeProducts()?.data, peekCollection('batch-01')?.data];
+    for (const list of lists) {
+      const p = list?.find((x) => x.slug === slug);
+      if (p) {
+        return {
+          name: p.name,
+          photos: p.images?.length,
+          sections: p.accordion?.filter((a) => notReviews(a.title)).length,
+        };
+      }
+    }
+  } catch {
+    /* fall through to defaults */
+  }
+  return null;
+}

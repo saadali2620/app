@@ -133,7 +133,7 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
 
         {loading ? (
           <div className="space-y-3 min-h-[60vh]" aria-hidden="true">
-            {['w-full', 'w-full', 'w-5/6', 'w-full', 'w-11/12', 'w-2/3', 'w-full', 'w-5/6', 'w-full', 'w-3/4', 'w-full', 'w-1/2'].map((w, i) => (
+            {['w-full', 'w-full', 'w-5/6', 'w-full', 'w-11/12', 'w-2/3', 'w-full', 'w-5/6', 'w-full', 'w-3/4', 'w-full', 'w-1/2', 'w-full', 'w-full', 'w-11/12', 'w-full', 'w-5/6', 'w-1/3'].map((w, i) => (
               <div key={i} className={`h-4 bg-neutral-900 animate-pulse ${w}`} />
             ))}
           </div>
