@@ -29,7 +29,7 @@ function takeEarly(url: string): Promise<Response> | null {
   return early;
 }
 
-async function fetchEarlyAware(url: string): Promise<Response> {
+export async function fetchEarlyAware(url: string): Promise<Response> {
   const early = takeEarly(url);
   if (early) {
     try {
@@ -194,6 +194,11 @@ function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string 
   }
 }
 
+// Collection lists (page 1 of /collections/<slug>) are reused for two minutes,
+// so a visit warmed in the background, or a quick return to the page, is instant.
+const CATEGORY_LIST_TTL_MS = 2 * 60 * 1000;
+const categoryLists = new Map<string, { at: number; p: Promise<ProductListResult> }>();
+
 export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<ProductListResult> {
   const params = new URLSearchParams();
   params.set('per_page', String(opts?.limit ?? 50));
@@ -203,14 +208,72 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   params.set('orderby', orderby);
   params.set('order', order);
 
-  const res = await fetchEarlyAware(`${WC_BASE}/products&${params.toString()}&nors_cb=2`);
-  const data = await res.json();
-  const total = Number(res.headers.get('X-WP-Total') ?? data.length);
-  const result = { data: data.map((p: any) => mapWcProduct(p)), count: total };
-  const isHomeList =
-    !opts?.category && !opts?.offset && (opts?.limit ?? 50) === 50 && (!opts?.sortBy || opts.sortBy === 'featured');
+  const url = `${WC_BASE}/products&${params.toString()}&nors_cb=2`;
+  const load = async (): Promise<ProductListResult> => {
+    const res = await fetchEarlyAware(url);
+    const data = await res.json();
+    const total = Number(res.headers.get('X-WP-Total') ?? data.length);
+    return { data: data.map((p: any) => mapWcProduct(p)), count: total };
+  };
+
+  if (opts?.category) {
+    const hit = categoryLists.get(url);
+    if (hit && Date.now() - hit.at < CATEGORY_LIST_TTL_MS) return hit.p;
+    const p = load();
+    categoryLists.set(url, { at: Date.now(), p });
+    p.catch(() => {
+      if (categoryLists.get(url)?.p === p) categoryLists.delete(url);
+    });
+    return p;
+  }
+
+  const result = await load();
+  const isHomeList = !opts?.offset && (opts?.limit ?? 50) === 50 && (!opts?.sortBy || opts.sortBy === 'featured');
   if (isHomeList) saveHomeProducts(result);
   return result;
+}
+
+/** Quietly loads the first page of every collection so opening one is instant. */
+export function warmCollections(): void {
+  getCollections()
+    .then((cols) => {
+      for (const c of cols) {
+        if (c.slug === 'uncategorized') continue;
+        getProducts({ limit: 8, category: c.id, sortBy: 'featured' }).catch(() => {});
+      }
+    })
+    .catch(() => {});
+}
+
+// Saved copy of a collection's first page, so a returning visitor sees it at once.
+const COLLECTION_KEY = 'nors:collection:v1:';
+const COLLECTION_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+export interface SavedCollection {
+  collection: Collection;
+  data: Product[];
+  count: number;
+}
+
+export function peekCollection(slug: string): SavedCollection | null {
+  try {
+    const raw = window.localStorage.getItem(COLLECTION_KEY + slug);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { t: number } & SavedCollection;
+    if (!saved || !saved.collection || !Array.isArray(saved.data) || saved.data.length === 0) return null;
+    if (Date.now() - saved.t > COLLECTION_MAX_AGE_MS) return null;
+    return { collection: saved.collection, data: saved.data, count: saved.count };
+  } catch {
+    return null;
+  }
+}
+
+export function saveCollection(slug: string, value: SavedCollection): void {
+  try {
+    window.localStorage.setItem(COLLECTION_KEY + slug, JSON.stringify({ t: Date.now(), ...value }));
+  } catch {
+    /* storage full or blocked: skipping the saved copy is fine */
+  }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -261,7 +324,7 @@ let collectionsAt = 0;
 export function getCollections(): Promise<Collection[]> {
   if (collectionsPromise && Date.now() - collectionsAt < COLLECTIONS_TTL_MS) return collectionsPromise;
   collectionsAt = Date.now();
-  const p = fetch(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`)
+  const p = fetchEarlyAware(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`)
     .then((res) => res.json())
     .then((data) =>
       data.map((c: any) => ({

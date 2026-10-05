@@ -24,7 +24,7 @@
  *   PRERENDER_FIXTURE    path to a JSON file { products, categories } for offline tests
  *   PRERENDER_DIST       default ./dist
  */
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const SITE = (process.env.PRERENDER_SITE_URL || 'https://nors.com.pk').replace(/\/$/, '');
@@ -43,11 +43,11 @@ const COLLECTION_SLUGS = ['batch-01'];
 
 // Pages that must never appear in search results.
 const NOINDEX_ROUTES = [
-  { route: '/track-order', title: `Track your order | ${BRAND}` },
-  { route: '/checkout', title: `Checkout | ${BRAND}` },
-  { route: '/login', title: `Log in | ${BRAND}` },
-  { route: '/register', title: `Create account | ${BRAND}` },
-  { route: '/account', title: `Your account | ${BRAND}` },
+  { route: '/track-order', title: `Track your order | ${BRAND}`, chunk: 'TrackOrderPage' },
+  { route: '/checkout', title: `Checkout | ${BRAND}`, chunk: 'CheckoutPage' },
+  { route: '/login', title: `Log in | ${BRAND}`, chunk: 'LoginPage' },
+  { route: '/register', title: `Create account | ${BRAND}`, chunk: 'RegisterPage' },
+  { route: '/account', title: `Your account | ${BRAND}`, chunk: 'AccountPage' },
 ];
 
 // ---------- text helpers ----------
@@ -282,9 +282,28 @@ function makeRenderer(template) {
     extra.push(`<meta name="twitter:image" content="${esc(o.image ?? LOGO)}" />`);
     for (const s of o.schema ?? []) extra.push(ld(s));
     html = html.replace('</head>', () => `${extra.join('\n')}\n</head>`);
+    if (o.earlyData) html = html.replace('<!--nors-early-data-->', () => `<script>${o.earlyData}</script>`);
+    if (o.chunk && CHUNKS[o.chunk]) {
+      // Start downloading this page's code now, alongside the main bundle,
+      // instead of after it.
+      html = html.replace('</head>', () => `<link rel="modulepreload" crossorigin href="${CHUNKS[o.chunk]}" />\n</head>`);
+    }
     if (o.body) html = html.replace('<div id="root"></div>', () => `<div id="root">${o.body}</div>`);
     return html;
   };
+}
+
+// Built page files by name, e.g. { PolicyPage: '/assets/PolicyPage-abc123.js' }.
+const CHUNKS = {};
+async function findChunks() {
+  try {
+    for (const f of await readdir(path.join(DIST, 'assets'))) {
+      const m = f.match(/^([A-Za-z]+Page)-[A-Za-z0-9_-]+\.js$/);
+      if (m) CHUNKS[m[1]] = `/assets/${f}`;
+    }
+  } catch {
+    /* no assets folder: nothing to preload */
+  }
 }
 
 async function writeRoute(route, html) {
@@ -399,6 +418,8 @@ function collectionPage(render, cat, items) {
     description,
     canonical: url,
     image: items[0]?.images[0],
+    // Lets the page request this collection's products immediately (see index.html).
+    earlyData: /^\d+$/.test(String(cat.id)) ? `window.__norsCatId=${JSON.stringify(String(cat.id))};` : undefined,
     schema: [
       {
         '@context': 'https://schema.org',
@@ -540,6 +561,7 @@ async function main() {
   const faqs = await loadFaqs();
   const homeDescription = (template.match(/<meta\s+name="description"\s+content="([^"]*)"/) ?? [])[1] ?? '';
   const render = makeRenderer(template);
+  await findChunks();
 
   const sitemapUrls = [{ loc: `${SITE}/` }];
 
@@ -568,6 +590,7 @@ async function main() {
       title: `Contact | ${BRAND}`,
       description: `Contact ${BRAND} in Karachi for sizing help and order questions.`,
       canonical: `${SITE}/contact`,
+      chunk: 'ContactPage',
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact` }])],
     }),
   );
@@ -578,6 +601,7 @@ async function main() {
       title: `Policies | ${BRAND}`,
       description: `Exchange and refund policy, shipping and payment information for ${BRAND} orders.`,
       canonical: `${SITE}/policies`,
+      chunk: 'PolicyPage',
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Policies', url: `${SITE}/policies` }])],
       body: policies.length
         ? wrap(
@@ -593,7 +617,7 @@ async function main() {
   for (const n of NOINDEX_ROUTES) {
     await writeRoute(
       n.route,
-      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}`, noindex: true }),
+      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}`, noindex: true, chunk: n.chunk }),
     );
   }
 

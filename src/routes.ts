@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { warmCollections } from '@/lib/woocommerce';
 
 /**
  * Pages that are NOT an entry point for most visitors (checkout, account,
@@ -59,6 +60,7 @@ export function prefetchAllPages(): void {
   if (conn?.saveData || conn?.effectiveType === '2g' || conn?.effectiveType === 'slow-2g') return;
 
   const run = () => {
+    warmCollections();
     for (const load of Object.values(importers)) {
       load().catch(() => {
         /* best effort; the page loads on demand if this fails */

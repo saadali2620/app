@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fetchEarlyAware } from '@/lib/woocommerce';
 
 interface PolicyPageProps {
   navigate: (path: string) => void;
@@ -32,11 +33,37 @@ function cleanPolicyHtml(html: string): string {
     .trim();
 }
 
+// Saved on this device so a returning visitor reads the policies instantly;
+// the fresh text loads in the background and replaces it if it changed.
+const SAVED_KEY = 'nors:policies:v1';
+const SAVED_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function peekPolicies(): PolicyDoc[] | null {
+  try {
+    const raw = window.localStorage.getItem(SAVED_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { t: number; docs: PolicyDoc[] };
+    if (!saved || !Array.isArray(saved.docs) || Date.now() - saved.t > SAVED_MAX_AGE_MS) return null;
+    return saved.docs.some((d) => d.content) ? saved.docs : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePolicies(docs: PolicyDoc[]): void {
+  try {
+    if (docs.some((d) => d.content)) window.localStorage.setItem(SAVED_KEY, JSON.stringify({ t: Date.now(), docs }));
+  } catch {
+    /* not critical */
+  }
+}
+
 export default function PolicyPage({ navigate }: PolicyPageProps) {
   void navigate;
-  const [docs, setDocs] = useState<PolicyDoc[]>([]);
+  const [saved] = useState(peekPolicies);
+  const [docs, setDocs] = useState<PolicyDoc[]>(saved ?? []);
   const [active, setActive] = useState(POLICY_SLUGS[0].slug);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!saved);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +71,7 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
       const results = await Promise.all(
         POLICY_SLUGS.map(async ({ slug, label }) => {
           try {
-            const res = await fetch(`${WP_BASE}/pages&slug=${slug}`);
+            const res = await fetchEarlyAware(`${WP_BASE}/pages&slug=${slug}`);
             const data = await res.json();
             const raw = data[0]?.content?.rendered ?? '';
             return { slug, label, content: cleanPolicyHtml(raw) };
@@ -54,7 +81,12 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
         })
       );
       if (!cancelled) {
-        setDocs(results);
+        // Keep the saved text if the network failed this time.
+        const failed = results.every((d) => !d.content);
+        if (!(failed && saved)) {
+          setDocs(results);
+          savePolicies(results);
+        }
         setLoading(false);
       }
     })();
