@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/format';
 import { trackViewContent } from '@/lib/pixel';
 import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn, Share2, Link } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
-import ProductReviews from '@/components/ProductReviews';
+import ProductReviews, { ReviewsSkeleton } from '@/components/ProductReviews';
 
 const SIZE_ORDER = [
   'xxs', '2xs', 'extra extra small', 'xs', 'extra small', 'x-small', 'extra-small',
@@ -320,12 +320,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         </div>
       </div>
     );
-    const reviewsSkeleton = (
-      <div className="h-[185px] pt-8" aria-hidden="true">
-        <div className={`h-3 w-16 mb-5 ${bar}`} />
-        <div className={`h-4 w-40 ${bar}`} />
-      </div>
-    );
+    const reviewsSkeleton = <ReviewsSkeleton />;
     const shareSkeleton = (
       <div className="h-[58px] pt-6" aria-hidden="true">
         <div className={`h-3 w-32 ${bar}`} />

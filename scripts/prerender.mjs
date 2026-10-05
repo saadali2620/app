@@ -305,6 +305,8 @@ function makeRenderer(template) {
 // Built page files by name, e.g. { PolicyPage: '/assets/PolicyPage-abc123.js' }.
 const SEED_VERSION = Date.now().toString(36);
 const RAW_POLICIES = {};
+// Newest store reviews, baked into product pages so the reviews placeholder has the right height.
+let RECENT_REVIEWS = [];
 const CHUNKS = {};
 async function findChunks() {
   try {
@@ -398,7 +400,7 @@ function productPage(render, p) {
       photos: p.images.length,
       sections: p.accordion.filter((x) => !/^reviews?$/i.test(String(x.title).trim())).length,
       sizes: p.sizes,
-    }).replace(/</g, '\\u003c')};`,
+    }).replace(/</g, '\\u003c')};window.__norsReviews=${JSON.stringify(RECENT_REVIEWS).replace(/</g, '\\u003c')};`,
     title: `${p.name} | ${BRAND}`,
     description,
     canonical: url,
@@ -577,6 +579,15 @@ async function main() {
     return;
   }
   const categories = data.categories ?? [];
+  try {
+    const rv = FIXTURE ? (data.reviews ?? []) : await getJson(`${API}/products/reviews&per_page=3&order=desc&orderby=date_gmt`, 2);
+    RECENT_REVIEWS = (Array.isArray(rv) ? rv : []).slice(0, 3).map((r) => ({
+      id: r.id, product_id: r.product_id, product_name: r.product_name, reviewer: r.reviewer,
+      review: r.review, rating: r.rating, verified: r.verified, date_created_gmt: r.date_created_gmt,
+    }));
+  } catch {
+    RECENT_REVIEWS = [];
+  }
   const faqs = await loadFaqs();
   const homeDescription = (template.match(/<meta\s+name="description"\s+content="([^"]*)"/) ?? [])[1] ?? '';
   const render = makeRenderer(template);

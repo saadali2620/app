@@ -49,6 +49,92 @@ function get(path: string): Promise<Review[]> {
   return promise;
 }
 
+// What the block looked like last time (this browser) or at build time, so the
+// placeholder takes the same height before the reviews arrive.
+const SHAPE_KEY = 'nors.reviews.shape.v1';
+interface Shape {
+  mine: number;
+  recent: Review[];
+}
+function peekShape(): Shape {
+  try {
+    const raw = localStorage.getItem(SHAPE_KEY);
+    if (raw) {
+      const j = JSON.parse(raw);
+      if (j && Array.isArray(j.recent)) return { mine: Number(j.mine) || 0, recent: j.recent.slice(0, 3) };
+    }
+  } catch {
+    /* fall through */
+  }
+  const baked = typeof window !== 'undefined' ? (window as any).__norsReviews : undefined;
+  return { mine: 0, recent: Array.isArray(baked) ? baked.slice(0, 3) : [] };
+}
+function saveShape(mine: number, recent: Review[]) {
+  try {
+    localStorage.setItem(SHAPE_KEY, JSON.stringify({ mine, recent: recent.slice(0, 3) }));
+  } catch {
+    /* ignore */
+  }
+}
+
+const GREY = 'bg-neutral-900 animate-pulse';
+function StarsGhost({ size }: { size: number }) {
+  return <div className={GREY} style={{ width: size * 5 + 16, height: size }} />;
+}
+
+// Same markup and classes as the real block, with the text hidden behind grey.
+export function ReviewsSkeleton() {
+  const { mine, recent } = peekShape();
+  return (
+    <section className="pt-10" aria-hidden="true">
+      <p className="text-[11px] uppercase tracking-[0.18em] font-medium mb-6">
+        <span className={`text-transparent ${GREY}`}>Reviews</span>
+      </p>
+      {mine > 0 ? (
+        <div className="flex items-center gap-4">
+          <span className={`text-4xl font-medium leading-none tabular-nums text-transparent ${GREY}`}>0.0</span>
+          <div className="flex flex-col gap-1.5">
+            <StarsGhost size={16} />
+            <p className="text-xs"><span className={`text-transparent ${GREY}`}>Based on {mine} reviews</span></p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <StarsGhost size={16} />
+          <p className="text-xs"><span className={`text-transparent ${GREY}`}>No reviews yet</span></p>
+        </div>
+      )}
+      <div className="inline-block py-3 mt-2 mb-8">
+        <span className={`text-[11px] uppercase tracking-[0.15em] border-b border-transparent pb-1 text-transparent ${GREY}`}>
+          Bought this? Review it
+        </span>
+      </div>
+      {recent.length > 0 && (
+        <>
+          <p className="text-[11px] uppercase tracking-[0.2em] mb-1">
+            <span className={`text-transparent ${GREY}`}>Latest from our customers</span>
+          </p>
+          {recent.map((r) => (
+            <article key={r.id} className="border-b border-transparent py-5 last:border-b-0 last:pb-8">
+              <div className="flex items-center justify-between mb-3">
+                <StarsGhost size={13} />
+                <span className={`text-xs tabular-nums text-transparent ${GREY}`}>
+                  {new Date(r.date_created_gmt + 'Z').toLocaleDateString()}
+                </span>
+              </div>
+              <p className="text-[15px] leading-relaxed mb-3 text-transparent">{plain(r.review)}</p>
+              <p className="text-xs leading-relaxed text-transparent">
+                {r.reviewer}
+                {r.verified ? ' \u00b7 Verified purchase' : ''} · {plain(r.product_name)}
+              </p>
+            </article>
+          ))}
+        </>
+      )}
+    </section>
+  );
+}
+
 interface Props {
   productId: string | number;
   navigate: (path: string) => void;
@@ -70,6 +156,7 @@ export default function ProductReviews({ productId, navigate }: Props) {
         if (!live) return;
         setMine(m);
         setRecent(r);
+        saveShape(m.length, r);
       })
       .catch(() => {
         if (live) setMine([]);
@@ -79,7 +166,7 @@ export default function ProductReviews({ productId, navigate }: Props) {
     };
   }, [productId]);
 
-  if (mine === null) return null;
+  if (mine === null) return <ReviewsSkeleton />;
 
   const avg = mine.length ? mine.reduce((s, r) => s + r.rating, 0) / mine.length : 0;
 
