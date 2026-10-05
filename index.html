@@ -38,22 +38,37 @@
 <!-- Start the shop-data request now, while the JavaScript is still downloading.
      The app picks up this same in-flight request (see woocommerce.ts), so it
      is not made twice. URLs must match what the app requests exactly. -->
+<!--nors-early-data-->
 <script>
 (function () {
   try {
     var path = location.pathname.replace(/\/+$/, '') || '/';
     var base = '/index.php?rest_route=/wc/store/v1';
-    var url = null;
+    var urls = [];
     if (path === '/' || path === '/faqs') {
-      url = base + '/products&per_page=50&orderby=menu_order&order=asc&nors_cb=2';
+      urls.push(base + '/products&per_page=50&orderby=menu_order&order=asc&nors_cb=2');
     } else if (path.indexOf('/products/') === 0) {
-      url = base + '/products&per_page=100&nors_cb=2';
+      urls.push(base + '/products&per_page=100&nors_cb=2');
+    } else if (path.indexOf('/collections/') === 0 && path !== '/collections/all') {
+      // The category list and the product list load side by side. The build
+      // writes the category id into this page (window.__norsCatId); the app
+      // checks the id against the category list before using the products.
+      urls.push(base + '/products/categories&per_page=50&nors_cb=2');
+      if (window.__norsCatId) {
+        urls.push(base + '/products&per_page=8&category=' + window.__norsCatId + '&orderby=menu_order&order=asc&nors_cb=2');
+      }
+    } else if (path === '/policies' || path.indexOf('/policies/') === 0) {
+      ['privacy-policy-2', 'payment-policy', 'shipping-policy', 'exchange-refund-policy'].forEach(function (slug) {
+        urls.push('/enterprise/index.php?rest_route=/wp/v2/pages&slug=' + slug);
+      });
     }
-    if (!url) return;
+    if (!urls.length) return;
     var early = {};
-    var request = fetch(url);
-    request.catch(function () {});
-    early[url] = request;
+    urls.forEach(function (url) {
+      var request = fetch(url);
+      request.catch(function () {});
+      early[url] = request;
+    });
     window.__norsEarly = early;
   } catch (e) {}
 })();

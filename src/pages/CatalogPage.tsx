@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts, getCollectionBySlug } from '@/lib/woocommerce';
+import { getProducts, getCollectionBySlug, peekCollection, saveCollection, sameProducts } from '@/lib/woocommerce';
 import type { Product, Collection } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
@@ -15,11 +15,12 @@ interface CatalogPageProps {
 // Products list (WooCommerce's menu_order field) — that's the 'featured' sort.
 
 export default function CatalogPage({ navigate, collectionSlug }: CatalogPageProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [collection, setCollection] = useState<Collection | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [saved] = useState(() => (collectionSlug && collectionSlug !== 'all' ? peekCollection(collectionSlug) : null));
+  const [products, setProducts] = useState<Product[]>(saved?.data ?? []);
+  const [collection, setCollection] = useState<Collection | null>(saved?.collection ?? null);
+  const [loading, setLoading] = useState(!saved);
   const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(saved?.count ?? 0);
 
   const pageSize = 8;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
@@ -29,39 +30,63 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
   }, [collectionSlug]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      setLoading(true);
+      const isCollection = !!collectionSlug && collectionSlug !== 'all';
 
-      if (collectionSlug && collectionSlug !== 'all') {
-        const col = await getCollectionBySlug(collectionSlug);
-        setCollection(col);
+      // A copy saved on this device shows straight away; the fresh list
+      // replaces it only if something actually changed.
+      const cached = isCollection && page === 1 ? peekCollection(collectionSlug!) : null;
+      if (cached) {
+        setCollection(cached.collection);
+        setProducts((prev) => (sameProducts(prev, cached.data) ? prev : cached.data));
+        setTotalCount(cached.count);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
 
-        if (col) {
+      try {
+        if (isCollection) {
+          const col = await getCollectionBySlug(collectionSlug!);
+          if (cancelled) return;
+          setCollection(col);
+
+          if (col) {
+            const { data, count } = await getProducts({
+              limit: pageSize,
+              offset: (page - 1) * pageSize,
+              category: col.id,
+              sortBy: 'featured',
+            });
+            if (cancelled) return;
+            setTotalCount(count);
+            setProducts((prev) => (sameProducts(prev, data) ? prev : data));
+            if (page === 1) saveCollection(collectionSlug!, { collection: col, data, count });
+          } else {
+            setProducts([]);
+            setTotalCount(0);
+          }
+        } else {
+          setCollection(null);
           const { data, count } = await getProducts({
             limit: pageSize,
             offset: (page - 1) * pageSize,
-            category: col.id,
             sortBy: 'featured',
           });
+          if (cancelled) return;
           setTotalCount(count);
           setProducts(data);
-        } else {
-          setProducts([]);
-          setTotalCount(0);
         }
-      } else {
-        setCollection(null);
-        const { data, count } = await getProducts({
-          limit: pageSize,
-          offset: (page - 1) * pageSize,
-          sortBy: 'featured',
-        });
-        setTotalCount(count);
-        setProducts(data);
+      } catch {
+        /* keep whatever is on screen (saved copy or empty state) */
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [collectionSlug, page]);
 
   // Blank while loading rather than defaulting to 'Products' — avoids a
