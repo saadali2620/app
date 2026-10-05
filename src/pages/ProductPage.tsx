@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getProductBySlug, getProductSizes, getCollectionBySlug } from '@/lib/woocommerce';
+import { useEffect, useMemo, useState } from 'react';
+import { getProductBySlug, getProductSizes, getCollectionBySlug, peekProductHint } from '@/lib/woocommerce';
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
@@ -57,6 +57,9 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [collection, setCollection] = useState<Collection | null>(null);
   const [loading, setLoading] = useState(true);
+  // What this product will look like (photo count, sections, name), so the
+  // loading placeholder takes the same shape. Falls back to typical values.
+  const hint = useMemo(() => peekProductHint(slug), [slug]);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
@@ -243,44 +246,58 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   if (loading) {
     // Mirrors the real page's structure (breadcrumb row, then image and details,
     // stacked on mobile and side by side on desktop) so nothing moves on arrival.
+    const photoCount = hint?.photos ?? 5;
+    const sectionCount = hint?.sections ?? 3;
+    const sizeCount = hint?.sizes ?? 4;
     const imageSkeleton = (
       <div className="flex flex-col gap-3 mb-8 lg:mb-0">
         <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
-        {/* Thumbnail row: nearly every product has several photos, so reserve it. */}
-        <div className="flex gap-2 overflow-hidden" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-shrink-0 w-14 sm:w-16 bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
-          ))}
-        </div>
+        {/* Thumbnail row: only products with more than one photo have it. */}
+        {photoCount > 1 && (
+          <div className="flex gap-2 overflow-hidden" aria-hidden="true">
+            {Array.from({ length: photoCount }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-14 sm:w-16 bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
+            ))}
+          </div>
+        )}
       </div>
     );
     // Block heights below are taken from the real page (measured), in the real
     // order, so the placeholder boxes sit where the content will appear.
     const bar = 'bg-neutral-900 animate-pulse';
-    // Title: shop product names are long, so reserve two lines; plus the price row.
+    // Title: the real name when known (so it wraps exactly as it will), else
+    // two bars, since this shop's product names are long. Then the price row.
     const titleSkeleton = (
-      <div className="mb-4 lg:mb-0" aria-hidden="true">
-        <div className="h-[60px] sm:h-[75px] flex flex-col justify-around mb-5">
-          <div className={`h-[20px] sm:h-[26px] w-full ${bar}`} />
-          <div className={`h-[20px] sm:h-[26px] w-2/3 ${bar}`} />
-        </div>
-        <div className="mb-8">
+      <div className="mb-4 lg:mb-0">
+        {hint?.name ? (
+          <div className="text-white text-2xl sm:text-3xl font-medium leading-tight mb-5">{hint.name}</div>
+        ) : (
+          <div className="h-[60px] sm:h-[75px] flex flex-col justify-around mb-5" aria-hidden="true">
+            <div className={`h-[20px] sm:h-[26px] w-full ${bar}`} />
+            <div className={`h-[20px] sm:h-[26px] w-2/3 ${bar}`} />
+          </div>
+        )}
+        <div className="mb-8" aria-hidden="true">
           <div className={`h-7 w-1/4 ${bar}`} />
         </div>
       </div>
     );
-    const accordionSkeleton = (
-      <div className="h-[150px] pt-3 space-y-3" aria-hidden="true">
-        <div className={`h-[26px] ${bar}`} />
-        <div className={`h-[26px] ${bar}`} />
-        <div className={`h-[26px] ${bar}`} />
-      </div>
-    );
+    // Same structure as the real accordion: a top line, then one 49.67px row per section.
+    const accordionSkeleton =
+      sectionCount > 0 ? (
+        <div className="border-t border-transparent" aria-hidden="true">
+          {Array.from({ length: sectionCount }).map((_, i) => (
+            <div key={i} className="h-[49.67px] flex items-center">
+              <div className={`h-3 w-28 ${bar}`} />
+            </div>
+          ))}
+        </div>
+      ) : null;
     const sizeCtaSkeleton = (
       <div className="h-[184px] pt-8 mb-8 lg:mb-0" aria-hidden="true">
         <div className={`h-3 w-10 mb-3 ${bar}`} />
         <div className="flex gap-2 mb-8">
-          {[0, 1, 2, 3].map((i) => (
+          {Array.from({ length: sizeCount }).map((_, i) => (
             <div key={i} className={`h-9 w-14 ${bar}`} />
           ))}
         </div>

@@ -391,6 +391,14 @@ function productPage(render, p) {
   );
 
   return render({
+    // Lets the loading placeholder match this product: name, photo count, accordion sections, sizes.
+    earlyData: `window.__norsPdp=${JSON.stringify({
+      slug: p.slug,
+      name: p.name,
+      photos: p.images.length,
+      sections: p.accordion.filter((x) => !/^reviews?$/i.test(String(x.title).trim())).length,
+      sizes: p.sizes.length,
+    }).replace(/</g, '\\u003c')};`,
     title: `${p.name} | ${BRAND}`,
     description,
     canonical: url,
