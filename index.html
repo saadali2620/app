@@ -62,6 +62,11 @@
         urls.push('/enterprise/index.php?rest_route=/wp/v2/pages&slug=' + slug);
       });
     }
+    // Build-time copy of the shop data: a plain static file, much quicker than
+    // the WordPress API. Pages paint from it, then the live data replaces it.
+    if (path === '/' || path === '/faqs' || path.indexOf('/collections/') === 0 || path === '/policies' || path.indexOf('/policies/') === 0) {
+      window.__norsSeed = fetch('/data/seed.json?v=__SEED_V__').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
     if (!urls.length) return;
     var early = {};
     urls.forEach(function (url) {
