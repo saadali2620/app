@@ -63,7 +63,7 @@ export default function Hero({ navigate, products: allProducts }: HeroProps) {
   }, []);
 
   if (products.length === 0) {
-    return <div className="h-[100vh] bg-black animate-pulse" />;
+    return <div className="h-[100vh] min-h-[600px] bg-black animate-pulse" />;
   }
 
   // Call on every manual prev/next/dot interaction — hands control to the

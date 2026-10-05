@@ -241,14 +241,44 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
   };
 
   if (loading) {
+    // Mirrors the real page's structure (breadcrumb row, then image and details,
+    // stacked on mobile and side by side on desktop) so nothing moves on arrival.
+    const imageSkeleton = (
+      <div className="flex flex-col gap-3 mb-8 lg:mb-0">
+        <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
+      </div>
+    );
+    // Heights match the real title (text-2xl / sm:text-3xl) and price rows.
+    const titleSkeleton = (
+      <div className="mb-4 lg:mb-0" aria-hidden="true">
+        <div className="h-[30px] sm:h-[38px] bg-neutral-900 animate-pulse w-3/4 mb-5" />
+        <div className="mb-8">
+          <div className="h-7 bg-neutral-900 animate-pulse w-1/4" />
+        </div>
+      </div>
+    );
+    const detailsSkeleton = (
+      <div className="space-y-6 mt-8" aria-hidden="true">
+        <div className="h-16 bg-neutral-900 animate-pulse" />
+        <div className="h-14 bg-neutral-900 animate-pulse" />
+        <div className="h-40 bg-neutral-900 animate-pulse" />
+      </div>
+    );
     return (
       <div className="min-h-screen bg-black pt-20">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-16 grid lg:grid-cols-2 gap-12">
-          <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
-          <div className="space-y-4">
-            <div className="h-8 bg-neutral-900 animate-pulse w-3/4" />
-            <div className="h-6 bg-neutral-900 animate-pulse w-1/3" />
-            <div className="h-32 bg-neutral-900 animate-pulse" />
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-10 pt-8 pb-4">
+          <div className="h-4 w-28 bg-neutral-900 animate-pulse" />
+        </div>
+        <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-10 flex flex-col">
+          {titleSkeleton}
+          {imageSkeleton}
+          {detailsSkeleton}
+        </div>
+        <div className="hidden lg:grid max-w-[1600px] mx-auto px-6 lg:px-10 pb-16 lg:grid-cols-2 gap-8 lg:gap-16">
+          {imageSkeleton}
+          <div className="flex flex-col lg:pt-4">
+            {titleSkeleton}
+            {detailsSkeleton}
           </div>
         </div>
       </div>

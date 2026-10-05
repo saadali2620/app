@@ -113,9 +113,16 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
     <div className="min-h-screen bg-black pt-20">
       {/* Page header */}
       <div className="px-6 lg:px-10 pt-16 pb-12 text-center">
-        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3 uppercase">{title}</h1>
+        {/* A blank space keeps the title's height while loading, so the page doesn't jump when the name arrives. */}
+        <h1 className="text-white text-4xl sm:text-5xl font-bold tracking-tight mb-3 uppercase">{title || '\u00A0'}</h1>
         {subtitle && (
           <p className="text-white/50 text-sm uppercase tracking-[0.2em]">{subtitle}</p>
+        )}
+        {loading && !collection && collectionSlug && collectionSlug !== 'all' && (
+          <div className="max-w-xl mx-auto mt-4 space-y-2" aria-hidden="true">
+            <div className="h-3 bg-neutral-900 animate-pulse w-full" />
+            <div className="h-3 bg-neutral-900 animate-pulse w-2/3 mx-auto" />
+          </div>
         )}
         {collection?.description && (
           <p className="text-white/60 text-sm leading-relaxed max-w-xl mx-auto mt-4">
@@ -128,10 +135,10 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pb-20">
         {loading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: pageSize }).map((_, i) => (
               <div
                 key={i}
-                className="w-full bg-neutral-900 animate-pulse relative overflow-hidden"
+                className="w-full border border-white/10 bg-neutral-900 animate-pulse relative overflow-hidden"
                 style={{ aspectRatio: '3/4' }}
               >
                 <div className="absolute bottom-0 left-0 right-0 px-3 py-3 space-y-2">
