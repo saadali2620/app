@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts, peekHomeProducts, peekSeedProducts, sameProducts } from '@/lib/woocommerce';
+import { getProducts, peekHomeProducts, sameProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
@@ -19,22 +19,11 @@ export default function HomePage({ navigate }: HomePageProps) {
 
   useEffect(() => {
     let cancelled = false;
-    let gotFresh = false;
-    // First-time visitors: the build-time copy of the list (a static file)
-    // paints the page while the live list is still on its way.
-    if (!saved) {
-      peekSeedProducts({ limit: 50, sortBy: 'featured' }).then((seed) => {
-        if (!seed || cancelled || gotFresh) return;
-        setAllProducts(seed.data);
-        setLoading(false);
-      });
-    }
     (async () => {
       // Single fetch shared by Hero and the grid below — avoids two
       // concurrent cross-origin requests hitting the WooCommerce API on load.
       try {
         const { data } = await getProducts({ limit: 50 });
-        gotFresh = true;
         if (cancelled) return;
         const fresh = data ?? [];
         setAllProducts((prev) => (sameProducts(prev, fresh) ? prev : fresh));
