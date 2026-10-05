@@ -724,7 +724,7 @@ export interface ProductHint {
   name?: string;
   photos?: number;
   sections?: number;
-  sizes?: number;
+  sizes?: string[];
 }
 
 const notReviews = (title: string) => !/^reviews?$/i.test(title.trim());

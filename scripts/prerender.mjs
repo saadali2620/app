@@ -397,7 +397,7 @@ function productPage(render, p) {
       name: p.name,
       photos: p.images.length,
       sections: p.accordion.filter((x) => !/^reviews?$/i.test(String(x.title).trim())).length,
-      sizes: p.sizes.length,
+      sizes: p.sizes,
     }).replace(/</g, '\\u003c')};`,
     title: `${p.name} | ${BRAND}`,
     description,
