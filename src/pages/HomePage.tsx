@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts } from '@/lib/woocommerce';
+import { getProducts, peekHomeProducts, sameProducts } from '@/lib/woocommerce';
 import type { Product } from '@/types';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
@@ -10,17 +10,32 @@ interface HomePageProps {
 }
 
 export default function HomePage({ navigate }: HomePageProps) {
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Returning visitors: paint the list this browser saved last time right
+  // away, then swap in the fresh one only if something actually changed (so
+  // the hero doesn't re-shuffle for no reason).
+  const [saved] = useState(() => peekHomeProducts());
+  const [allProducts, setAllProducts] = useState<Product[]>(saved?.data ?? []);
+  const [loading, setLoading] = useState(!saved);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       // Single fetch shared by Hero and the grid below — avoids two
       // concurrent cross-origin requests hitting the WooCommerce API on load.
-      const { data } = await getProducts({ limit: 50 });
-      setAllProducts(data ?? []);
-      setLoading(false);
+      try {
+        const { data } = await getProducts({ limit: 50 });
+        if (cancelled) return;
+        const fresh = data ?? [];
+        setAllProducts((prev) => (sameProducts(prev, fresh) ? prev : fresh));
+        setLoading(false);
+      } catch {
+        // Offline or the shop is briefly unreachable: keep showing the saved
+        // list if there is one (otherwise the loading placeholder stays, as before).
+      }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const featured = allProducts.slice(0, 4);

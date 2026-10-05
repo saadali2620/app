@@ -31,10 +31,22 @@ function Stars({ value, size }: { value: number; size: number }) {
   );
 }
 
-async function get(path: string): Promise<Review[]> {
-  const r = await fetch(BASE + path);
-  const j = await r.json();
-  return Array.isArray(j) ? j : [];
+// The product page mounts this block twice (mobile and desktop layouts), so
+// share one request between the two instead of fetching everything twice.
+const REVIEWS_TTL_MS = 60 * 1000;
+const reviewRequests = new Map<string, { at: number; promise: Promise<Review[]> }>();
+
+function get(path: string): Promise<Review[]> {
+  const cached = reviewRequests.get(path);
+  if (cached && Date.now() - cached.at < REVIEWS_TTL_MS) return cached.promise;
+  const promise = (async () => {
+    const r = await fetch(BASE + path);
+    const j = await r.json();
+    return Array.isArray(j) ? (j as Review[]) : [];
+  })();
+  reviewRequests.set(path, { at: Date.now(), promise });
+  promise.catch(() => reviewRequests.delete(path));
+  return promise;
 }
 
 interface Props {

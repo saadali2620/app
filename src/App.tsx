@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { trackPageView } from '@/lib/pixel';
@@ -9,16 +9,19 @@ import CartDrawer from '@/components/CartDrawer';
 import HomePage from '@/pages/HomePage';
 import CatalogPage from '@/pages/CatalogPage';
 import ProductPage from '@/pages/ProductPage';
-import CheckoutPage from '@/pages/CheckoutPage';
-import PolicyPage from '@/pages/PolicyPage';
-import ContactPage from '@/pages/ContactPage';
-import OrderConfirmationPage from '@/pages/OrderConfirmationPage';
-import TrackOrderPage from '@/pages/TrackOrderPage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import AccountPage from '@/pages/AccountPage';
-import AccountOrdersPage, { type OrdersView } from '@/pages/AccountOrdersPage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import type { OrdersView } from '@/pages/AccountOrdersPage';
+import {
+  CheckoutPage,
+  PolicyPage,
+  ContactPage,
+  OrderConfirmationPage,
+  TrackOrderPage,
+  LoginPage,
+  RegisterPage,
+  AccountPage,
+  AccountOrdersPage,
+  NotFoundPage,
+} from '@/routes';
 
 function App() {
   const { route, navigate } = useRouter();
@@ -131,7 +134,11 @@ function App() {
       <CartProvider>
         <div className="min-h-screen bg-black flex flex-col">
           <Header navigate={navigate} currentPath={path} />
-          <main className="flex-1">{renderPage()}</main>
+          <main className="flex-1">
+            {/* Split pages are normally already downloaded (see main.tsx and
+                routes.ts), so this fallback is rarely visible. */}
+            <Suspense fallback={<div className="min-h-[60vh] bg-black" />}>{renderPage()}</Suspense>
+          </main>
           <Footer navigate={navigate} />
           <CartDrawer navigate={navigate} />
         </div>
