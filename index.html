@@ -7,6 +7,12 @@
 <link rel="canonical" href="https://nors.com.pk/" />
 <link rel="https://api.w.org/" href="https://nors.com.pk/index.php?rest_route=/" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="nors." />
 <title>nors. | Official Site</title>
 <meta name="description" content="Independent streetwear designed in Karachi: relaxed cargo trousers, wide bootcut trousers, collar shirts and heavyweight tees. Small batches, considered fabric, cash on delivery across Pakistan." />
 <meta property="og:title" content="nors. — Karachi, est. 2021 / WORN IN, NOT WORN OUT" />
@@ -25,7 +31,33 @@
 <link rel="preconnect" href="https://nors.com.pk" />
 <link rel="dns-prefetch" href="https://nors.com.pk" />
 <style>html,body{background:#000}</style>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Font stylesheet loads without blocking the first paint (display=swap shows
+     text in the system font until Inter arrives). -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+<!-- Start the shop-data request now, while the JavaScript is still downloading.
+     The app picks up this same in-flight request (see woocommerce.ts), so it
+     is not made twice. URLs must match what the app requests exactly. -->
+<script>
+(function () {
+  try {
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var base = '/index.php?rest_route=/wc/store/v1';
+    var url = null;
+    if (path === '/' || path === '/faqs') {
+      url = base + '/products&per_page=50&orderby=menu_order&order=asc&nors_cb=2';
+    } else if (path.indexOf('/products/') === 0) {
+      url = base + '/products&per_page=100&nors_cb=2';
+    }
+    if (!url) return;
+    var early = {};
+    var request = fetch(url);
+    request.catch(function () {});
+    early[url] = request;
+    window.__norsEarly = early;
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>

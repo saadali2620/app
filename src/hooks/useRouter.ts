@@ -16,6 +16,11 @@ function parsePath(): Route {
   return { path: pathname + window.location.search, params: {} };
 }
 
+/** The route path (no /enterprise prefix, no trailing slash) for the current URL. */
+export function currentRoutePath(): string {
+  return parsePath().path;
+}
+
 // Old links look like /#/login. Rewrite them once to /login.
 function migrateHash() {
   const h = window.location.hash;

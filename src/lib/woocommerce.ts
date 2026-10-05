@@ -2,6 +2,112 @@ import type { Product, Collection, ProductSize, AccordionSection } from '@/types
 
 const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/index.php?rest_route=/wc/store/v1';
 
+// ---------------------------------------------------------------------------
+// Speed helpers
+//
+// 1. Early requests: index.html starts the product-list request while the JS
+//    bundle is still downloading and parks the in-flight Promise on
+//    window.__norsEarly, keyed by the exact URL. fetchEarlyAware() picks it up
+//    when the app asks for the same URL, so there is still only one request.
+// 2. Short in-session memo for the lists that every product page used to
+//    re-download (100 products just to find one slug).
+// 3. A saved copy of the homepage list so returning visitors see products
+//    instantly while the fresh list loads in the background.
+// ---------------------------------------------------------------------------
+
+declare global {
+  interface Window {
+    __norsEarly?: Record<string, Promise<Response>>;
+  }
+}
+
+function takeEarly(url: string): Promise<Response> | null {
+  const store = typeof window !== 'undefined' ? window.__norsEarly : undefined;
+  const early = store?.[url];
+  if (!early) return null;
+  delete store![url];
+  return early;
+}
+
+async function fetchEarlyAware(url: string): Promise<Response> {
+  const early = takeEarly(url);
+  if (early) {
+    try {
+      const res = await early;
+      if (res.ok) return res;
+    } catch {
+      /* fall through to a normal request */
+    }
+  }
+  return fetch(url);
+}
+
+const PRODUCT_LIST_TTL_MS = 2 * 60 * 1000;
+let productListPromise: Promise<any[]> | null = null;
+let productListAt = 0;
+
+function getProductList(): Promise<any[]> {
+  if (productListPromise && Date.now() - productListAt < PRODUCT_LIST_TTL_MS) return productListPromise;
+  productListAt = Date.now();
+  const p = fetchEarlyAware(`${WC_BASE}/products&per_page=100&nors_cb=2`).then((res) => res.json());
+  productListPromise = p;
+  p.catch(() => {
+    if (productListPromise === p) productListPromise = null;
+  });
+  return p;
+}
+
+const HOME_LIST_KEY = 'nors:home-products:v1';
+const HOME_LIST_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+export interface ProductListResult {
+  data: Product[];
+  count: number;
+}
+
+/** Last homepage product list this browser saved, if it is recent enough. */
+export function peekHomeProducts(): ProductListResult | null {
+  try {
+    const raw = window.localStorage.getItem(HOME_LIST_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { t: number; data: Product[]; count: number };
+    if (!saved || !Array.isArray(saved.data) || saved.data.length === 0) return null;
+    if (Date.now() - saved.t > HOME_LIST_MAX_AGE_MS) return null;
+    return { data: saved.data, count: saved.count };
+  } catch {
+    return null;
+  }
+}
+
+function saveHomeProducts(result: ProductListResult): void {
+  try {
+    window.localStorage.setItem(HOME_LIST_KEY, JSON.stringify({ t: Date.now(), ...result }));
+  } catch {
+    /* storage full or blocked: skipping the saved copy is fine */
+  }
+}
+
+/** True when two lists would render identically (so the screen need not re-render). */
+export function sameProducts(a: Product[], b: Product[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (
+      x.id !== y.id ||
+      x.name !== y.name ||
+      x.price !== y.price ||
+      x.compare_at_price !== y.compare_at_price ||
+      x.in_stock !== y.in_stock ||
+      x.badge !== y.badge ||
+      x.image_url !== y.image_url
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function decodeEntities(text: string): string {
   return text
     .replace(/&#(\d+);/g, (_m, dec) => String.fromCharCode(parseInt(dec, 10)))
@@ -88,7 +194,7 @@ function sortToParams(sortBy?: ProductSortBy): { orderby: string; order: string 
   }
 }
 
-export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<{ data: Product[]; count: number }> {
+export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<ProductListResult> {
   const params = new URLSearchParams();
   params.set('per_page', String(opts?.limit ?? 50));
   if (opts?.offset) params.set('offset', String(opts.offset));
@@ -97,15 +203,18 @@ export async function getProducts(opts?: { limit?: number; offset?: number; cate
   params.set('orderby', orderby);
   params.set('order', order);
 
-  const res = await fetch(`${WC_BASE}/products&${params.toString()}&nors_cb=2`);
+  const res = await fetchEarlyAware(`${WC_BASE}/products&${params.toString()}&nors_cb=2`);
   const data = await res.json();
   const total = Number(res.headers.get('X-WP-Total') ?? data.length);
-  return { data: data.map((p: any) => mapWcProduct(p)), count: total };
+  const result = { data: data.map((p: any) => mapWcProduct(p)), count: total };
+  const isHomeList =
+    !opts?.category && !opts?.offset && (opts?.limit ?? 50) === 50 && (!opts?.sortBy || opts.sortBy === 'featured');
+  if (isHomeList) saveHomeProducts(result);
+  return result;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const res = await fetch(`${WC_BASE}/products&per_page=100&nors_cb=2`);
-  const list = await res.json();
+  const list = await getProductList();
   const match = list.find((p: any) => p.slug === slug);
   if (!match) return null;
   return mapWcProduct(match);
@@ -143,18 +252,33 @@ export async function getProductSizes(productId: string): Promise<ProductSize[]>
   return sizes;
 }
 
-export async function getCollections(): Promise<Collection[]> {
-  const res = await fetch(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`);
-  const data = await res.json();
-  return data.map((c: any) => ({
-    id: String(c.id),
-    name: c.name,
-    slug: c.slug,
-    tagline: null,
-    description: c.description || null,
-    sort_order: 0,
-    created_at: new Date().toISOString(),
-  }));
+// Categories change rarely; reuse them for a few minutes instead of
+// re-downloading on every product/collection page.
+const COLLECTIONS_TTL_MS = 10 * 60 * 1000;
+let collectionsPromise: Promise<Collection[]> | null = null;
+let collectionsAt = 0;
+
+export function getCollections(): Promise<Collection[]> {
+  if (collectionsPromise && Date.now() - collectionsAt < COLLECTIONS_TTL_MS) return collectionsPromise;
+  collectionsAt = Date.now();
+  const p = fetch(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`)
+    .then((res) => res.json())
+    .then((data) =>
+      data.map((c: any) => ({
+        id: String(c.id),
+        name: c.name,
+        slug: c.slug,
+        tagline: null,
+        description: c.description || null,
+        sort_order: 0,
+        created_at: new Date().toISOString(),
+      })) as Collection[]
+    );
+  collectionsPromise = p;
+  p.catch(() => {
+    if (collectionsPromise === p) collectionsPromise = null;
+  });
+  return p;
 }
 
 export async function getCollectionBySlug(slug: string): Promise<Collection | null> {
