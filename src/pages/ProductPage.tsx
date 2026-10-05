@@ -246,6 +246,12 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     const imageSkeleton = (
       <div className="flex flex-col gap-3 mb-8 lg:mb-0">
         <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
+        {/* Thumbnail row: nearly every product has several photos, so reserve it. */}
+        <div className="flex gap-2 overflow-hidden" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex-shrink-0 w-14 sm:w-16 bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
+          ))}
+        </div>
       </div>
     );
     // Block heights below are taken from the real page (measured), in the real
@@ -295,7 +301,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     return (
       <div className="min-h-screen bg-black pt-20">
         <div className="max-w-[1600px] mx-auto px-6 lg:px-10 pt-8 pb-4">
-          <div className="h-4 w-28 bg-neutral-900 animate-pulse" />
+          <div className="h-[17px] w-[130px] bg-neutral-900 animate-pulse" />
         </div>
         <div className="lg:hidden max-w-[1600px] mx-auto px-4 sm:px-6 pb-10 flex flex-col">
           {titleSkeleton}
