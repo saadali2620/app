@@ -18,7 +18,6 @@ const WC_BASE = import.meta.env.VITE_WC_BASE_URL ?? '/index.php?rest_route=/wc/s
 declare global {
   interface Window {
     __norsEarly?: Record<string, Promise<Response>>;
-    __norsSeed?: Promise<Seed | null>;
   }
 }
 
@@ -41,77 +40,6 @@ export async function fetchEarlyAware(url: string): Promise<Response> {
     }
   }
   return fetch(url);
-}
-
-// ---------------------------------------------------------------------------
-// Build-time seed: every deploy writes /data/seed.json with the shop's
-// product lists, categories and policy texts as they were at build time.
-// index.html starts downloading it immediately. It is a plain static file, so
-// it arrives far faster than the WordPress API; pages paint from it at once
-// and the live API answer replaces it a moment later (only if it differs).
-// ---------------------------------------------------------------------------
-interface Seed {
-  products: Record<string, { total: number; items: any[] }>;
-  categories: any[];
-  policies: Record<string, string>;
-}
-
-function getSeed(): Promise<Seed | null> {
-  const p = typeof window !== 'undefined' ? window.__norsSeed : undefined;
-  return p ? p.catch(() => null) : Promise.resolve(null);
-}
-
-function listParams(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): string {
-  const params = new URLSearchParams();
-  params.set('per_page', String(opts?.limit ?? 50));
-  if (opts?.offset) params.set('offset', String(opts.offset));
-  if (opts?.category) params.set('category', opts.category);
-  const { orderby, order } = sortToParams(opts?.sortBy);
-  params.set('orderby', orderby);
-  params.set('order', order);
-  return params.toString();
-}
-
-function mapCategory(c: any): Collection {
-  return {
-    id: String(c.id),
-    name: c.name,
-    slug: c.slug,
-    tagline: null,
-    description: c.description || null,
-    sort_order: 0,
-    created_at: new Date().toISOString(),
-  };
-}
-
-/** The build-time copy of a product list, or null if there isn't one. */
-export async function peekSeedProducts(opts?: { limit?: number; category?: string; sortBy?: ProductSortBy }): Promise<ProductListResult | null> {
-  try {
-    const entry = (await getSeed())?.products?.[listParams(opts)];
-    if (!entry || !Array.isArray(entry.items) || entry.items.length === 0) return null;
-    return { data: entry.items.map((p: any) => mapWcProduct(p)), count: entry.total };
-  } catch {
-    return null;
-  }
-}
-
-export async function peekSeedCollection(slug: string): Promise<Collection | null> {
-  try {
-    const c = (await getSeed())?.categories?.find((x: any) => x.slug === slug);
-    return c ? mapCategory(c) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Build-time policy texts keyed by page slug (raw WordPress HTML), or null. */
-export async function peekSeedPolicies(): Promise<Record<string, string> | null> {
-  try {
-    const policies = (await getSeed())?.policies;
-    return policies && Object.keys(policies).length ? policies : null;
-  } catch {
-    return null;
-  }
 }
 
 const PRODUCT_LIST_TTL_MS = 2 * 60 * 1000;
@@ -272,7 +200,15 @@ const CATEGORY_LIST_TTL_MS = 2 * 60 * 1000;
 const categoryLists = new Map<string, { at: number; p: Promise<ProductListResult> }>();
 
 export async function getProducts(opts?: { limit?: number; offset?: number; category?: string; sortBy?: ProductSortBy }): Promise<ProductListResult> {
-  const url = `${WC_BASE}/products&${listParams(opts)}&nors_cb=2`;
+  const params = new URLSearchParams();
+  params.set('per_page', String(opts?.limit ?? 50));
+  if (opts?.offset) params.set('offset', String(opts.offset));
+  if (opts?.category) params.set('category', opts.category);
+  const { orderby, order } = sortToParams(opts?.sortBy);
+  params.set('orderby', orderby);
+  params.set('order', order);
+
+  const url = `${WC_BASE}/products&${params.toString()}&nors_cb=2`;
   const load = async (): Promise<ProductListResult> => {
     const res = await fetchEarlyAware(url);
     const data = await res.json();
@@ -390,7 +326,17 @@ export function getCollections(): Promise<Collection[]> {
   collectionsAt = Date.now();
   const p = fetchEarlyAware(`${WC_BASE}/products/categories&per_page=50&nors_cb=2`)
     .then((res) => res.json())
-    .then((data) => data.map(mapCategory));
+    .then((data) =>
+      data.map((c: any) => ({
+        id: String(c.id),
+        name: c.name,
+        slug: c.slug,
+        tagline: null,
+        description: c.description || null,
+        sort_order: 0,
+        created_at: new Date().toISOString(),
+      })) as Collection[]
+    );
   collectionsPromise = p;
   p.catch(() => {
     if (collectionsPromise === p) collectionsPromise = null;

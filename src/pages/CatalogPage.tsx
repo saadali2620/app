@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts, getCollectionBySlug, peekCollection, saveCollection, sameProducts, peekSeedCollection, peekSeedProducts } from '@/lib/woocommerce';
+import { getProducts, getCollectionBySlug, peekCollection, saveCollection, sameProducts } from '@/lib/woocommerce';
 import type { Product, Collection } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
@@ -31,7 +31,6 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
 
   useEffect(() => {
     let cancelled = false;
-    let gotFresh = false;
     (async () => {
       const isCollection = !!collectionSlug && collectionSlug !== 'all';
 
@@ -45,19 +44,6 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
         setLoading(false);
       } else {
         setLoading(true);
-        // Nothing saved on this device: show the build-time copy (a static
-        // file) while the live list loads.
-        if (isCollection && page === 1) {
-          peekSeedCollection(collectionSlug!).then(async (col) => {
-            if (!col || cancelled || gotFresh) return;
-            const seeded = await peekSeedProducts({ limit: pageSize, category: col.id, sortBy: 'featured' });
-            if (!seeded || cancelled || gotFresh) return;
-            setCollection(col);
-            setProducts(seeded.data);
-            setTotalCount(seeded.count);
-            setLoading(false);
-          });
-        }
       }
 
       try {
@@ -73,7 +59,6 @@ export default function CatalogPage({ navigate, collectionSlug }: CatalogPagePro
               category: col.id,
               sortBy: 'featured',
             });
-            gotFresh = true;
             if (cancelled) return;
             setTotalCount(count);
             setProducts((prev) => (sameProducts(prev, data) ? prev : data));
