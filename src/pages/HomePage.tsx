@@ -55,7 +55,7 @@ export default function HomePage({ navigate }: HomePageProps) {
     <div className="bg-black">
       {/* Hero slideshow */}
       {loading ? (
-        <div className="h-[100vh] bg-black animate-pulse" />
+        <div className="h-[100vh] min-h-[600px] bg-black animate-pulse" />
       ) : (
         <Hero navigate={navigate} products={allProducts} />
       )}
@@ -73,10 +73,12 @@ export default function HomePage({ navigate }: HomePageProps) {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 gap-12">
+            // Same grid and card shape as the real products below, so nothing
+            // moves when they arrive.
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i}>
-                  <div className="w-full bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
+                <div key={i} className="w-full">
+                  <div className="w-full border border-white/10 bg-neutral-900 animate-pulse" style={{ aspectRatio: '3/4' }} />
                 </div>
               ))}
             </div>

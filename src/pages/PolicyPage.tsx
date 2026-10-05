@@ -132,14 +132,14 @@ export default function PolicyPage({ navigate }: PolicyPageProps) {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            <div className="h-4 bg-neutral-900 animate-pulse w-full" />
-            <div className="h-4 bg-neutral-900 animate-pulse w-5/6" />
-            <div className="h-4 bg-neutral-900 animate-pulse w-2/3" />
+          <div className="space-y-3 min-h-[60vh]" aria-hidden="true">
+            {['w-full', 'w-full', 'w-5/6', 'w-full', 'w-11/12', 'w-2/3', 'w-full', 'w-5/6', 'w-full', 'w-3/4', 'w-full', 'w-1/2'].map((w, i) => (
+              <div key={i} className={`h-4 bg-neutral-900 animate-pulse ${w}`} />
+            ))}
           </div>
         ) : activeDoc && activeDoc.content ? (
           <div
-            className="policy-content text-white/70 text-sm leading-relaxed [&_p]:mb-4 [&_strong]:text-white [&_strong]:font-medium"
+            className="policy-content min-h-[60vh] text-white/70 text-sm leading-relaxed [&_p]:mb-4 [&_strong]:text-white [&_strong]:font-medium"
             dangerouslySetInnerHTML={{ __html: activeDoc.content }}
           />
         ) : (
