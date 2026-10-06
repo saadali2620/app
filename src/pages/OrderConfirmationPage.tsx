@@ -43,6 +43,11 @@ export default function OrderConfirmationPage({ path, navigate }: OrderConfirmat
           ? `Thank you for your order${orderId ? ` #${orderId}` : ''}. We'll send a confirmation email shortly. Due to high influx of orders, please bear with us as we navigate through each and all queries.`
           : "Your payment could not be completed. You haven't been charged. Please try again or choose a different payment method at checkout."}
       </p>
+      {isSuccess && (
+        <p className="text-white/50 text-xs max-w-md leading-relaxed">
+          Your nors. points are added to your account once your order is delivered. Log in to see your balance.
+        </p>
+      )}
       <button
         onClick={() => navigate(isSuccess ? '/' : '/checkout')}
         className="mt-4 bg-white text-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors"

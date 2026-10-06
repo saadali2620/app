@@ -3,6 +3,7 @@ import { getProductBySlug, getProductSizes, getCollectionBySlug, peekProductHint
 import type { Product, ProductSize, Collection } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
+import { pointsLabel } from '@/lib/points';
 import { trackViewContent } from '@/lib/pixel';
 import { ChevronLeft, ChevronRight, Check, ShoppingBag, X, ZoomIn, Share2, Link } from 'lucide-react';
 import ProductAccordion from '@/components/ProductAccordion';
@@ -391,6 +392,11 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
           </div>
         ) : (
           <span className="text-white text-lg">{formatPrice(product.price)}</span>
+        )}
+        {pointsLabel(isOnSale ? product.compare_at_price! : product.price) && (
+          <p className="text-white/60 text-xs uppercase tracking-[0.15em] mt-3">
+            {pointsLabel(isOnSale ? product.compare_at_price! : product.price)} on delivery
+          </p>
         )}
       </div>
     </div>

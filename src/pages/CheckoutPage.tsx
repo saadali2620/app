@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
+import { pointsLabel } from '@/lib/points';
 import { performCheckout, getCartTotals, getPaymentMethods, markCodDeposit, getPostexServiceableCities, COD_DEPOSIT_THRESHOLD } from '@/lib/woocommerce';
 import { useTurnstile } from '@/hooks/useTurnstile';
 import { HoneypotField } from '@/components/HoneypotField';
@@ -716,6 +717,9 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                     {totalsLoading ? '…' : formatPrice(grandTotal)}
                   </span>
                 </div>
+                {pointsLabel(totalPrice) && (
+                  <p className="text-white/70 text-xs pt-1">{pointsLabel(totalPrice)} once this order is delivered.</p>
+                )}
                 {totalsError && (
                   <p className="text-red-400 text-xs pt-1">
                     Couldn't confirm shipping cost — showing subtotal only. It will be recalculated
