@@ -2,6 +2,7 @@ import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 import { useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/format';
+import { pointsLabel } from '@/lib/points';
 
 interface CartDrawerProps {
   navigate: (path: string) => void;
@@ -134,6 +135,9 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
                 <span className="text-white/50 text-sm uppercase tracking-[0.15em]">Subtotal</span>
                 <span className="text-white text-lg font-medium">{formatPrice(totalPrice)}</span>
               </div>
+              {pointsLabel(totalPrice) && (
+                <p className="text-white/70 text-xs">{pointsLabel(totalPrice)} once this order is delivered.</p>
+              )}
               <p className="text-white/40 text-xs">Shipping & taxes calculated at checkout.</p>
               <button
                 onClick={handleCheckout}
