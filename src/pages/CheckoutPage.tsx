@@ -717,8 +717,8 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                     {totalsLoading ? '…' : formatPrice(grandTotal)}
                   </span>
                 </div>
-                {pointsLabel(totalPrice) && (
-                  <p className="text-white/70 text-xs pt-1">{pointsLabel(totalPrice)} once this order is delivered.</p>
+                {pointsLabel(totalPrice, 'this order') && (
+                  <p className="text-white/70 text-xs pt-1">{pointsLabel(totalPrice, 'this order')}. Points are added once your order is delivered.</p>
                 )}
                 {totalsError && (
                   <p className="text-red-400 text-xs pt-1">

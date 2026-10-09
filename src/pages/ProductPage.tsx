@@ -393,9 +393,10 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         ) : (
           <span className="text-white text-lg">{formatPrice(product.price)}</span>
         )}
-        {pointsLabel(isOnSale ? product.compare_at_price! : product.price) && (
-          <p className="text-white/60 text-xs uppercase tracking-[0.15em] mt-3">
-            {pointsLabel(isOnSale ? product.compare_at_price! : product.price)} once your order is delivered
+        {pointsLabel(isOnSale ? product.compare_at_price! : product.price, 'this piece') && (
+          <p className="text-white/60 text-xs tracking-[0.05em] leading-relaxed mt-3">
+            {pointsLabel(isOnSale ? product.compare_at_price! : product.price, 'this piece')}.
+            Points are added once your order is delivered.
           </p>
         )}
       </div>

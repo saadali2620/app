@@ -10,11 +10,12 @@ export function pointsFor(amount: number): number {
   return Math.floor(amount / RUPEES_PER_POINT);
 }
 
-export function pointsLabel(amount: number): string | null {
+export function pointsLabel(amount: number, scope: string): string | null {
   const pts = pointsFor(amount);
   if (pts <= 0) return null;
-  const base = `Earn ${pts.toLocaleString('en-PK')} nors. points`;
-  if (POINT_VALUE_PKR === null) return `${base} as store credit`;
-  const credit = Math.round(pts * POINT_VALUE_PKR);
-  return `${base} (Rs. ${credit.toLocaleString('en-PK')} store credit)`;
+  const rate = `Earn 1 nors. point for every Rs. ${RUPEES_PER_POINT} spent`;
+  const count = pts.toLocaleString('en-PK');
+  if (POINT_VALUE_PKR === null) return `${rate} (${count} on ${scope})`;
+  const credit = Math.round(pts * POINT_VALUE_PKR).toLocaleString('en-PK');
+  return `${rate} (${count} on ${scope}, worth Rs. ${credit} store credit)`;
 }

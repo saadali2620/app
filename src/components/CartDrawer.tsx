@@ -135,8 +135,8 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
                 <span className="text-white/50 text-sm uppercase tracking-[0.15em]">Subtotal</span>
                 <span className="text-white text-lg font-medium">{formatPrice(totalPrice)}</span>
               </div>
-              {pointsLabel(totalPrice) && (
-                <p className="text-white/70 text-xs">{pointsLabel(totalPrice)} once this order is delivered.</p>
+              {pointsLabel(totalPrice, 'this order') && (
+                <p className="text-white/70 text-xs">{pointsLabel(totalPrice, 'this order')}. Points are added once your order is delivered.</p>
               )}
               <p className="text-white/40 text-xs">Shipping & taxes calculated at checkout.</p>
               <button
