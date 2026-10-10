@@ -26,6 +26,8 @@
  */
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { AAO } from './aao-config.mjs';
+import { productSchema, organizationSchema } from './aao-schema.mjs';
 
 const SITE = (process.env.PRERENDER_SITE_URL || 'https://nors.com.pk').replace(/\/$/, '');
 const API = process.env.PRERENDER_WC_BASE || `${SITE}/index.php?rest_route=/wc/store/v1`;
@@ -224,7 +226,28 @@ async function loadPolicies() {
   return out;
 }
 
-function normalizeProduct(p) {
+// Per-size stock, price and SKU. The Store API's product list carries variation ids
+// and sizes but no stock flag, so ask for the variations as products, up to 100
+// per request (same call the product page makes in the browser).
+async function loadVariants(rawProducts, data) {
+  const map = {};
+  if (FIXTURE) {
+    for (const v of data.variations ?? []) map[String(v.id)] = v;
+    return map;
+  }
+  const ids = rawProducts.flatMap((p) => (p.variations ?? []).map((v) => v.id));
+  for (let i = 0; i < ids.length; i += 100) {
+    try {
+      const rows = await getJson(`${API}/products&type=variation&per_page=100&include=${ids.slice(i, i + 100).join(',')}`, 3);
+      for (const r of Array.isArray(rows) ? rows : []) map[String(r.id)] = r;
+    } catch (err) {
+      console.warn(`[prerender] Size stock unavailable (${err.message}); schema falls back to product-level stock.`);
+    }
+  }
+  return map;
+}
+
+function normalizeProduct(p, variantMap = {}) {
   const minor = p.prices?.currency_minor_unit ?? p.minor ?? 0;
   const price = money(p.prices?.price ?? p.price, minor);
   const regular = money(p.prices?.regular_price ?? p.regular ?? p.prices?.price ?? p.price, minor);
@@ -232,7 +255,29 @@ function normalizeProduct(p) {
     .map((v) => (v.attributes ?? []).find((a) => /^size$/i.test(a.name))?.value)
     .filter(Boolean)
     .map(titleCase);
+  const variants = (p.variations ?? [])
+    .map((v) => {
+      const size = (v.attributes ?? []).find((a) => /^size$/i.test(a.name))?.value;
+      const x = variantMap[String(v.id)];
+      if (!size) return null;
+      const vMinor = x?.prices?.currency_minor_unit ?? minor;
+      const vPrice = x?.prices ? money(x.prices.price, vMinor) : undefined;
+      const vRegular = x?.prices ? money(x.prices.regular_price, vMinor) : undefined;
+      return {
+        id: v.id,
+        size,
+        sku: x?.sku || '',
+        inStock: x ? x.is_in_stock === true : undefined, // undefined = unknown, use product-level stock
+        backorder: x?.is_on_backorder === true,
+        price: vPrice,
+        regular: vPrice !== undefined && vRegular > vPrice ? vRegular : undefined,
+      };
+    })
+    .filter(Boolean);
+  const color = (p.attributes ?? []).find((a) => /^colou?r$/i.test(a.name))?.terms?.[0]?.name;
   return {
+    variants,
+    color,
     id: p.id,
     name: stripHtml(p.name),
     slug: p.slug,
@@ -346,24 +391,11 @@ function productPage(render, p) {
   const lead = p.short || p.long || p.name;
   const description = `${clip(lead, 108)} ${rs(p.price)}. Cash on delivery across Pakistan.`;
 
-  const offer = {
-    '@type': 'Offer',
-    url,
-    priceCurrency: p.currency,
-    price: String(p.price),
-    availability: p.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-    itemCondition: 'https://schema.org/NewCondition',
-  };
-  const product = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: p.name,
-    description: p.short || p.long || p.name,
-    image: p.images,
-    brand: { '@type': 'Brand', name: BRAND },
-    offers: offer,
-  };
-  if (p.sku) product.sku = p.sku;
+  // One ProductGroup with an offer per size, so a sold-out size reads as sold out.
+  const product = productSchema(SITE, BRAND, p);
+  const sizeLine = p.variants.length
+    ? p.variants.map((v) => `${v.size} (${(v.inStock ?? p.inStock) ? 'in stock' : 'sold out'})`).join(', ')
+    : p.sizes.join(', ');
 
   const sections = p.accordion
     .filter((s) => !/^reviews?$/i.test(s.title))
@@ -387,7 +419,7 @@ function productPage(render, p) {
       `<h1>${esc(p.name)}</h1>` +
       `<p>${esc(priceLine)}</p>` +
       (p.short ? `<p>${esc(p.short)}</p>` : '') +
-      (p.sizes.length ? `<h2>Sizes</h2><p>${esc(p.sizes.join(', '))}</p>` : '') +
+      (sizeLine ? `<h2>Sizes</h2><p>${esc(sizeLine)}</p>` : '') +
       sections +
       '<p>Ships within Pakistan. Pay by cash on delivery or secure online payment.</p>',
   );
@@ -469,16 +501,7 @@ function collectionPage(render, cat, items) {
 
 function homePage(render, homeDescription, products, faqs) {
   const schema = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: BRAND,
-      url: `${SITE}/`,
-      logo: LOGO,
-      foundingDate: '2021',
-      description: homeDescription,
-      address: { '@type': 'PostalAddress', addressLocality: 'Karachi', addressCountry: 'PK' },
-    },
+    organizationSchema({ site: SITE, brand: BRAND, logo: LOGO, description: stripHtml(homeDescription) }),
     { '@context': 'https://schema.org', '@type': 'WebSite', name: BRAND, url: `${SITE}/` },
   ];
   if (faqs.length) {
@@ -529,22 +552,116 @@ function sitemapXml(urls) {
   );
 }
 
+// Stock and price facts for one product, shared by llms.txt and llms-full.txt.
+function productFacts(p) {
+  const sale = p.regular
+    ? ` (reduced from ${rs(p.regular)}${AAO.saleItemsReturnable ? '' : '; not eligible for exchange or refund'})`
+    : '';
+  let sizes = '';
+  if (p.variants.length) {
+    const open = p.variants.filter((v) => v.inStock ?? p.inStock).map((v) => v.size);
+    sizes = open.length ? ` Sizes in stock: ${open.join(', ')}.` : ' Sold out.';
+  } else if (!p.inStock) {
+    sizes = ' Sold out.';
+  }
+  return `${rs(p.price)}${sale}.${sizes}`;
+}
+
+function factsBlock() {
+  return [
+    'Key facts for agents:',
+    '- Currency: PKR. Ships within Pakistan only, by courier, in ' +
+      `${AAO.transitDays.min}-${AAO.transitDays.max} business days (limited-run drops can take up to 2-3 weeks).`,
+    `- Cash on delivery, or online payment. Orders above PKR ${AAO.codAdvanceThresholdPkr.toLocaleString('en-PK')} need an advance payment before dispatch.`,
+    `- Exchange and refund claims must be made within ${AAO.returnWindowDays * 24} hours of delivery, on unused items with tags.` +
+      (AAO.saleItemsReturnable ? '' : ' Discounted, sale and archive pieces are not eligible.'),
+    '- Stock is micro-batch and sizes sell out. Check the size-level availability below before recommending a size.',
+    `- Support is by email and Instagram DM, answered by a person: ${AAO.email}`,
+  ];
+}
+
 function llmsTxt(homeDescription, products) {
+  const stamp = new Date().toISOString().slice(0, 10);
   const lines = [
     `# ${BRAND}`,
     '',
     `> ${stripHtml(homeDescription)}`,
     '',
-    '## Products',
-    ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}): ${clip(p.short || p.name, 140)} ${rs(p.price)}.`),
+    ...factsBlock(),
     '',
-    '## Info',
-    `- [Policies](${SITE}/policies): Shipping (nationwide courier delivery), exchange and refund rules, payment and privacy policies.`,
-    `- [Contact](${SITE}/contact): Sizing help and order questions.`,
-    `- [Track your order](${SITE}/track-order): Check order status with your order number and phone number.`,
+    `## Products (generated ${stamp}; live prices and stock are on each product page)`,
+    ...products.map((p) => `- [${p.name}](${SITE}/products/${p.slug}): ${clip(p.short || p.name, 140)} ${productFacts(p)}`),
+    '',
+    '## Collections',
+    ...COLLECTION_SLUGS.map((s) => `- [${titleCase(s)}](${SITE}/collections/${s})`),
+    '',
+    '## Policies and support',
+    `- [Policies](${SITE}/policies): Shipping, exchange and refund, payment and privacy.`,
+    `- [Full reference in plain text](${SITE}/llms-full.txt): Policies, sizes and products written out for agents.`,
+    `- [Contact](${SITE}/contact): ${AAO.email}, Instagram, ${AAO.streetAddress} ${AAO.locality}.`,
+    `- [Track your order](${SITE}/track-order): Needs order number and phone number.`,
+    '',
+    '## Machine-readable',
+    `- [Sitemap](${SITE}/sitemap.xml): Products with image URLs.`,
     '',
   ];
   return lines.join('\n');
+}
+
+// Policy HTML from WordPress to readable plain text with list bullets kept.
+function htmlToText(html) {
+  return decodeEntities(
+    String(html ?? '')
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')
+      .replace(/<li[^>]*>/gi, '\n- ')
+      .replace(/<\/(p|h[1-6]|ul|ol|div)>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Full reference. The policy text is pulled from the same WordPress pages the
+// site shows, so it cannot drift from the published rules.
+function llmsFullTxt(homeDescription, products, faqs) {
+  const out = [
+    `# ${BRAND} - full reference for AI agents`,
+    '',
+    `Source of truth is ${SITE}. If anything here conflicts with a product page, the product page wins. Generated ${new Date().toISOString().slice(0, 10)}.`,
+    '',
+    '## Business',
+    `- ${stripHtml(homeDescription)}`,
+    `- Location: ${AAO.streetAddress}, ${AAO.locality}, Pakistan. Founded 2021.`,
+    `- Contact: ${AAO.email}, Instagram ${AAO.instagram}`,
+    '',
+    ...factsBlock(),
+    '',
+  ];
+  for (const [slug, label] of POLICY_SLUGS) {
+    if (!RAW_POLICIES[slug]) continue;
+    out.push(`## ${label}`, '', htmlToText(RAW_POLICIES[slug]), '');
+  }
+  out.push('## Products', '');
+  for (const p of products) {
+    out.push(`### ${p.name}`);
+    out.push(`${productFacts(p)} ${clip(p.long || p.short, 400)}`.trim());
+    for (const s of p.accordion) {
+      if (/^size/i.test(s.title) && s.table) {
+        out.push(`${s.title}: ` + s.table.map((row) => row.join(' / ')).join('; '));
+      }
+    }
+    out.push(`${SITE}/products/${p.slug}`, '');
+  }
+  if (faqs.length) {
+    out.push('## FAQ', '');
+    for (const f of faqs) out.push(`- ${f.question} ${f.answer}`);
+    out.push('');
+  }
+  return out.join('\n');
 }
 
 // ---------- main ----------
@@ -572,7 +689,8 @@ async function main() {
     return;
   }
 
-  const products = (data.products ?? []).map(normalizeProduct).filter((p) => p.slug && p.name);
+  const variantMap = await loadVariants(data.products ?? [], data);
+  const products = (data.products ?? []).map((p) => normalizeProduct(p, variantMap)).filter((p) => p.slug && p.name);
   if (products.length === 0) {
     console.warn('[prerender] No products returned. Leaving dist/ untouched.');
     if (process.env.PRERENDER_STRICT) process.exitCode = 1;
@@ -711,6 +829,7 @@ async function main() {
 
   await writeFile(path.join(DIST, 'sitemap.xml'), sitemapXml(sitemapUrls));
   await writeFile(path.join(DIST, 'llms.txt'), llmsTxt(homeDescription, products));
+  await writeFile(path.join(DIST, 'llms-full.txt'), llmsFullTxt(homeDescription, products, faqs));
 
   console.log(
     `[prerender] ${products.length} products, ${COLLECTION_SLUGS.length} collection(s), ` +
