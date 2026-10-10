@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/png" href="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<link rel="apple-touch-icon" href="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<link rel="canonical" href="https://nors.com.pk/checkout" />
+<link rel="https://api.w.org/" href="https://nors.com.pk/index.php?rest_route=/" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="nors." />
+<title>Checkout | nors.</title>
+<meta name="description" content="nors. – Checkout" />
+<meta property="og:title" content="Checkout | nors." />
+<meta property="og:description" content="nors. – Checkout" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="nors." />
+<meta property="og:url" content="https://nors.com.pk/checkout" />
+<meta property="og:image" content="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Every product image and the WooCommerce Store API both live on this
+     origin, so warming up the connection here (DNS + TLS) before the first
+     image or API call actually fires saves a full round trip on slow
+     connections. -->
+<link rel="preconnect" href="https://nors.com.pk" />
+<link rel="dns-prefetch" href="https://nors.com.pk" />
+<style>html,body{background:#000}</style>
+<!-- Font stylesheet loads without blocking the first paint (display=swap shows
+     text in the system font until Inter arrives). -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+<!-- Start the shop-data request now, while the JavaScript is still downloading.
+     The app picks up this same in-flight request (see woocommerce.ts), so it
+     is not made twice. URLs must match what the app requests exactly. -->
+<!--nors-early-data-->
+<script>
+(function () {
+  try {
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var base = '/index.php?rest_route=/wc/store/v1';
+    var urls = [];
+    if (path === '/' || path === '/faqs') {
+      urls.push(base + '/products&per_page=50&orderby=menu_order&order=asc&nors_cb=2');
+    } else if (path.indexOf('/products/') === 0) {
+      urls.push(base + '/products&per_page=100&nors_cb=2');
+    } else if (path.indexOf('/collections/') === 0 && path !== '/collections/all') {
+      // The category list and the product list load side by side. The build
+      // writes the category id into this page (window.__norsCatId); the app
+      // checks the id against the category list before using the products.
+      urls.push(base + '/products/categories&per_page=50&nors_cb=2');
+      if (window.__norsCatId) {
+        urls.push(base + '/products&per_page=8&category=' + window.__norsCatId + '&orderby=menu_order&order=asc&nors_cb=2');
+      }
+    } else if (path === '/policies' || path.indexOf('/policies/') === 0) {
+      ['privacy-policy-2', 'payment-policy', 'shipping-policy', 'exchange-refund-policy'].forEach(function (slug) {
+        urls.push('/enterprise/index.php?rest_route=/wp/v2/pages&slug=' + slug);
+      });
+    }
+    // Build-time copy of the shop data: a plain static file, much quicker than
+    // the WordPress API. Pages paint from it, then the live data replaces it.
+    if (path === '/' || path === '/faqs' || path.indexOf('/collections/') === 0 || path === '/policies' || path.indexOf('/policies/') === 0) {
+      window.__norsSeed = fetch('/data/seed.json?v=mv2rt30c').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    if (!urls.length) return;
+    var early = {};
+    urls.forEach(function (url) {
+      var request = fetch(url);
+      request.catch(function () {});
+      early[url] = request;
+    });
+    window.__norsEarly = early;
+  } catch (e) {}
+})();
+</script>
+  <script type="module" crossorigin src="/assets/index-Ct-G230K.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-react-YsBxPMQB.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-CV7unmr1.css">
+<meta name="robots" content="noindex, nofollow" />
+<meta name="twitter:title" content="Checkout | nors." />
+<meta name="twitter:description" content="nors. – Checkout" />
+<meta name="twitter:image" content="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<link rel="modulepreload" crossorigin href="/assets/CheckoutPage-k3c18jbN.js" />
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

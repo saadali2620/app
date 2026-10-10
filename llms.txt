@@ -1,0 +1,31 @@
+# nors.
+
+> Independent streetwear designed in Karachi: relaxed cargo trousers, wide bootcut trousers, collar shirts and heavyweight tees. Small batches, considered fabric, cash on delivery across Pakistan.
+
+Key facts for agents:
+- Currency: PKR. Ships within Pakistan only, by courier, in 3-7 business days (limited-run drops can take up to 2-3 weeks).
+- Cash on delivery, or online payment. Orders above PKR 6,000 need an advance payment before dispatch.
+- Exchange and refund claims must be made within 72 hours of delivery, on unused items with tags. Discounted, sale and archive pieces are not eligible.
+- Stock is micro-batch and sizes sell out. Check the size-level availability below before recommending a size.
+- Support is by email and Instagram DM, answered by a person: help@nors.com.pk
+
+## Products (generated 2026-10-10; live prices and stock are on each product page)
+- [Vintage Point Collar Ribbed Knit Shirt – Burgundy](https://nors.com.pk/products/vintage-point-collar-ribbed-knit-shirt-burgundy): Crafted from a flexible, high-density micro-ribbed jersey knit, this burgundy long-sleeve shirt reinterprets classic vintage tailoring for… Rs. 2,200.00 (reduced from Rs. 3,200.00; not eligible for exchange or refund). Sizes in stock: large, medium, extra-large.
+- [Relaxed Fit Turkish Linen Cargo Trousers – Khaki](https://nors.com.pk/products/relaxed-fit-turkish-linen-cargo-trousers-khaki): Cut from breathable premium Turkish linen, these relaxed-fit cargo trousers balance tactical utility with soft structural comfort… Rs. 3,800.00 (reduced from Rs. 4,800.00; not eligible for exchange or refund). Sizes in stock: large, extra-large.
+- [Double-Button Wide Bootcut Twill Trousers – Black](https://nors.com.pk/products/double-button-wide-bootcut-twill-trousers-black): Crafted from structured, mid-weight cotton twill, these black trousers feature a waistband secured with two stacked tonal buttons… Rs. 2,700.00 (reduced from Rs. 3,700.00; not eligible for exchange or refund). Sizes in stock: l-xl, s-m.
+- [Vintage Pointed Collar Paisley Shirt – Muted Sage](https://nors.com.pk/products/vintage-pointed-collar-paisley-shirt-muted-sage): Rooted in classic vintage tailoring, this button-down features an iconic elongated pointed collar, natural coconut button fastenings, and… Rs. 2,200.00 (reduced from Rs. 3,200.00; not eligible for exchange or refund). Sizes in stock: large, medium, extra-large.
+- [Boxy “Modern Archaeology” T-Shirt – Earth Brown](https://nors.com.pk/products/boxy-modern-archaeology-t-shirt-earth-brown): Constructed from a dense 280 GSM organic cotton , this dark brown boxy t-shirt features a triple chest print lineup. Styled with an… Rs. 3,200.00 (reduced from Rs. 4,200.00; not eligible for exchange or refund). Sizes in stock: large, extra-large.
+- [Heavyweight Boxy Acid Wash T-Shirt – charcoal Grey](https://nors.com.pk/products/heavyweight-boxy-acid-wash-t-shirt-charcoal-grey): Crafted from low-impact 350 GSM organic cotton yarn, this heavyweight boxy t-shirt features an artisanal acid wash finish, drop shoulders… Rs. 3,200.00 (reduced from Rs. 4,200.00; not eligible for exchange or refund). Sizes in stock: large.
+- [Relaxed Fit Turkish Linen Cargo Trousers – Olive Green](https://nors.com.pk/products/relaxed-fit-turkish-linen-cargo-trousers-olive-green): Cut from breathable premium Turkish linen, these relaxed-fit cargo trousers balance tactical utility with soft structural comfort… Rs. 3,800.00 (reduced from Rs. 4,800.00; not eligible for exchange or refund). Sizes in stock: large, extra-large.
+
+## Collections
+- [Batch 01](https://nors.com.pk/collections/batch-01)
+
+## Policies and support
+- [Policies](https://nors.com.pk/policies): Shipping, exchange and refund, payment and privacy.
+- [Full reference in plain text](https://nors.com.pk/llms-full.txt): Policies, sizes and products written out for agents.
+- [Contact](https://nors.com.pk/contact): help@nors.com.pk, Instagram, PECHS Karachi.
+- [Track your order](https://nors.com.pk/track-order): Needs order number and phone number.
+
+## Machine-readable
+- [Sitemap](https://nors.com.pk/sitemap.xml): Products with image URLs.

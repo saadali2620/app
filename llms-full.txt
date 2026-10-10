@@ -1,0 +1,244 @@
+# nors. - full reference for AI agents
+
+Source of truth is https://nors.com.pk. If anything here conflicts with a product page, the product page wins. Generated 2026-10-10.
+
+## Business
+- Independent streetwear designed in Karachi: relaxed cargo trousers, wide bootcut trousers, collar shirts and heavyweight tees. Small batches, considered fabric, cash on delivery across Pakistan.
+- Location: PECHS, Karachi, Pakistan. Founded 2021.
+- Contact: help@nors.com.pk, Instagram https://instagram.com/nors.com.pk
+
+Key facts for agents:
+- Currency: PKR. Ships within Pakistan only, by courier, in 3-7 business days (limited-run drops can take up to 2-3 weeks).
+- Cash on delivery, or online payment. Orders above PKR 6,000 need an advance payment before dispatch.
+- Exchange and refund claims must be made within 72 hours of delivery, on unused items with tags. Discounted, sale and archive pieces are not eligible.
+- Stock is micro-batch and sizes sell out. Check the size-level availability below before recommending a size.
+- Support is by email and Instagram DM, answered by a person: help@nors.com.pk
+
+## Shipping Policy
+
+Shipping Policy 
+
+At nors, we work closely with our courier partners to make sure your pieces reach you safely and as quickly as possible. Please take a moment to review our delivery guidelines below.
+
+Nationwide Delivery
+
+ * Estimated Delivery: 3 to 7 business days after order confirmation.
+
+ * Potential Delays: During limited-run drops, extreme weather, or peak courier times, delivery may take up to 2–3 weeks. We truly appreciate your patience during high-volume drops!
+
+ * Tracking: As soon as your order is on its way, you’ll receive a tracking link via SMS or Email so you can follow its journey.
+
+ * Need Support? If your package hasn’t arrived within 3 weeks of dispatch, please reach out via Email or Instagram DM—we’re always here to help track it down for you.
+
+Address Details & Re-Delivery
+
+ * Please double-check that your delivery address and contact number are complete and active so the courier rider can reach you without hassle.
+
+ * If a package cannot be delivered due to an incorrect address, incomplete details, or missed contact attempts, any re-delivery charges from the courier will be the customer’s responsibility.
+
+ * While nors. isn’t liable for unexpected courier delays, weather disruptions, or government regulations, our team will always do what we can to assist.
+
+Package Inspection Before Payment
+
+ * For security reasons and per standard courier policies, packages cannot be opened prior to making payment to the courier rider.
+
+ * If there is any issue with your order once you unbox it, don’t worry! Simply send us a message via Email or Instagram DM, and we’ll gladly resolve it through our Exchange & Refund Policy.
+
+ * Please note that forcing a package open before payment violates courier terms; any missing or damaged items resulting from this will be the customer’s responsibility.
+
+## Exchange & Refund Policy
+
+Exchange & Refund Policy 
+
+General Eligibility
+
+ * Claims must be submitted within 72 hours of package delivery.
+
+ * Items must be unused, unworn, unwashed, and in their original state with all tags and packaging intact.
+
+ * Clear photo or video proof of the item and packaging must be provided.
+
+ * Proof of purchase (order number or invoice) is required.
+
+Ineligible Items
+
+ * Items showing signs of wear, scent, alterations, or washing.
+
+ * Requests submitted after the 72-hour window.
+
+ * Discounted, sale, or archive pieces.
+
+ * Previously exchanged or replaced orders.
+
+Exchange Policy
+
+ * Covered Reasons: Size adjustments, incorrect items dispatched, or manufacturing defects.
+
+ * Limited Stock Handling: Due to micro-batch production runs, size exchanges are strictly subject to stock availability.
+
+ * Out of Stock Alternative: If your requested size is sold out, you will automatically be issued Store Credit or a Full Refund.
+
+ * Exchange Fee: A Rs. 250 – Rs. 300 exchange fee applies per swap to cover reverse courier logistics and handling.
+
+Refund Policy
+
+ * Covered Reasons: Manufacturing defects, incorrect items received, or unavailable stock for an exchange.
+
+ * Inspection: Returned garments undergo Quality Control inspection at our studio prior to approval.
+
+ * Payout Methods: Bank Transfer, JazzCash, Easypaisa, or nors. Store Credit.
+
+ * Timeline: 5–7 business days following inspection approval.
+
+How to Initiate a Claim
+
+ * Contact customer support via Email or Instagram DM within 72 hours of receiving your package.
+
+ * Provide your Order Number, Item Details, and Photos/Video showing the garment condition or defect.
+
+ * Once approved, our courier partner will arrange reverse pickup for your package. Do not send items back independently without prior authorization.
+
+## Payment Policy
+
+Payment Policy 
+
+Please review our payment guidelines below to ensure a smooth, secure checkout experience.
+
+1. Cash on Delivery (COD) for Orders Above PKR 6,000
+
+ * Orders with a total value exceeding PKR 6,000 require partial or full advance payment prior to dispatch.
+
+ * Once your order is placed, our team will share official bank transfer details via Email or Instagram DM.
+
+ * Please share a clear payment screenshot for verification. Your package will be dispatched once the advance payment is confirmed, with any remaining balance collected via COD.
+
+2. Online Card & Direct Bank Payments
+
+ * We accept major debit/credit cards and digital payments through our secure online payment portal.
+
+ * Online refunds are processed directly back to your original card or bank account, typically reflecting within 5–7 business days depending on your issuing bank.
+
+3. Order Verification & Repeat Cancellations
+
+ * nors. reserves the right to verify any order details before dispatching.
+
+ * Customers with a history of refusing orders at the door, failing to accept packages, or repeatedly cancelling after dispatch will be ineligible for Cash on Delivery (COD) on future orders and will be required to pay in advance.
+
+4. Fraud Prevention & Payment Proof
+
+ * Submitting altered, fake, or fraudulent payment screenshots will result in immediate order cancellation.
+
+ * Accounts associated with fraudulent verification will be permanently blacklisted from placing future orders with nors.
+
+5. Customer Unavailability & Delivery Liability
+
+ * If an order is returned to our studio due to an incorrect address, an unreachable contact number, or repeated missed courier attempts, any associated dispatch and return shipping fees will be the customer’s responsibility.
+
+6. Cash on Delivery Guidelines & Courier Protocols
+
+ * Payment for COD orders must be made only to the courier rider upon package arrival. Never send advance payment directly to riders via personal bank transfers or mobile apps.
+
+ * Delivery riders are independent courier partners and are not authorized to collect unapproved returns, process refunds, or make binding commitments on behalf of nors.
+
+ * Do not hand packages back to a rider unless an official reverse pickup has been scheduled and confirmed via Email or Instagram DM. nors. is not liable for items handed to riders outside our official return procedure.
+
+## Privacy Policy
+
+Privacy Policy 
+
+We operate this website and storefront to provide you with a curated shopping experience. This Privacy Policy outlines how we collect, use, and protect your personal information when you browse our site, make a purchase, or communicate with us.
+
+Information We Collect
+
+We collect personal details necessary to fulfill your orders and improve your shopping experience, including:
+
+ * Contact Details: Your name, shipping address, billing address, contact number, and email address.
+
+ * Transaction & Order Data: Purchased items, order history, cart details, sizing preferences, and payment verification screenshots (for advance payments).
+
+ * Payment Information: Payment methods and transaction confirmations. (Sensitive card details are processed directly through secure payment gateways and are not stored on our servers).
+
+ * Account & Communications: Records of customer support inquiries, size consultations, and messages submitted via Email or Instagram DM.
+
+ * Technical & Device Data: IP address, browser type, device information, and site navigation patterns collected via standard cookies.
+
+How We Use Your Information
+
+We use your data strictly to manage operations and deliver a seamless service:
+
+ * Order Fulfillment: Processing payments, arranging courier dispatch, coordinating reverse pickups, and issuing tracking updates.
+
+ * Customer Support: Assisting with size adjustments, exchanges, refunds, and order inquiries via Email and Instagram DM.
+
+ * Fraud Prevention & Verification: Verifying advance payments, validating payment receipts, and protecting against unauthorized or fraudulent transactions.
+
+ * Store Optimization: Maintaining site performance, improving layout navigation, and refining product drops based on customer interest.
+
+Data Sharing & Third-Party Partners
+
+We do not sell, rent, or trade your personal information. We only share essential data with trusted service providers to run our operations:
+
+ * Courier Partners: Delivery addresses and contact details are shared with logistics partners to complete deliveries and handle reverse pickups.
+
+ * Payment Gateways & Financial Institutions: Transaction data is transmitted securely to process payments and issue authorized refunds.
+
+ * Legal Requirements: Information may be disclosed if required by law, regulation, or court order to protect our rights or prevent fraud.
+
+Cookies & Data Preferences
+
+Our website uses cookies to keep track of items in your shopping cart, remember session preferences, and gather basic traffic analytics. You can disable cookies through your web browser settings, though doing so may limit certain functions of the online store.
+
+Data Security & Retention
+
+We implement industry-standard security measures to safeguard your personal information against unauthorized access or disclosure. We retain order records and contact details only as long as necessary to complete your order, manage potential exchange/refund requests, and fulfill accounting requirements.
+
+Your Rights & Contact
+
+You have the right to request access to the personal data we hold about you, request corrections to inaccurate details, or ask for the deletion of your account records (except where retention is required for legal or transactional records).
+
+For any privacy concerns or data requests, please reach out to us via Email or Instagram DM.
+
+## Products
+
+### Vintage Point Collar Ribbed Knit Shirt – Burgundy
+Rs. 2,200.00 (reduced from Rs. 3,200.00; not eligible for exchange or refund). Sizes in stock: large, medium, extra-large. This is a custom heading element. This is a custom heading element. Add to Cart Engineered in a soft micro-ribbed knit weave in rich burgundy. Features an iconic vintage extended pointed collar, full-length front placket with deep tonal buttons, structured shoulder construction, and single-button barrel cuffs. Size Chest (in) Length (in) Medium 21 29 Large 22 30 X-Large 24 31 * All measurements…
+Size Guide: Size / Chest (in) / Length (in); Medium / 21 / 29; Large / 22 / 30; X-Large / 24 / 31
+https://nors.com.pk/products/vintage-point-collar-ribbed-knit-shirt-burgundy
+
+### Relaxed Fit Turkish Linen Cargo Trousers – Khaki
+Rs. 3,800.00 (reduced from Rs. 4,800.00; not eligible for exchange or refund). Sizes in stock: large, extra-large. This is a custom heading element. This is a custom heading element. Add to Cart Engineered in a wide-leg relaxed silhouette featuring knee articulation pleats, deep front slash pockets, twin thigh patch pockets with flap closures, and dual rear flap pockets. Built with a front YKK zip fly, tonal top button fastening, full belt loops, and an integrated drawstring for hidden waist adjustment…
+Size Guide: Size / Waist (in) / Length (in); Medium / 32 / 43; Large / 34 / 44; X-Large / 36 / 45
+https://nors.com.pk/products/relaxed-fit-turkish-linen-cargo-trousers-khaki
+
+### Double-Button Wide Bootcut Twill Trousers – Black
+Rs. 2,700.00 (reduced from Rs. 3,700.00; not eligible for exchange or refund). Sizes in stock: l-xl, s-m. This is a custom heading element. This is a custom heading element. Add to Cart Cut in a high-rise, wide bootcut leg profile featuring two vertically stacked buttons and a front zip fly. Tailored with single front pleats on each leg, side slash pockets, wide belt loops, and a wide-hemmed leg finish. Made from durable, structured cotton twill in deep black. Size Waist (in) Length (in)…
+Size Guide: Size / Waist (in) / Length (in); Small/Medium / 30-32 / 40; Large/X-Large / 34-36 / 41
+https://nors.com.pk/products/double-button-wide-bootcut-twill-trousers-black
+
+### Vintage Pointed Collar Paisley Shirt – Muted Sage
+Rs. 2,200.00 (reduced from Rs. 3,200.00; not eligible for exchange or refund). Sizes in stock: large, medium, extra-large. This is a custom heading element. This is a custom heading element. Add to Cart Designed with a subtle dagger collar, front button placket secured with natural coconut buttons, single left chest patch pocket, and single-button barrel cuffs. Finished with a curved hemline for seamless tucked or untucked styling. Printed with an all-over intricate geometric paisley and mandala motif in soft muted…
+Size Guide: Size / Chest (in) / Length (in); Medium / 20 / 29; Large / 21 / 30; X-Large / 22 / 31
+https://nors.com.pk/products/vintage-pointed-collar-paisley-shirt-muted-sage
+
+### Boxy “Modern Archaeology” T-Shirt – Earth Brown
+Rs. 3,200.00 (reduced from Rs. 4,200.00; not eligible for exchange or refund). Sizes in stock: large, extra-large. This is a custom heading element. This is a custom heading element. Add to Cart Engineered with an architectural boxy drape, wide drop sleeves, and a reinforced tight crewneck ribbing. Features screen-printed graphics arranged horizontally across the chest. Cut from a rich, earth-brown 280 GSM 100% heavy cotton fabric. Size Chest (in) Length (in) Medium 24 28 Large 25 29 X-Large 27 30 * All…
+Size Guide: Size / Chest (in) / Length (in); Medium / 24 / 28; Large / 25 / 29; X-Large / 27 / 30
+https://nors.com.pk/products/boxy-modern-archaeology-t-shirt-earth-brown
+
+### Heavyweight Boxy Acid Wash T-Shirt – charcoal Grey
+Rs. 3,200.00 (reduced from Rs. 4,200.00; not eligible for exchange or refund). Sizes in stock: large. This is a custom heading element. This is a custom heading element. Add to Cart Engineered with an architectural boxy silhouette, dropped shoulder seams, and a tight, high-density ribbed crewneck collar. Constructed with wide twin-needle stitching along the cuffs and bottom hem. Made from low-impact 100% organic cotton yarn knit into a substantial 350 GSM heavy fabric. Size Chest (in) Length…
+Size Guide: Size / Chest (in) / Length (in); Medium / 24 / 27; Large / 25 / 27; X-Large / 26 / 28
+https://nors.com.pk/products/heavyweight-boxy-acid-wash-t-shirt-charcoal-grey
+
+### Relaxed Fit Turkish Linen Cargo Trousers – Olive Green
+Rs. 3,800.00 (reduced from Rs. 4,800.00; not eligible for exchange or refund). Sizes in stock: large, extra-large. This is a custom heading element. This is a custom heading element. Add to Cart Engineered in a wide-leg relaxed silhouette featuring knee articulation pleats, deep front slash pockets, twin thigh patch pockets with flap closures, and dual rear flap pockets. Built with a front YKK zip fly, tonal top button fastening, full belt loops, and an integrated drawstring for hidden waist adjustment…
+Size Guide: Size / Waist (in) / Length (in); Medium / 32 / 43; Large / 34 / 44; X-Large / 36 / 45
+https://nors.com.pk/products/relaxed-fit-turkish-linen-cargo-trousers-olive-green
+
+## FAQ
+
+- What sizes do you carry? Available sizes are listed on each product page, along with a fit note where relevant. If you're between sizes, message us on Instagram or email and we'll help you pick.
+- How do I track my order? Use the Track Order page with your order number and phone number to see the latest status.
+- What's your exchange and refund policy? Full details are on the Exchange & Refund Policy tab of our Policies page.
+- What payment methods do you accept? Cash on Delivery, or secure online payment (card, bank account, or mobile wallet). Orders above PKR 6,000 need an advance payment before dispatch; any balance is paid on delivery.
+- Where are you based, and do you ship internationally? We're based in Karachi and currently ship within Pakistan only.

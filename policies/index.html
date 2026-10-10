@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/png" href="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<link rel="apple-touch-icon" href="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<link rel="canonical" href="https://nors.com.pk/policies" />
+<link rel="https://api.w.org/" href="https://nors.com.pk/index.php?rest_route=/" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#000000" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="nors." />
+<title>Policies | nors.</title>
+<meta name="description" content="Exchange and refund policy, shipping and payment information for nors. orders." />
+<meta property="og:title" content="Policies | nors." />
+<meta property="og:description" content="Exchange and refund policy, shipping and payment information for nors. orders." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="nors." />
+<meta property="og:url" content="https://nors.com.pk/policies" />
+<meta property="og:image" content="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Every product image and the WooCommerce Store API both live on this
+     origin, so warming up the connection here (DNS + TLS) before the first
+     image or API call actually fires saves a full round trip on slow
+     connections. -->
+<link rel="preconnect" href="https://nors.com.pk" />
+<link rel="dns-prefetch" href="https://nors.com.pk" />
+<style>html,body{background:#000}</style>
+<!-- Font stylesheet loads without blocking the first paint (display=swap shows
+     text in the system font until Inter arrives). -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+<!-- Start the shop-data request now, while the JavaScript is still downloading.
+     The app picks up this same in-flight request (see woocommerce.ts), so it
+     is not made twice. URLs must match what the app requests exactly. -->
+<!--nors-early-data-->
+<script>
+(function () {
+  try {
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var base = '/index.php?rest_route=/wc/store/v1';
+    var urls = [];
+    if (path === '/' || path === '/faqs') {
+      urls.push(base + '/products&per_page=50&orderby=menu_order&order=asc&nors_cb=2');
+    } else if (path.indexOf('/products/') === 0) {
+      urls.push(base + '/products&per_page=100&nors_cb=2');
+    } else if (path.indexOf('/collections/') === 0 && path !== '/collections/all') {
+      // The category list and the product list load side by side. The build
+      // writes the category id into this page (window.__norsCatId); the app
+      // checks the id against the category list before using the products.
+      urls.push(base + '/products/categories&per_page=50&nors_cb=2');
+      if (window.__norsCatId) {
+        urls.push(base + '/products&per_page=8&category=' + window.__norsCatId + '&orderby=menu_order&order=asc&nors_cb=2');
+      }
+    } else if (path === '/policies' || path.indexOf('/policies/') === 0) {
+      ['privacy-policy-2', 'payment-policy', 'shipping-policy', 'exchange-refund-policy'].forEach(function (slug) {
+        urls.push('/enterprise/index.php?rest_route=/wp/v2/pages&slug=' + slug);
+      });
+    }
+    // Build-time copy of the shop data: a plain static file, much quicker than
+    // the WordPress API. Pages paint from it, then the live data replaces it.
+    if (path === '/' || path === '/faqs' || path.indexOf('/collections/') === 0 || path === '/policies' || path.indexOf('/policies/') === 0) {
+      window.__norsSeed = fetch('/data/seed.json?v=mv2rt30c').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    if (!urls.length) return;
+    var early = {};
+    urls.forEach(function (url) {
+      var request = fetch(url);
+      request.catch(function () {});
+      early[url] = request;
+    });
+    window.__norsEarly = early;
+  } catch (e) {}
+})();
+</script>
+  <script type="module" crossorigin src="/assets/index-Ct-G230K.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-react-YsBxPMQB.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-CV7unmr1.css">
+<meta name="twitter:title" content="Policies | nors." />
+<meta name="twitter:description" content="Exchange and refund policy, shipping and payment information for nors. orders." />
+<meta name="twitter:image" content="https://nors.com.pk/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://nors.com.pk/"},{"@type":"ListItem","position":2,"name":"Policies","item":"https://nors.com.pk/policies"}]}</script>
+<link rel="modulepreload" crossorigin href="/assets/PolicyPage-DdQtGDCA.js" />
+</head>
+<body>
+<div id="root"><div data-prerender="true" style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0;font-family:Inter,Arial,sans-serif;line-height:1.6"><div><h1>Policies</h1><section id="shipping-policy"><h2>Shipping Policy</h2><p>   Shipping Policy   </p>
+<p><strong>At nors, we work closely with our courier partners to make sure your pieces reach you safely and as quickly as possible. Please take a moment to review our delivery guidelines below.</strong></p>
+<p><strong>Nationwide Delivery</strong></p>
+<p> * Estimated Delivery: 3 to 7 business days after order confirmation.</p>
+<p> * Potential Delays: During limited-run drops, extreme weather, or peak courier times, delivery may take up to 2–3 weeks. We truly appreciate your patience during high-volume drops!</p>
+<p> * Tracking: As soon as your order is on its way, you’ll receive a tracking link via SMS or Email so you can follow its journey.</p>
+<p> * Need Support? If your package hasn’t arrived within 3 weeks of dispatch, please reach out via Email or Instagram DM—we’re always here to help track it down for you.</p>
+<p><strong>Address Details &amp; Re-Delivery</strong></p>
+<p> * Please double-check that your delivery address and contact number are complete and active so the courier rider can reach you without hassle.</p>
+<p> * If a package cannot be delivered due to an incorrect address, incomplete details, or missed contact attempts, any re-delivery charges from the courier will be the customer’s responsibility.</p>
+<p> * While nors. isn’t liable for unexpected courier delays, weather disruptions, or government regulations, our team will always do what we can to assist.</p>
+<p><strong>Package Inspection Before Payment</strong></p>
+<p> * For security reasons and per standard courier policies, packages cannot be opened prior to making payment to the courier rider.</p>
+<p> * If there is any issue with your order once you unbox it, don’t worry! Simply send us a message via Email or Instagram DM, and we’ll gladly resolve it through our Exchange &amp; Refund Policy.</p>
+<p> * Please note that forcing a package open before payment violates courier terms; any missing or damaged items resulting from this will be the customer’s responsibility.</p></section><section id="exchange-refund-policy"><h2>Exchange &amp; Refund Policy</h2><p>   Exchange &amp; Refund Policy   </p>
+<p><strong>General Eligibility</strong></p>
+<p> * Claims must be submitted within 72 hours of package delivery.</p>
+<p> * Items must be unused, unworn, unwashed, and in their original state with all tags and packaging intact.</p>
+<p> * Clear photo or video proof of the item and packaging must be provided.</p>
+<p> * Proof of purchase (order number or invoice) is required.</p>
+<p><strong>Ineligible Items</strong></p>
+<p> * Items showing signs of wear, scent, alterations, or washing.</p>
+<p> * Requests submitted after the 72-hour window.</p>
+<p> * Discounted, sale, or archive pieces.</p>
+<p> * Previously exchanged or replaced orders.</p>
+<p><strong>Exchange Policy</strong></p>
+<p> * Covered Reasons: Size adjustments, incorrect items dispatched, or manufacturing defects.</p>
+<p> * Limited Stock Handling: Due to micro-batch production runs, size exchanges are strictly subject to stock availability.</p>
+<p> * Out of Stock Alternative: If your requested size is sold out, you will automatically be issued Store Credit or a Full Refund.</p>
+<p> * Exchange Fee: A Rs. 250 – Rs. 300 exchange fee applies per swap to cover reverse courier logistics and handling.</p>
+<p><strong>Refund Policy</strong></p>
+<p> * Covered Reasons: Manufacturing defects, incorrect items received, or unavailable stock for an exchange.</p>
+<p> * Inspection: Returned garments undergo Quality Control inspection at our studio prior to approval.</p>
+<p> * Payout Methods: Bank Transfer, JazzCash, Easypaisa, or nors. Store Credit.</p>
+<p> * Timeline: 5–7 business days following inspection approval.</p>
+<p><strong>How to Initiate a Claim</strong></p>
+<p> * Contact customer support via Email or Instagram DM within 72 hours of receiving your package.</p>
+<p> * Provide your Order Number, Item Details, and Photos/Video showing the garment condition or defect.</p>
+<p> * Once approved, our courier partner will arrange reverse pickup for your package. Do not send items back independently without prior authorization.</p></section><section id="payment-policy"><h2>Payment Policy</h2><p>   Payment Policy   </p>
+<p><strong>Please review our payment guidelines below to ensure a smooth, secure checkout experience.</strong></p>
+<p><strong>1. Cash on Delivery (COD) for Orders Above PKR 6,000</strong></p>
+<p> * Orders with a total value exceeding PKR 6,000 require partial or full advance payment prior to dispatch.</p>
+<p> * Once your order is placed, our team will share official bank transfer details via Email or Instagram DM.</p>
+<p> * Please share a clear payment screenshot for verification. Your package will be dispatched once the advance payment is confirmed, with any remaining balance collected via COD.</p>
+<p><strong>2. Online Card &amp; Direct Bank Payments</strong></p>
+<p> * We accept major debit/credit cards and digital payments through our secure online payment portal.</p>
+<p> * Online refunds are processed directly back to your original card or bank account, typically reflecting within 5–7 business days depending on your issuing bank.</p>
+<p><strong>3. Order Verification &amp; Repeat Cancellations</strong></p>
+<p> * nors. reserves the right to verify any order details before dispatching.</p>
+<p> * Customers with a history of refusing orders at the door, failing to accept packages, or repeatedly cancelling after dispatch will be ineligible for Cash on Delivery (COD) on future orders and will be required to pay in advance.</p>
+<p><strong>4. Fraud Prevention &amp; Payment Proof</strong></p>
+<p> * Submitting altered, fake, or fraudulent payment screenshots will result in immediate order cancellation.</p>
+<p> * Accounts associated with fraudulent verification will be permanently blacklisted from placing future orders with nors.</p>
+<p><strong>5. Customer Unavailability &amp; Delivery Liability</strong></p>
+<p> * If an order is returned to our studio due to an incorrect address, an unreachable contact number, or repeated missed courier attempts, any associated dispatch and return shipping fees will be the customer’s responsibility.</p>
+<p><strong>6. Cash on Delivery Guidelines &amp; Courier Protocols</strong></p>
+<p> * Payment for COD orders must be made only to the courier rider upon package arrival. Never send advance payment directly to riders via personal bank transfers or mobile apps.</p>
+<p> * Delivery riders are independent courier partners and are not authorized to collect unapproved returns, process refunds, or make binding commitments on behalf of nors.</p>
+<p> * Do not hand packages back to a rider unless an official reverse pickup has been scheduled and confirmed via Email or Instagram DM. nors. is not liable for items handed to riders outside our official return procedure.</p></section><section id="privacy-policy-2"><h2>Privacy Policy</h2><p>   Privacy Policy   </p>
+<p><strong>We operate this website and storefront to provide you with a curated shopping experience. This Privacy Policy outlines how we collect, use, and protect your personal information when you browse our site, make a purchase, or communicate with us.</strong></p>
+<p><strong>Information We Collect</strong></p>
+<p>We collect personal details necessary to fulfill your orders and improve your shopping experience, including:</p>
+<p> * Contact Details: Your name, shipping address, billing address, contact number, and email address.</p>
+<p> * Transaction &amp; Order Data: Purchased items, order history, cart details, sizing preferences, and payment verification screenshots (for advance payments).</p>
+<p> * Payment Information: Payment methods and transaction confirmations. (Sensitive card details are processed directly through secure payment gateways and are not stored on our servers).</p>
+<p> * Account &amp; Communications: Records of customer support inquiries, size consultations, and messages submitted via Email or Instagram DM.</p>
+<p> * Technical &amp; Device Data: IP address, browser type, device information, and site navigation patterns collected via standard cookies.</p>
+<p><strong>How We Use Your Information</strong></p>
+<p>We use your data strictly to manage operations and deliver a seamless service:</p>
+<p> * Order Fulfillment: Processing payments, arranging courier dispatch, coordinating reverse pickups, and issuing tracking updates.</p>
+<p> * Customer Support: Assisting with size adjustments, exchanges, refunds, and order inquiries via Email and Instagram DM.</p>
+<p> * Fraud Prevention &amp; Verification: Verifying advance payments, validating payment receipts, and protecting against unauthorized or fraudulent transactions.</p>
+<p> * Store Optimization: Maintaining site performance, improving layout navigation, and refining product drops based on customer interest.</p>
+<p><strong>Data Sharing &amp; Third-Party Partners</strong></p>
+<p>We do not sell, rent, or trade your personal information. We only share essential data with trusted service providers to run our operations:</p>
+<p> * Courier Partners: Delivery addresses and contact details are shared with logistics partners to complete deliveries and handle reverse pickups.</p>
+<p> * Payment Gateways &amp; Financial Institutions: Transaction data is transmitted securely to process payments and issue authorized refunds.</p>
+<p> * Legal Requirements: Information may be disclosed if required by law, regulation, or court order to protect our rights or prevent fraud.</p>
+<p><strong>Cookies &amp; Data Preferences</strong></p>
+<p>Our website uses cookies to keep track of items in your shopping cart, remember session preferences, and gather basic traffic analytics. You can disable cookies through your web browser settings, though doing so may limit certain functions of the online store.</p>
+<p><strong>Data Security &amp; Retention</strong></p>
+<p>We implement industry-standard security measures to safeguard your personal information against unauthorized access or disclosure. We retain order records and contact details only as long as necessary to complete your order, manage potential exchange/refund requests, and fulfill accounting requirements.</p>
+<p><strong>Your Rights &amp; Contact</strong></p>
+<p>You have the right to request access to the personal data we hold about you, request corrections to inaccurate details, or ask for the deletion of your account records (except where retention is required for legal or transactional records).</p>
+<p>For any privacy concerns or data requests, please reach out to us via Email or Instagram DM.</p></section></div></div></div>
+</body>
+</html>
