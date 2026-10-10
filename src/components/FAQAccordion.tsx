@@ -33,7 +33,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'What payment methods do you accept?',
     answer:
-      'Cash on Delivery, or secure online payment (card, bank account, or mobile wallet).',
+      'Cash on Delivery, or secure online payment (card, bank account, or mobile wallet). Orders above PKR 6,000 need an advance payment before dispatch; any balance is paid on delivery.',
   },
   {
     question: 'Where are you based, and do you ship internationally?',

@@ -162,14 +162,13 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     }
   }, [lightboxOpen]);
 
-  // Search-engine basics: per-product title, description, canonical and Product structured data.
+  // Search-engine basics: per-product title, description and canonical.
+  // Product structured data is NOT added here: scripts/prerender.mjs writes one
+  // ProductGroup (with a per-size offer) into the HTML at build time. Adding a
+  // second, simpler Product block here gave crawlers two conflicting answers.
   useEffect(() => {
     if (!product) return;
     const url = 'https://nors.com.pk/products/' + product.slug;
-    const price =
-      product.compare_at_price !== null && product.compare_at_price < product.price
-        ? product.compare_at_price
-        : product.price;
     document.title = product.name + ' | nors.';
     let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!meta) {
@@ -180,31 +179,20 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     meta.content = (product.name + '. ' + (product.description || '')).slice(0, 155);
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (canonical) canonical.href = url;
-    const ld = document.createElement('script');
-    ld.type = 'application/ld+json';
-    ld.id = 'product-ld';
-    ld.text = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product.name,
-      description: product.description || product.name,
-      image: product.images && product.images.length ? product.images : [product.image_url],
-      brand: { '@type': 'Brand', name: 'nors.' },
-      offers: {
-        '@type': 'Offer',
-        url,
-        priceCurrency: 'PKR',
-        price: String(price),
-        availability: product.in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      },
-    });
-    document.getElementById('product-ld')?.remove();
-    document.head.appendChild(ld);
     return () => {
-      document.getElementById('product-ld')?.remove();
       document.title = 'nors. | Official Site';
     };
   }, [product]);
+
+  // A link like /products/<slug>?size=L (the variant URLs in the structured data)
+  // opens with that size selected, if it is in stock.
+  useEffect(() => {
+    if (loading || sizes.length === 0) return;
+    const wanted = new URLSearchParams(window.location.search).get('size')?.trim().toLowerCase();
+    if (!wanted) return;
+    const match = sizes.find((s) => s.in_stock && s.size.trim().toLowerCase() === wanted);
+    if (match) setSelectedSize(match.size);
+  }, [loading, sizes]);
 
   // Meta Pixel / Conversions API: one ViewContent per product page view.
   // Uses the same price the page charges (see isOnSale / handleAddToCart).
@@ -478,10 +466,17 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
         <h3 className="text-white text-[11px] uppercase tracking-[0.18em] font-medium mb-3">
           Size
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Size">
           {sortSizes(sizes).map((s) => (
             <button
               key={s.id}
+              type="button"
+              role="radio"
+              aria-checked={selectedSize === s.size}
+              aria-label={s.in_stock && !isSoldOut ? s.size : `${s.size}, sold out`}
+              data-size={s.size}
+              data-variation-id={s.id}
+              data-availability={s.in_stock && !isSoldOut ? 'in_stock' : 'out_of_stock'}
               onClick={() => s.in_stock && setSelectedSize(s.size)}
               disabled={!s.in_stock || isSoldOut}
               className={`min-w-[3rem] px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-medium border transition-all ${
@@ -499,6 +494,8 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
       </div>
 
       <button
+        type="button"
+        data-action="add-to-cart"
         onClick={handleAddToCart}
         disabled={!selectedSize || isSoldOut}
         className={`w-full py-4 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${

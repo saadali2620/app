@@ -1,4 +1,4 @@
 name: Deploy to Hostinger
-on: { push: { branches: [main] } }
+on: { push: { branches: [main] }, workflow_dispatch: {}, schedule: [ { cron: "17 */6 * * *" } ] }
 permissions: { contents: write }
 jobs: { deploy: { runs-on: ubuntu-latest, steps: [ { uses: "actions/checkout@v4" }, { uses: "actions/setup-node@v4", with: { node-version: "20" } }, { run: "npm ci && npm run build" }, { name: "Publish dist to deploy branch", uses: "peaceiris/actions-gh-pages@v3", with: { github_token: "${{ secrets.GITHUB_TOKEN }}", publish_dir: "./dist", publish_branch: "deploy", force_orphan: true } } ] } }

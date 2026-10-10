@@ -57,7 +57,8 @@ function App() {
   const renderPage = () => {
     // /products/:slug
     if (path.startsWith('/products/')) {
-      const slug = path.replace('/products/', '');
+      // Drop any query string so /products/<slug>?size=L still finds the product.
+      const slug = path.replace('/products/', '').split('?')[0];
       return <ProductPage slug={slug} navigate={navigate} />;
     }
 
