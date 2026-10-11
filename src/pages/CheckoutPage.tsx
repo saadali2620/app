@@ -99,7 +99,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
     state: '',
     phone: '',
   });
-  const { containerRef: turnstileRef, token: turnstileToken, reset: resetTurnstile } = useTurnstile(); useEffect(() => { if (user?.email) { setForm((f) => (f.email ? f : { ...f, email: user.email })); } }, [user]);
+  const { containerRef: turnstileRef, token: turnstileToken, failed: turnstileFailed, reset: resetTurnstile } = useTurnstile(); useEffect(() => { if (user?.email) { setForm((f) => (f.email ? f : { ...f, email: user.email })); } }, [user]);
   const [honeypot, setHoneypot] = useState('');
 
   // Meta Pixel / Conversions API: InitiateCheckout fires once per visit to
@@ -662,8 +662,27 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
               <p className="text-red-400 text-xs">{error}</p>
             )}
 
+            {turnstileFailed && !turnstileToken && (
+              <div role="alert" data-checkout-blocked="security-check" className="text-red-400 text-xs space-y-2">
+                <p>
+                  The security check did not finish in this browser, so the order cannot be placed from here. If an
+                  assistant is placing this order for you, please finish checkout yourself.
+                </p>
+                <button
+                  type="button"
+                  onClick={resetTurnstile}
+                  className="underline text-white/80 hover:text-white"
+                >
+                  Try the security check again
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
+              data-checkout-status={
+                submitting ? 'submitting' : turnstileToken ? 'ready' : turnstileFailed ? 'blocked-security-check' : 'verifying'
+              }
               disabled={submitting || totalsLoading || !turnstileToken || codDepositBlocked}
               className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
             >
@@ -672,7 +691,9 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                 : totalsLoading
                 ? 'Calculating…'
                 : !turnstileToken
-                ? 'Preparing Secure Checkout…'
+                ? turnstileFailed
+                  ? 'Security Check Not Completed'
+                  : 'Preparing Secure Checkout…'
                 : codDepositBlocked
                 ? 'Cash on Delivery Unavailable'
                 : `Place Order — ${formatPrice(grandTotal)}`}
