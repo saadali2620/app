@@ -15,6 +15,7 @@ declare global {
 const TURNSTILE_SITE_KEY =
   (import.meta.env.VITE_TURNSTILE_SITE_KEY as string) || '0x4AAAAAAEpPaxvM-BXh-ahF';
 
+const VERIFY_TIMEOUT_MS = 20000;
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 
 /**
@@ -27,6 +28,9 @@ export function useTurnstile() {
   const widgetIdRef = useRef<string | null>(null);
   const [token, setToken] = useState('');
   const [ready, setReady] = useState(false);
+  // True when the check could not finish (script blocked, widget error, or no
+  // token within the wait below). Lets the page say so instead of waiting forever.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (document.querySelector(`script[src="${SCRIPT_SRC}"]`)) {
@@ -38,6 +42,7 @@ export function useTurnstile() {
     script.async = true;
     script.defer = true;
     script.onload = () => setReady(true);
+    script.onerror = () => setFailed(true);
     document.head.appendChild(script);
   }, []);
 
@@ -46,8 +51,14 @@ export function useTurnstile() {
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: TURNSTILE_SITE_KEY,
       size: 'invisible',
-      callback: (t: string) => setToken(t),
-      'error-callback': () => setToken(''),
+      callback: (t: string) => {
+        setToken(t);
+        setFailed(false);
+      },
+      'error-callback': () => {
+        setToken('');
+        setFailed(true);
+      },
       'expired-callback': () => setToken(''),
     });
   }, [ready]);
@@ -56,8 +67,16 @@ export function useTurnstile() {
     if (window.turnstile && widgetIdRef.current) {
       window.turnstile.reset(widgetIdRef.current);
       setToken('');
+      setFailed(false);
     }
   }, []);
 
-  return { containerRef, token, reset };
+  // No token after this long counts as a failed check.
+  useEffect(() => {
+    if (token || failed) return;
+    const t = window.setTimeout(() => setFailed(true), VERIFY_TIMEOUT_MS);
+    return () => window.clearTimeout(t);
+  }, [token, failed]);
+
+  return { containerRef, token, failed, reset };
 }
