@@ -44,6 +44,21 @@ const HOME_TITLE = 'nors. | Official Site';
 const COLLECTION_SLUGS = ['batch-01'];
 
 // Pages that must never appear in search results.
+// Plain-text versions of the pages that need a customer's own data. They are
+// hidden once the app loads. They only tell a text-only reader what the page
+// is for and what it asks for; they never hold a cart or an order.
+const NOINDEX_BODIES = {
+  '/track-order':
+    '<h1>Track Order</h1>' +
+    '<p>Enter your order number and the phone number used at checkout to see your delivery status.</p>' +
+    '<p>Fields: Order Number, Phone Number.</p>',
+  '/checkout':
+    '<h1>Checkout</h1>' +
+    '<p>Checkout shows the items in your cart, asks for your delivery details, and takes payment by Cash on Delivery or secure online payment.</p>' +
+    `<p>Orders above PKR ${AAO.codAdvanceThresholdPkr.toLocaleString('en-US')} need an advance payment before dispatch; any balance is paid on delivery.</p>` +
+    '<p>Add a product to the cart first, then open checkout.</p>',
+};
+
 const NOINDEX_ROUTES = [
   { route: '/track-order', title: `Track your order | ${BRAND}`, chunk: 'TrackOrderPage' },
   { route: '/checkout', title: `Checkout | ${BRAND}`, chunk: 'CheckoutPage' },
@@ -740,6 +755,14 @@ async function main() {
       canonical: `${SITE}/contact`,
       chunk: 'ContactPage',
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact` }])],
+      // Same wording as the visible page, so text-only readers see it too.
+      body: wrap(
+        '<h1>Contact Us</h1>' +
+          "<p>Small team, real replies. You won't get a bot or a canned script here — just give us a bit of time and you'll hear from an actual person. Email or Instagram, whichever you check more.</p>" +
+          `<p>Email: <a href="mailto:${esc(AAO.email)}">${esc(AAO.email)}</a></p>` +
+          `<p>Instagram: <a href="${esc(AAO.instagram)}">${esc(AAO.instagram)}</a></p>` +
+          `<p>${esc(AAO.streetAddress)}, ${esc(AAO.locality)}</p>`,
+      ),
     }),
   );
   const policies = await loadPolicies();
@@ -809,7 +832,14 @@ async function main() {
   for (const n of NOINDEX_ROUTES) {
     await writeRoute(
       n.route,
-      render({ title: n.title, description: `${BRAND} – ${n.title.split(' | ')[0]}`, canonical: `${SITE}${n.route}`, noindex: true, chunk: n.chunk }),
+      render({
+        title: n.title,
+        description: `${BRAND} – ${n.title.split(' | ')[0]}`,
+        canonical: `${SITE}${n.route}`,
+        noindex: true,
+        chunk: n.chunk,
+        body: NOINDEX_BODIES[n.route] ? wrap(NOINDEX_BODIES[n.route]) : undefined,
+      }),
     );
   }
 
