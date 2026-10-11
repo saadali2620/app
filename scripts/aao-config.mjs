@@ -10,6 +10,10 @@ export const AAO = {
   locality: 'Karachi',
   country: 'PK',
 
+  // Where the garments are made, e.g. 'Pakistan'. Leave null until confirmed: while null,
+  // nothing about origin is published (the fabric origin on product pages is a separate fact).
+  madeIn: null,
+
   // Policies page: "Estimated Delivery: 3 to 7 business days after order confirmation."
   transitDays: { min: 3, max: 7 },
   // Policies page: "Claims must be submitted within 72 hours of package delivery."

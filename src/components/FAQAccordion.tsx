@@ -12,7 +12,7 @@ interface FAQAccordionProps {
 
 // Starter FAQ content — grounded in what the site actually does today
 // (per-product sizing, Track Order page, Policies page, online payment + COD
-// at checkout, Karachi/Pakistan-only shipping). Edit freely; nothing here is
+// at checkout, Pakistan-only shipping). Edit freely; nothing here is
 // final copy.
 const FAQ_ITEMS: FAQItem[] = [
   {
@@ -38,7 +38,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'Where are you based, and do you ship internationally?',
     answer:
-      "We're based in Karachi and currently ship within Pakistan only.",
+      "We're a Pakistani brand and deliver to addresses across Pakistan. We don't ship internationally yet.",
   },
 ];
 

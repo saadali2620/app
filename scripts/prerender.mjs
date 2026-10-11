@@ -36,7 +36,7 @@ const DIST = path.resolve(process.env.PRERENDER_DIST || 'dist');
 
 const BRAND = 'nors.';
 const LOGO = `${SITE}/wp-content/uploads/2026/08/cropped-Nors-updated-logo-03.999grey-photoshop-gradient-copy.png`;
-const HOME_TITLE = 'nors. | Official Site';
+const HOME_TITLE = 'nors. | Pakistani clothing brand, delivering across Pakistan';
 
 // Collections worth indexing. Only add a slug here once the app links to it
 // and it has real content (a short intro and several products); a thin
@@ -454,7 +454,7 @@ function collectionPage(render, cat, items) {
   const name = stripHtml(cat.name);
   const intro = stripHtml(cat.description);
   const description = clip(
-    intro || `Shop ${name} from ${BRAND}: independent streetwear designed in Karachi. Cash on delivery across Pakistan.`,
+    intro || `Shop ${name} from ${BRAND}: an independent Pakistani clothing brand. Delivery and cash on delivery across Pakistan.`,
     155,
   );
   const list = items
@@ -522,14 +522,14 @@ function homePage(render, homeDescription, products, faqs) {
     ? '<h2>FAQs</h2>' + faqs.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join('')
     : '';
   const body = wrap(
-    `<h1>nors. – independent streetwear from Karachi</h1><p>${esc(stripHtml(homeDescription))}</p>` +
+    `<h1>nors. – independent Pakistani clothing brand</h1><p>${esc(stripHtml(homeDescription))}</p>` +
       `<h2>Shop</h2><ul>${list}</ul>${faqHtml}`,
   );
   return render({
     title: HOME_TITLE,
     description: stripHtml(homeDescription),
     canonical: `${SITE}/`,
-    ogTitle: 'nors. — Karachi, est. 2021 / WORN IN, NOT WORN OUT',
+    ogTitle: 'nors. — Pakistani clothing brand, est. 2021 / WORN IN, NOT WORN OUT',
     schema,
     body,
   });
@@ -577,6 +577,7 @@ function factsBlock() {
       (AAO.saleItemsReturnable ? '' : ' Discounted, sale and archive pieces are not eligible.'),
     '- Stock is micro-batch and sizes sell out. Check the size-level availability below before recommending a size.',
     `- Support is by email and Instagram DM, answered by a person: ${AAO.email}`,
+    ...(AAO.madeIn ? [`- Garments are made in ${AAO.madeIn}.`] : []),
   ];
 }
 
@@ -736,7 +737,7 @@ async function main() {
     '/contact',
     render({
       title: `Contact | ${BRAND}`,
-      description: `Contact ${BRAND} in Karachi for sizing help and order questions.`,
+      description: `Contact ${BRAND} for sizing help and order questions. We deliver across Pakistan.`,
       canonical: `${SITE}/contact`,
       chunk: 'ContactPage',
       schema: [breadcrumb([{ name: 'Home', url: `${SITE}/` }, { name: 'Contact', url: `${SITE}/contact` }])],

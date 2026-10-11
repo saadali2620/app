@@ -180,7 +180,7 @@ export default function ProductPage({ slug, navigate }: ProductPageProps) {
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (canonical) canonical.href = url;
     return () => {
-      document.title = 'nors. | Official Site';
+      document.title = 'nors. | Pakistani clothing brand, delivering across Pakistan';
     };
   }, [product]);
 

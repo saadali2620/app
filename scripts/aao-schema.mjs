@@ -99,6 +99,7 @@ export function productSchema(site, brand, p) {
     description: p.short || p.long || p.name,
     image: p.images,
     brand: { '@type': 'Brand', name: brand },
+    ...(AAO.madeIn && { countryOfOrigin: { '@type': 'Country', name: AAO.madeIn } }),
   };
   const own = { currency: p.currency, price: p.price, regular: p.regular, inStock: p.inStock, backorder: false };
 
