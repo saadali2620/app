@@ -739,7 +739,7 @@ export default function CheckoutPage({ navigate }: CheckoutPageProps) {
                   </span>
                 </div>
                 {pointsLabel(totalPrice, 'this order') && (
-                  <p className="text-white/70 text-xs pt-1">{pointsLabel(totalPrice, 'this order')}. Points are added once your order is delivered.</p>
+                  <p className="text-white/70 text-xs pt-1">{pointsLabel(totalPrice, 'this order')}. Points are added once your order is delivered. Estimated Delivery: 3 to 7 business days after order confirmation.</p>
                 )}
                 {totalsError && (
                   <p className="text-red-400 text-xs pt-1">
