@@ -138,7 +138,7 @@ export default function CartDrawer({ navigate }: CartDrawerProps) {
               {pointsLabel(totalPrice, 'this order') && (
                 <p className="text-white/70 text-xs">{pointsLabel(totalPrice, 'this order')}. Points are added once your order is delivered.</p>
               )}
-              <p className="text-white/40 text-xs">Shipping & taxes calculated at checkout.</p>
+              <p className="text-white/40 text-xs">Shipping calculated at checkout.</p>
               <button
                 onClick={handleCheckout}
                 className="w-full bg-white text-black py-4 text-[11px] uppercase tracking-[0.2em] font-semibold hover:bg-white/90 transition-colors"
